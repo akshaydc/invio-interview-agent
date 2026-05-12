@@ -55,6 +55,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
   const startTimeRef = useRef(0)
   const endingRef = useRef(false)
   const shouldAutoEndRef = useRef(false)
+  const sampleCountRef = useRef(0)
   // Calibration: sample background noise for 2s after interview starts, set dynamic threshold
   const calibrationRef = useRef({ samples: [] as number[], done: false, threshold: BASE_THRESHOLD })
 
@@ -117,10 +118,12 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
 
   function setupAudio(stream: MediaStream) {
     const ctx = new AudioContext()
+    console.log('AudioContext created, state:', ctx.state)
     const analyser = ctx.createAnalyser()
     analyser.fftSize = 2048
     const source = ctx.createMediaStreamSource(stream)
     source.connect(analyser)
+    console.log('Analyser connected, fftSize:', analyser.fftSize)
     audioContextRef.current = ctx
     analyserRef.current = analyser
   }
@@ -168,8 +171,14 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
           : 0
         cal.threshold = Math.max(BASE_THRESHOLD, avg * 2)
         cal.done = true
+        console.log('Calibration done — background avg:', avg.toFixed(5), '| dynamic threshold:', cal.threshold.toFixed(5))
       }
       return
+    }
+
+    sampleCountRef.current++
+    if (sampleCountRef.current % 10 === 0) {
+      console.log('Current RMS volume:', rms.toFixed(5), 'Threshold:', cal.threshold.toFixed(5))
     }
 
     const threshold = cal.threshold
@@ -181,6 +190,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
       s.lastAbove = now
       if (!s.capturing && now - s.firstAbove >= SPEAK_DEBOUNCE_MS) {
         s.capturing = true
+        console.log('SPEAKING DETECTED - starting recording')
         setListenStatus('recording')
         listenStatusRef.current = 'recording'
         if (streamRef.current) startNewRecorder(streamRef.current)
@@ -210,6 +220,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
       }
       const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
       audioChunksRef.current = []
+      console.log('SILENCE DETECTED - sending audio, size:', blob.size)
 
       // Discard audio that's too short to be real speech
       if (blob.size < MIN_AUDIO_BYTES) {
@@ -309,9 +320,18 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
     calibrationRef.current = { samples: [], done: false, threshold: BASE_THRESHOLD }
     shouldAutoEndRef.current = false
 
+    console.log('Requesting microphone...')
     const stream = await (async () => {
-      try { return await navigator.mediaDevices.getUserMedia({ audio: true, video: true }) } catch { /* fall through */ }
-      try { return await navigator.mediaDevices.getUserMedia({ audio: true }) } catch { return null }
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+        console.log('Microphone access granted (audio + video)')
+        return s
+      } catch { /* fall through to audio-only */ }
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({ audio: true })
+        console.log('Microphone access granted (audio only)')
+        return s
+      } catch { return null }
     })()
 
     if (!stream) {
@@ -338,6 +358,8 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
       setTranscript([{ q: res.data.first_question, a: '', score: null }])
       setStage('active')
       stageRef.current = 'active'
+      sampleCountRef.current = 0
+      console.log('Audio detection started automatically (session:', res.data.session_id, ')')
       pollIntervalRef.current = setInterval(pollAudio, 100)
       proctorIntervalRef.current = setInterval(captureProctorFrame, 3000)
       startLockoutCountdown()
