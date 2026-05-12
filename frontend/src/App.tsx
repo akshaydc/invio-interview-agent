@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import Login from './pages/Login'
 import RecruiterDashboard from './pages/RecruiterDashboard'
 import CandidateInterview from './pages/CandidateInterview'
 import ScorecardView from './pages/ScorecardView'
 import JobListings, { type Job } from './pages/JobListings'
 import JobDetail from './pages/JobDetail'
 import ApplicationForm from './pages/ApplicationForm'
+import CandidateLogin from './pages/CandidateLogin'
+import RecruiterLogin from './pages/RecruiterLogin'
 import './index.css'
 
 export type AuthInfo = {
@@ -21,7 +22,8 @@ type Page =
   | 'job-listings'
   | 'job-detail'
   | 'application-form'
-  | 'login'
+  | 'candidate-login'
+  | 'recruiter-login'
   | 'recruiter-dashboard'
   | 'recruiter-scorecard'
   | 'candidate-interview'
@@ -59,7 +61,8 @@ function App() {
       {page === 'job-listings' && (
         <JobListings
           onSelectJob={handleSelectJob}
-          onLoginClick={() => setPage('login')}
+          onCandidateLoginClick={() => setPage('candidate-login')}
+          onRecruiterLoginClick={() => setPage('recruiter-login')}
         />
       )}
 
@@ -79,8 +82,18 @@ function App() {
         />
       )}
 
-      {page === 'login' && (
-        <Login onLogin={handleLogin} onBack={() => setPage('job-listings')} />
+      {page === 'candidate-login' && (
+        <CandidateLogin
+          onLogin={handleLogin}
+          onBack={() => setPage('job-listings')}
+        />
+      )}
+
+      {page === 'recruiter-login' && (
+        <RecruiterLogin
+          onLogin={handleLogin}
+          onBack={() => setPage('job-listings')}
+        />
       )}
 
       {page === 'recruiter-dashboard' && auth && (

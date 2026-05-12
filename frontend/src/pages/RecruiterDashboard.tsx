@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
 
@@ -32,6 +32,8 @@ type Candidate = {
   match_summary?: string
   match_strengths?: string[]
   match_gaps?: string[]
+  compensation_fit?: string
+  notice_fit?: string
   applied_at?: string
   invited_at?: string
 }
@@ -109,8 +111,12 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [jLocation, setJLocation] = useState('')
   const [jJobType, setJJobType] = useState('Full-time')
   const [jExperience, setJExperience] = useState('')
+  const [jRoleBudget, setJRoleBudget] = useState('')
+  const [jPreferredNotice, setJPreferredNotice] = useState('Flexible')
   const [jDescription, setJDescription] = useState('')
   const [jRequirements, setJRequirements] = useState('')
+  const [jdFile, setJdFile] = useState<File | null>(null)
+  const jdFileInputRef = useRef<HTMLInputElement>(null)
 
   const headers = { 'X-Auth-Token': token }
 
@@ -191,27 +197,32 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   async function handleCreateJob() {
     setJobFormError('')
-    if (!jTitle.trim() || !jDepartment.trim() || !jLocation.trim() || !jDescription.trim()) {
-      setJobFormError('Title, department, location, and description are required.')
+    if (!jTitle.trim() || !jDepartment.trim() || !jLocation.trim()) {
+      setJobFormError('Title, department, and location are required.')
+      return
+    }
+    if (!jDescription.trim() && !jdFile) {
+      setJobFormError('Please upload a JD file or paste the job description.')
       return
     }
     setJobFormLoading(true)
     try {
-      await axios.post(
-        `${API}/recruiter/jobs`,
-        {
-          title: jTitle.trim(),
-          department: jDepartment.trim(),
-          location: jLocation.trim(),
-          job_type: jJobType,
-          experience: jExperience.trim(),
-          description: jDescription.trim(),
-          requirements: jRequirements.split(',').map(r => r.trim()).filter(Boolean),
-        },
-        { headers }
-      )
+      const fd = new FormData()
+      fd.append('title', jTitle.trim())
+      fd.append('department', jDepartment.trim())
+      fd.append('location', jLocation.trim())
+      fd.append('job_type', jJobType)
+      fd.append('experience', jExperience.trim())
+      fd.append('description', jDescription.trim())
+      fd.append('requirements', jRequirements.split(',').map(r => r.trim()).filter(Boolean).join(','))
+      fd.append('role_budget', jRoleBudget.trim())
+      fd.append('preferred_notice', jPreferredNotice)
+      if (jdFile) fd.append('jd_file', jdFile)
+      await axios.post(`${API}/recruiter/jobs`, fd, { headers })
       setJTitle(''); setJDepartment(''); setJLocation(''); setJJobType('Full-time')
-      setJExperience(''); setJDescription(''); setJRequirements('')
+      setJExperience(''); setJRoleBudget(''); setJPreferredNotice('Flexible')
+      setJDescription(''); setJRequirements(''); setJdFile(null)
+      if (jdFileInputRef.current) jdFileInputRef.current.value = ''
       setShowJobForm(false)
       await fetchJobs()
     } catch (err: unknown) {
@@ -225,6 +236,15 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   async function handleCloseJob(jobId: string) {
     try {
       await axios.put(`${API}/recruiter/jobs/${jobId}`, { status: 'closed' }, { headers })
+      await fetchJobs()
+    } catch {
+      // silent
+    }
+  }
+
+  async function handleReopenJob(jobId: string) {
+    try {
+      await axios.put(`${API}/recruiter/jobs/${jobId}`, { status: 'open' }, { headers })
       await fetchJobs()
     } catch {
       // silent
@@ -427,6 +447,20 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                         <p style={{ color: 'var(--text)', fontSize: '0.9rem', lineHeight: 1.6 }}>
                                           {c.match_summary || '—'}
                                         </p>
+                                        {(c.compensation_fit || c.notice_fit) && (
+                                          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                                            {c.compensation_fit && (
+                                              <span className={`fit-badge fit-badge--${c.compensation_fit === 'good' ? 'good' : c.compensation_fit === 'partial' ? 'partial' : 'mismatch'}`}>
+                                                Compensation: {c.compensation_fit}
+                                              </span>
+                                            )}
+                                            {c.notice_fit && (
+                                              <span className={`fit-badge fit-badge--${c.notice_fit === 'good' ? 'good' : c.notice_fit === 'partial' ? 'partial' : 'mismatch'}`}>
+                                                Notice: {c.notice_fit}
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
 
@@ -532,12 +566,54 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                   <input className="role-input" placeholder="e.g. 3-5 years" value={jExperience} onChange={e => setJExperience(e.target.value)} />
                 </div>
                 <div className="role-select-group">
+                  <label className="role-label">Role Budget</label>
+                  <input className="role-input" placeholder="e.g. 10-15 LPA" value={jRoleBudget} onChange={e => setJRoleBudget(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Preferred Notice Period</label>
+                  <select className="role-select" value={jPreferredNotice} onChange={e => setJPreferredNotice(e.target.value)}>
+                    <option>Immediate</option>
+                    <option>Up to 15 days</option>
+                    <option>Up to 30 days</option>
+                    <option>Up to 60 days</option>
+                    <option>Flexible</option>
+                  </select>
+                </div>
+                <div className="role-select-group">
                   <label className="role-label">Requirements (comma-separated)</label>
                   <input className="role-input" placeholder="Python, React, FastAPI" value={jRequirements} onChange={e => setJRequirements(e.target.value)} />
                 </div>
                 <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="role-label">Job Description</label>
-                  <textarea className="role-textarea" placeholder="Full job description..." value={jDescription} onChange={e => setJDescription(e.target.value)} />
+                  <label className="role-label">Upload JD File (PDF or TXT)</label>
+                  <div
+                    className="resume-upload-area"
+                    onClick={() => jdFileInputRef.current?.click()}
+                  >
+                    <input
+                      ref={jdFileInputRef}
+                      type="file"
+                      accept=".pdf,.txt"
+                      style={{ display: 'none' }}
+                      onChange={e => setJdFile(e.target.files?.[0] ?? null)}
+                    />
+                    {jdFile ? (
+                      <span style={{ color: 'var(--text)' }}>{jdFile.name}</span>
+                    ) : (
+                      <span style={{ color: 'var(--muted)' }}>Click to upload JD file (optional if pasting below)&hellip;</span>
+                    )}
+                  </div>
+                  {jdFile && (
+                    <button
+                      style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer', padding: 0, marginTop: 4, textAlign: 'left' }}
+                      onClick={() => { setJdFile(null); if (jdFileInputRef.current) jdFileInputRef.current.value = '' }}
+                    >
+                      Remove file
+                    </button>
+                  )}
+                </div>
+                <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="role-label">Or Paste JD Here</label>
+                  <textarea className="role-textarea" placeholder="Paste job description (used if no file uploaded)..." value={jDescription} onChange={e => setJDescription(e.target.value)} />
                 </div>
               </div>
               {jobFormError && <p className="error-text" style={{ marginTop: 12 }}>{jobFormError}</p>}
@@ -588,6 +664,15 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                               onClick={() => handleCloseJob(j.id)}
                             >
                               Close Job
+                            </button>
+                          )}
+                          {j.status === 'closed' && (
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+                              onClick={() => handleReopenJob(j.id)}
+                            >
+                              Reopen
                             </button>
                           )}
                         </td>

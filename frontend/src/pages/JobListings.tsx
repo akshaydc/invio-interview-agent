@@ -17,10 +17,11 @@ export type Job = {
 
 type Props = {
   onSelectJob: (job: Job) => void
-  onLoginClick: () => void
+  onCandidateLoginClick: () => void
+  onRecruiterLoginClick: () => void
 }
 
-export default function JobListings({ onSelectJob, onLoginClick }: Props) {
+export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecruiterLoginClick }: Props) {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -35,7 +36,10 @@ export default function JobListings({ onSelectJob, onLoginClick }: Props) {
     <div className="jobs-page">
       <nav className="jobs-nav">
         <span className="jobs-nav-logo">Invio</span>
-        <button className="btn btn-secondary" onClick={onLoginClick}>Login</button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-outline" onClick={onCandidateLoginClick}>Candidate Login</button>
+          <button className="btn btn-primary" onClick={onRecruiterLoginClick}>Recruiter Login</button>
+        </div>
       </nav>
 
       <div className="jobs-hero">

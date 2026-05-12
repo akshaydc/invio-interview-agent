@@ -68,7 +68,7 @@ export default function Login({ onLogin, onBack }: Props) {
     <div className="login-page">
       <div className="login-card">
         <h1 className="login-title">Invio</h1>
-        <p className="login-subtitle">AI Interview Portal</p>
+        <p className="login-subtitle">Smart Recruitment Portal</p>
         {onBack && (
           <button
             style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.85rem', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}

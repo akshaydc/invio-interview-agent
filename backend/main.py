@@ -279,15 +279,42 @@ def _extract_resume_text(file_bytes: bytes, filename: str) -> str:
     return file_bytes.decode("utf-8", errors="replace").strip()
 
 
-async def _analyze_resume_match(resume_text: str, job: dict) -> dict:
+async def _analyze_resume_match(
+    resume_text: str,
+    job: dict,
+    expected_ctc: str = "",
+    notice_period: str = "",
+) -> dict:
     if not ANTHROPIC_API_KEY or not resume_text:
         return {}
     requirements_str = ", ".join(job.get("requirements", []))
+    role_budget = job.get("role_budget", "")
+    preferred_notice = job.get("preferred_notice", "")
+
+    extra_lines = ""
+    if role_budget:
+        extra_lines += f"- Role budget: {role_budget}\n"
+    if preferred_notice:
+        extra_lines += f"- Preferred notice period: {preferred_notice}\n"
+    if expected_ctc:
+        extra_lines += f"- Candidate's expected CTC: {expected_ctc}\n"
+    if notice_period:
+        extra_lines += f"- Candidate's notice period: {notice_period}\n"
+
+    compensation_instruction = (
+        "\nAlso consider:\n" + extra_lines +
+        "Give a match percentage (0-100) that factors in skills match, experience match, "
+        "AND compensation and notice period fit.\n"
+        if extra_lines else
+        "\nGive a match percentage (0-100) based on skills and experience fit.\n"
+    )
+
     prompt = (
-        "Compare this resume with the job description and give a match percentage (0-100) "
-        "and a 3-line summary of fit. Return ONLY valid JSON with no extra text:\n"
+        f"Compare this resume with the job description.{compensation_instruction}"
+        "Return ONLY valid JSON with no extra text:\n"
         '{"match_percentage": 75, "match_summary": "...", '
-        '"strengths": ["...", "..."], "gaps": ["...", "..."]}\n\n'
+        '"strengths": ["...", "..."], "gaps": ["...", "..."], '
+        '"compensation_fit": "good", "notice_fit": "good"}\n\n'
         f"Job Description: {job['description']}\n"
         f"Requirements: {requirements_str}\n\n"
         f"Resume: {resume_text}"
@@ -576,7 +603,11 @@ async def apply_for_job(
         file_bytes = await resume.read()
         resume_text = _extract_resume_text(file_bytes, resume.filename)
 
-    match_result = await _analyze_resume_match(resume_text, job)
+    match_result = await _analyze_resume_match(
+        resume_text, job,
+        expected_ctc=expected_ctc,
+        notice_period=notice_period,
+    )
 
     candidate = {
         "name": name,
@@ -595,6 +626,8 @@ async def apply_for_job(
         "match_summary": match_result.get("match_summary"),
         "match_strengths": match_result.get("strengths", []),
         "match_gaps": match_result.get("gaps", []),
+        "compensation_fit": match_result.get("compensation_fit"),
+        "notice_fit": match_result.get("notice_fit"),
         "session_id": None,
         "status": "applied",
         "applied_at": datetime.now(timezone.utc).isoformat(),
@@ -619,19 +652,40 @@ async def list_all_jobs(_auth: dict = Depends(verify_recruiter_token)) -> list:
 
 @app.post("/recruiter/jobs")
 async def create_job(
-    body: CreateJobRequest,
     _auth: dict = Depends(verify_recruiter_token),
+    title: str = Form(...),
+    department: str = Form(...),
+    location: str = Form(...),
+    job_type: str = Form(...),
+    experience: str = Form(""),
+    description: str = Form(""),
+    requirements: str = Form(""),
+    role_budget: str = Form(""),
+    preferred_notice: str = Form("Flexible"),
+    jd_file: UploadFile | None = File(None),
 ) -> dict:
     jobs = await _read_jobs()
+
+    final_description = description
+    if jd_file and jd_file.filename:
+        file_bytes = await jd_file.read()
+        extracted = _extract_resume_text(file_bytes, jd_file.filename)
+        if extracted:
+            final_description = extracted
+
+    requirements_list = [r.strip() for r in requirements.split(",") if r.strip()]
+
     job = {
         "id": str(uuid.uuid4()),
-        "title": body.title,
-        "department": body.department,
-        "location": body.location,
-        "job_type": body.job_type,
-        "experience": body.experience,
-        "description": body.description,
-        "requirements": body.requirements,
+        "title": title,
+        "department": department,
+        "location": location,
+        "job_type": job_type,
+        "experience": experience,
+        "description": final_description,
+        "requirements": requirements_list,
+        "role_budget": role_budget,
+        "preferred_notice": preferred_notice,
         "status": "open",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
