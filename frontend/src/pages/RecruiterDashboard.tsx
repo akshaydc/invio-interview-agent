@@ -47,6 +47,8 @@ type Job = {
   experience: string
   description: string
   requirements: string[]
+  role_budget?: string
+  preferred_notice?: string
   status: string
   created_at: string
 }
@@ -117,6 +119,21 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [jRequirements, setJRequirements] = useState('')
   const [jdFile, setJdFile] = useState<File | null>(null)
   const jdFileInputRef = useRef<HTMLInputElement>(null)
+
+  // Edit job state
+  const [editingJob, setEditingJob] = useState<Job | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDepartment, setEditDepartment] = useState('')
+  const [editLocation, setEditLocation] = useState('')
+  const [editJobType, setEditJobType] = useState('Full-time')
+  const [editExperience, setEditExperience] = useState('')
+  const [editRoleBudget, setEditRoleBudget] = useState('')
+  const [editPreferredNotice, setEditPreferredNotice] = useState('Flexible')
+  const [editDescription, setEditDescription] = useState('')
+  const [editRequirements, setEditRequirements] = useState('')
+  const [editFormLoading, setEditFormLoading] = useState(false)
+  const [editFormError, setEditFormError] = useState('')
+  const [editSuccessMsg, setEditSuccessMsg] = useState('')
 
   const headers = { 'X-Auth-Token': token }
 
@@ -230,6 +247,66 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
       setJobFormError(String(msg))
     } finally {
       setJobFormLoading(false)
+    }
+  }
+
+  function handleEditStart(job: Job) {
+    setEditingJob(job)
+    setEditTitle(job.title)
+    setEditDepartment(job.department)
+    setEditLocation(job.location)
+    setEditJobType(job.job_type)
+    setEditExperience(job.experience)
+    setEditRoleBudget(job.role_budget ?? '')
+    setEditPreferredNotice(job.preferred_notice ?? 'Flexible')
+    setEditDescription(job.description)
+    setEditRequirements(job.requirements.join(', '))
+    setEditFormError('')
+    setEditSuccessMsg('')
+  }
+
+  function handleEditCancel() {
+    setEditingJob(null)
+    setEditFormError('')
+    setEditSuccessMsg('')
+  }
+
+  async function handleSaveEdit() {
+    if (!editingJob) return
+    setEditFormError('')
+    setEditSuccessMsg('')
+    if (!editTitle.trim() || !editDepartment.trim() || !editLocation.trim()) {
+      setEditFormError('Title, department, and location are required.')
+      return
+    }
+    setEditFormLoading(true)
+    try {
+      const res = await axios.put<{ success: boolean; recalculated: number; job: Job }>(
+        `${API}/recruiter/jobs/${editingJob.id}`,
+        {
+          title: editTitle.trim(),
+          department: editDepartment.trim(),
+          location: editLocation.trim(),
+          job_type: editJobType,
+          experience: editExperience.trim(),
+          description: editDescription.trim(),
+          requirements: editRequirements.split(',').map(r => r.trim()).filter(Boolean),
+          role_budget: editRoleBudget.trim(),
+          preferred_notice: editPreferredNotice,
+        },
+        { headers }
+      )
+      const updatedJob = res.data.job
+      setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j))
+      setEditSuccessMsg(
+        `Job updated. Match scores recalculated for ${res.data.recalculated} candidate${res.data.recalculated !== 1 ? 's' : ''}.`
+      )
+      setEditingJob(null)
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Failed to save.' : 'Failed to save.'
+      setEditFormError(String(msg))
+    } finally {
+      setEditFormLoading(false)
     }
   }
 
@@ -623,6 +700,74 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
             </div>
           )}
 
+          {editSuccessMsg && (
+            <div className="info-box" style={{ marginBottom: 0 }}>{editSuccessMsg}</div>
+          )}
+
+          {editingJob && (
+            <div className="card">
+              <h3 style={{ marginBottom: 16, color: 'var(--text)' }}>Edit Job — {editingJob.title}</h3>
+              <div className="form-grid">
+                <div className="role-select-group">
+                  <label className="role-label">Job Title</label>
+                  <input className="role-input" value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Department</label>
+                  <input className="role-input" value={editDepartment} onChange={e => setEditDepartment(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Location</label>
+                  <input className="role-input" value={editLocation} onChange={e => setEditLocation(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Job Type</label>
+                  <select className="role-select" value={editJobType} onChange={e => setEditJobType(e.target.value)}>
+                    <option>Full-time</option>
+                    <option>Part-time</option>
+                    <option>Contract</option>
+                    <option>Internship</option>
+                  </select>
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Experience</label>
+                  <input className="role-input" value={editExperience} onChange={e => setEditExperience(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Role Budget</label>
+                  <input className="role-input" placeholder="e.g. 10-15 LPA" value={editRoleBudget} onChange={e => setEditRoleBudget(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Preferred Notice Period</label>
+                  <select className="role-select" value={editPreferredNotice} onChange={e => setEditPreferredNotice(e.target.value)}>
+                    <option>Immediate</option>
+                    <option>Up to 15 days</option>
+                    <option>Up to 30 days</option>
+                    <option>Up to 60 days</option>
+                    <option>Flexible</option>
+                  </select>
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Requirements (comma-separated)</label>
+                  <input className="role-input" value={editRequirements} onChange={e => setEditRequirements(e.target.value)} />
+                </div>
+                <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="role-label">Job Description</label>
+                  <textarea className="role-textarea" value={editDescription} onChange={e => setEditDescription(e.target.value)} />
+                </div>
+              </div>
+              {editFormError && <p className="error-text" style={{ marginTop: 12 }}>{editFormError}</p>}
+              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                <button className="btn btn-primary" onClick={handleSaveEdit} disabled={editFormLoading}>
+                  {editFormLoading ? 'Saving…' : 'Save Changes'}
+                </button>
+                <button className="btn btn-secondary" onClick={handleEditCancel} disabled={editFormLoading}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
               <h3 style={{ color: 'var(--text)' }}>Job Postings ({jobs.length})</h3>
@@ -657,24 +802,33 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                           </span>
                         </td>
                         <td>
-                          {j.status === 'open' && (
-                            <button
-                              className="btn btn-danger"
-                              style={{ padding: '6px 14px', fontSize: '0.85rem' }}
-                              onClick={() => handleCloseJob(j.id)}
-                            >
-                              Close Job
-                            </button>
-                          )}
-                          {j.status === 'closed' && (
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <button
                               className="btn btn-secondary"
                               style={{ padding: '6px 14px', fontSize: '0.85rem' }}
-                              onClick={() => handleReopenJob(j.id)}
+                              onClick={() => handleEditStart(j)}
                             >
-                              Reopen
+                              Edit
                             </button>
-                          )}
+                            {j.status === 'open' && (
+                              <button
+                                className="btn btn-danger"
+                                style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+                                onClick={() => handleCloseJob(j.id)}
+                              >
+                                Close
+                              </button>
+                            )}
+                            {j.status === 'closed' && (
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+                                onClick={() => handleReopenJob(j.id)}
+                              >
+                                Reopen
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

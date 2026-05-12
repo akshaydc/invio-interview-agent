@@ -181,6 +181,8 @@ class UpdateJobRequest(BaseModel):
     experience: str | None = None
     description: str | None = None
     requirements: list[str] | None = None
+    role_budget: str | None = None
+    preferred_notice: str | None = None
     status: str | None = None
 
 
@@ -586,6 +588,17 @@ async def apply_for_job(
         raise HTTPException(status_code=400, detail="This position is no longer accepting applications")
 
     candidates = await _read_candidates()
+
+    duplicate = next(
+        (c for c in candidates if c.get("email", "").lower() == email.lower() and c.get("job_id") == job_id),
+        None,
+    )
+    if duplicate:
+        raise HTTPException(
+            status_code=409,
+            detail="You have already applied for this position. Check your email for your CT number.",
+        )
+
     year = datetime.now(timezone.utc).year
     existing_ct = {c["ct_number"] for c in candidates}
     ct_number = None
@@ -707,7 +720,28 @@ async def update_job(
     updates = body.model_dump(exclude_none=True)
     job.update(updates)
     await _write_jobs(jobs)
-    return job
+
+    candidates = await _read_candidates()
+    recalculated = 0
+    for candidate in candidates:
+        if candidate.get("job_id") == job_id and candidate.get("resume_text"):
+            match_result = await _analyze_resume_match(
+                candidate["resume_text"],
+                job,
+                expected_ctc=candidate.get("expected_ctc", ""),
+                notice_period=candidate.get("notice_period", ""),
+            )
+            candidate["match_percentage"] = match_result.get("match_percentage")
+            candidate["match_summary"] = match_result.get("match_summary")
+            candidate["match_strengths"] = match_result.get("strengths", [])
+            candidate["match_gaps"] = match_result.get("gaps", [])
+            candidate["compensation_fit"] = match_result.get("compensation_fit")
+            candidate["notice_fit"] = match_result.get("notice_fit")
+            recalculated += 1
+    if recalculated > 0:
+        await _write_candidates(candidates)
+
+    return {"success": True, "recalculated": recalculated, "job": job}
 
 
 # ---------------------------------------------------------------------------

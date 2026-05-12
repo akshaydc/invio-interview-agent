@@ -79,6 +79,7 @@ function App() {
           jobId={selectedJob.id}
           jobTitle={selectedJob.title}
           onBack={() => setPage('job-detail')}
+          onApplied={() => setPage('job-listings')}
         />
       )}
 

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
 
@@ -9,6 +9,7 @@ type Props = {
   jobId: string
   jobTitle: string
   onBack: () => void
+  onApplied: () => void
 }
 
 type FieldErrors = Record<string, string>
@@ -44,7 +45,7 @@ function ctcWarning(currentCtc: string, expectedCtc: string): string {
   return ''
 }
 
-export default function ApplicationForm({ jobId, jobTitle, onBack }: Props) {
+export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: Props) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -59,6 +60,12 @@ export default function ApplicationForm({ jobId, jobTitle, onBack }: Props) {
   const [loading, setLoading] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [ctNumber, setCtNumber] = useState('')
+
+  useEffect(() => {
+    if (!ctNumber) return
+    const timer = setTimeout(() => onApplied(), 4000)
+    return () => clearTimeout(timer)
+  }, [ctNumber])
 
   const errors = validate(name, email, phone, currentRole, currentCtc, expectedCtc, resumeFile)
   const isValid = Object.keys(errors).length === 0
@@ -97,8 +104,12 @@ export default function ApplicationForm({ jobId, jobTitle, onBack }: Props) {
       )
       setCtNumber(res.data.ct_number)
     } catch (err: unknown) {
-      const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Submission failed.' : 'Submission failed.'
-      setSubmitError(String(msg))
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        setSubmitError('You have already applied for this position. Please check your email for your CT number.')
+      } else {
+        const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Submission failed.' : 'Submission failed.'
+        setSubmitError(String(msg))
+      }
     } finally {
       setLoading(false)
     }
@@ -117,10 +128,11 @@ export default function ApplicationForm({ jobId, jobTitle, onBack }: Props) {
             <strong style={{ color: 'var(--primary)', fontSize: '1.1rem' }}>{ctNumber}</strong>
           </p>
           <p className="thankyou-sub">
-            Check your email for login details. You will be contacted by the recruiter if your profile matches.
+            You'll receive a confirmation email with your CT number shortly. We'll get back to you if your profile matches.
           </p>
+          <p className="muted" style={{ fontSize: '0.8rem' }}>Redirecting to jobs in 4 seconds…</p>
           <hr className="thankyou-divider" />
-          <button className="btn btn-secondary thankyou-btn" onClick={onBack}>
+          <button className="btn btn-secondary thankyou-btn" onClick={onApplied}>
             Back to Jobs
           </button>
         </div>
