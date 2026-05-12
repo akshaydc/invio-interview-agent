@@ -13,17 +13,27 @@ const JOB_ROLES = [
   'QA Engineer',
 ]
 
+type CandidateStatus = 'not_started' | 'applied' | 'invited' | 'in_progress' | 'interviewing' | 'completed'
+
 type Candidate = {
   name: string
   ct_number: string
+  email?: string
+  phone?: string
+  current_role?: string
+  current_ctc?: string
+  expected_ctc?: string
+  notice_period?: string
   job_role: string
   job_description: string
   session_id: string | null
-  status: 'not_started' | 'in_progress' | 'completed' | 'applied'
+  status: CandidateStatus
   match_percentage?: number | null
   match_summary?: string
   match_strengths?: string[]
   match_gaps?: string[]
+  applied_at?: string
+  invited_at?: string
 }
 
 type Job = {
@@ -47,20 +57,24 @@ type Props = {
 
 const STATUS_LABELS: Record<string, string> = {
   not_started: 'Not Started',
-  in_progress: 'In Progress',
-  completed: 'Completed',
   applied: 'Applied',
+  invited: 'Invited',
+  in_progress: 'Interviewing',
+  interviewing: 'Interviewing',
+  completed: 'Completed',
 }
 
 const STATUS_CLASSES: Record<string, string> = {
   not_started: 'badge badge--muted',
-  in_progress: 'badge badge--blue',
-  completed: 'badge badge--green',
   applied: 'badge badge--muted',
+  invited: 'badge badge--blue',
+  in_progress: 'badge badge--amber',
+  interviewing: 'badge badge--amber',
+  completed: 'badge badge--green',
 }
 
 function matchBadge(pct: number | null | undefined) {
-  if (pct == null) return <span className="muted">—</span>
+  if (pct == null) return <span className="muted" style={{ fontSize: '0.85rem' }}>—</span>
   const cls = pct >= 70 ? 'match-badge match-badge--green' : pct >= 50 ? 'match-badge match-badge--amber' : 'match-badge match-badge--red'
   return <span className={cls}>{pct}%</span>
 }
@@ -70,7 +84,6 @@ type Tab = 'candidates' | 'jobs'
 export default function RecruiterDashboard({ token, onLogout, onViewScorecard }: Props) {
   const [tab, setTab] = useState<Tab>('candidates')
   const [expandedCt, setExpandedCt] = useState<string | null>(null)
-  const [copiedCt, setCopiedCt] = useState<string | null>(null)
 
   // Candidates state
   const [candidates, setCandidates] = useState<Candidate[]>([])
@@ -78,6 +91,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [showCandidateForm, setShowCandidateForm] = useState(false)
   const [candidateFormError, setCandidateFormError] = useState('')
   const [candidateFormLoading, setCandidateFormLoading] = useState(false)
+  const [invitingCt, setInvitingCt] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [ctNumber, setCtNumber] = useState('')
   const [jobRole, setJobRole] = useState('Software Engineer')
@@ -132,14 +146,16 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   }
 
   async function handleInvite(ct: string) {
+    setInvitingCt(ct)
     try {
-      await navigator.clipboard.writeText(ct)
-      setCopiedCt(ct)
-      setTimeout(() => setCopiedCt(null), 2000)
+      await axios.post(`${API}/recruiter/candidates/${ct}/invite`, {}, { headers })
+      setCandidates(prev =>
+        prev.map(c => c.ct_number === ct ? { ...c, status: 'invited' as CandidateStatus } : c)
+      )
     } catch {
-      // fallback: just indicate the CT number
-      setCopiedCt(ct)
-      setTimeout(() => setCopiedCt(null), 2000)
+      // silent — table will refresh on next load
+    } finally {
+      setInvitingCt(null)
     }
   }
 
@@ -262,23 +278,23 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
               <div className="form-grid">
                 <div className="role-select-group">
                   <label className="role-label">Full Name</label>
-                  <input className="role-input" placeholder="Jane Smith" value={name} onChange={(e) => setName(e.target.value)} />
+                  <input className="role-input" placeholder="Jane Smith" value={name} onChange={e => setName(e.target.value)} />
                 </div>
                 <div className="role-select-group">
                   <label className="role-label">CT Number</label>
-                  <input className="role-input" placeholder="CT001" value={ctNumber} onChange={(e) => setCtNumber(e.target.value.toUpperCase())} />
+                  <input className="role-input" placeholder="CT001" value={ctNumber} onChange={e => setCtNumber(e.target.value.toUpperCase())} />
                 </div>
                 <div className="role-select-group">
                   <label className="role-label">Job Role</label>
-                  <select className="role-select" value={jobRole} onChange={(e) => { setJobRole(e.target.value); setCustomRole('') }}>
-                    {JOB_ROLES.map((r) => <option key={r}>{r}</option>)}
+                  <select className="role-select" value={jobRole} onChange={e => { setJobRole(e.target.value); setCustomRole('') }}>
+                    {JOB_ROLES.map(r => <option key={r}>{r}</option>)}
                   </select>
                   <label className="role-label" style={{ marginTop: 8 }}>Or custom role</label>
-                  <input className="role-input" placeholder="e.g. DevOps Engineer" value={customRole} onChange={(e) => setCustomRole(e.target.value)} />
+                  <input className="role-input" placeholder="e.g. DevOps Engineer" value={customRole} onChange={e => setCustomRole(e.target.value)} />
                 </div>
                 <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
                   <label className="role-label">Job Description (optional)</label>
-                  <textarea className="role-textarea" placeholder="Paste job description..." value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} />
+                  <textarea className="role-textarea" placeholder="Paste job description..." value={jobDescription} onChange={e => setJobDescription(e.target.value)} />
                 </div>
               </div>
               {candidateFormError && <p className="error-text" style={{ marginTop: 12 }}>{candidateFormError}</p>}
@@ -306,11 +322,11 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                       <th>Job Role</th>
                       <th>Match %</th>
                       <th>Status</th>
-                      <th></th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {candidates.map((c) => (
+                    {candidates.map(c => (
                       <>
                         <tr
                           key={c.ct_number}
@@ -320,10 +336,32 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                           <td style={{ fontWeight: 500 }}>{c.name}</td>
                           <td style={{ color: 'var(--muted)', fontFamily: 'monospace' }}>{c.ct_number}</td>
                           <td>{c.job_role}</td>
-                          <td>{matchBadge(c.match_percentage)}</td>
-                          <td><span className={STATUS_CLASSES[c.status] ?? 'badge badge--muted'}>{STATUS_LABELS[c.status] ?? c.status}</span></td>
-                          <td style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>
-                            {expandedCt === c.ct_number ? '▲' : '▼'}
+                          <td onClick={e => e.stopPropagation()}>{matchBadge(c.match_percentage)}</td>
+                          <td onClick={e => e.stopPropagation()}>
+                            <span className={STATUS_CLASSES[c.status] ?? 'badge badge--muted'}>
+                              {STATUS_LABELS[c.status] ?? c.status}
+                            </span>
+                          </td>
+                          <td onClick={e => e.stopPropagation()}>
+                            {c.status === 'applied' && (
+                              <button
+                                className="btn btn-primary"
+                                style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+                                disabled={invitingCt === c.ct_number}
+                                onClick={() => handleInvite(c.ct_number)}
+                              >
+                                {invitingCt === c.ct_number ? 'Inviting...' : 'Invite'}
+                              </button>
+                            )}
+                            {c.status === 'completed' && (
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+                                onClick={() => onViewScorecard(c.ct_number)}
+                              >
+                                Scorecard
+                              </button>
+                            )}
                           </td>
                         </tr>
 
@@ -331,73 +369,122 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                           <tr key={`${c.ct_number}-detail`}>
                             <td colSpan={6} style={{ padding: 0, background: 'var(--surface-2)' }}>
                               <div className="candidate-panel">
-                                {/* Match score section */}
+
+                                {/* ── Candidate details grid ── */}
+                                <div className="candidate-details-grid">
+                                  {c.email && (
+                                    <div className="candidate-detail-item">
+                                      <span className="role-label">Email</span>
+                                      <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.email}</span>
+                                    </div>
+                                  )}
+                                  {c.phone && (
+                                    <div className="candidate-detail-item">
+                                      <span className="role-label">Phone</span>
+                                      <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.phone}</span>
+                                    </div>
+                                  )}
+                                  {c.current_role && (
+                                    <div className="candidate-detail-item">
+                                      <span className="role-label">Current Role</span>
+                                      <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.current_role}</span>
+                                    </div>
+                                  )}
+                                  {c.notice_period && (
+                                    <div className="candidate-detail-item">
+                                      <span className="role-label">Notice Period</span>
+                                      <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.notice_period}</span>
+                                    </div>
+                                  )}
+                                  {(c.current_ctc || c.expected_ctc) && (
+                                    <div className="candidate-detail-item">
+                                      <span className="role-label">CTC (Current → Expected)</span>
+                                      <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>
+                                        {c.current_ctc || '—'} → {c.expected_ctc || '—'}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* ── Match analysis ── */}
                                 {c.match_percentage != null ? (
-                                  <div className="candidate-panel-match">
-                                    <div
-                                      className="candidate-match-score"
-                                      style={{
-                                        color: c.match_percentage >= 70
-                                          ? 'var(--green)'
-                                          : c.match_percentage >= 50
-                                          ? '#f59e0b'
-                                          : 'var(--red)',
-                                      }}
-                                    >
-                                      {c.match_percentage}%
+                                  <>
+                                    <div className="candidate-panel-match" style={{ marginTop: 20 }}>
+                                      <div
+                                        className="candidate-match-score"
+                                        style={{
+                                          color: c.match_percentage >= 70
+                                            ? 'var(--green)'
+                                            : c.match_percentage >= 50
+                                            ? '#f59e0b'
+                                            : 'var(--red)',
+                                        }}
+                                      >
+                                        {c.match_percentage}%
+                                      </div>
+                                      <div style={{ flex: 1 }}>
+                                        <p className="role-label" style={{ marginBottom: 6 }}>Match Summary</p>
+                                        <p style={{ color: 'var(--text)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                                          {c.match_summary || '—'}
+                                        </p>
+                                      </div>
                                     </div>
-                                    <div style={{ flex: 1 }}>
-                                      <p className="role-label" style={{ marginBottom: 6 }}>Match Summary</p>
-                                      <p style={{ color: 'var(--text)', fontSize: '0.9rem', lineHeight: 1.6 }}>
-                                        {c.match_summary || '—'}
-                                      </p>
-                                    </div>
-                                  </div>
+
+                                    {(c.match_strengths?.length || c.match_gaps?.length) ? (
+                                      <div className="two-col" style={{ marginTop: 16 }}>
+                                        {c.match_strengths && c.match_strengths.length > 0 && (
+                                          <div>
+                                            <p className="role-label" style={{ marginBottom: 8 }}>Strengths</p>
+                                            <ul className="tag-list tag-list--green">
+                                              {c.match_strengths.map((s, i) => <li key={i}>{s}</li>)}
+                                            </ul>
+                                          </div>
+                                        )}
+                                        {c.match_gaps && c.match_gaps.length > 0 && (
+                                          <div>
+                                            <p className="role-label" style={{ marginBottom: 8 }}>Gaps</p>
+                                            <ul className="tag-list tag-list--red">
+                                              {c.match_gaps.map((g, i) => <li key={i}>{g}</li>)}
+                                            </ul>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : null}
+                                  </>
                                 ) : (
-                                  <p className="muted" style={{ fontSize: '0.875rem' }}>No resume analysis available.</p>
+                                  <p className="muted" style={{ fontSize: '0.875rem', marginTop: 12 }}>
+                                    No resume analysis available.
+                                  </p>
                                 )}
 
-                                {/* Strengths & Gaps */}
-                                {(c.match_strengths?.length || c.match_gaps?.length) ? (
-                                  <div className="two-col" style={{ marginTop: 16 }}>
-                                    {c.match_strengths && c.match_strengths.length > 0 && (
-                                      <div>
-                                        <p className="role-label" style={{ marginBottom: 8 }}>Strengths</p>
-                                        <ul className="tag-list tag-list--green">
-                                          {c.match_strengths.map((s, i) => <li key={i}>{s}</li>)}
-                                        </ul>
-                                      </div>
-                                    )}
-                                    {c.match_gaps && c.match_gaps.length > 0 && (
-                                      <div>
-                                        <p className="role-label" style={{ marginBottom: 8 }}>Gaps</p>
-                                        <ul className="tag-list tag-list--red">
-                                          {c.match_gaps.map((g, i) => <li key={i}>{g}</li>)}
-                                        </ul>
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : null}
-
-                                {/* Action buttons */}
+                                {/* ── Action buttons ── */}
                                 <div className="candidate-panel-actions">
-                                  <button
-                                    className="btn btn-primary"
-                                    style={{ fontSize: '0.875rem', padding: '8px 20px' }}
-                                    onClick={(e) => { e.stopPropagation(); handleInvite(c.ct_number) }}
-                                  >
-                                    {copiedCt === c.ct_number ? 'CT Copied!' : 'Invite for Interview'}
-                                  </button>
+                                  {c.status === 'applied' && (
+                                    <button
+                                      className="btn btn-primary"
+                                      style={{ fontSize: '0.875rem', padding: '8px 20px' }}
+                                      disabled={invitingCt === c.ct_number}
+                                      onClick={e => { e.stopPropagation(); handleInvite(c.ct_number) }}
+                                    >
+                                      {invitingCt === c.ct_number ? 'Inviting...' : 'Invite for Interview'}
+                                    </button>
+                                  )}
+                                  {c.status === 'invited' && (
+                                    <span style={{ fontSize: '0.875rem', color: 'var(--primary)' }}>
+                                      Invitation sent
+                                    </span>
+                                  )}
                                   {c.status === 'completed' && (
                                     <button
                                       className="btn btn-secondary"
                                       style={{ fontSize: '0.875rem', padding: '8px 20px' }}
-                                      onClick={(e) => { e.stopPropagation(); onViewScorecard(c.ct_number) }}
+                                      onClick={e => { e.stopPropagation(); onViewScorecard(c.ct_number) }}
                                     >
                                       View Scorecard
                                     </button>
                                   )}
                                 </div>
+
                               </div>
                             </td>
                           </tr>

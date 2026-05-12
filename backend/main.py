@@ -411,6 +411,11 @@ async def candidate_login(body: CandidateLoginRequest) -> dict:
     candidate = next((c for c in candidates if c["ct_number"] == body.ct_number), None)
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found. Please ask your recruiter.")
+    if candidate.get("status") == "applied":
+        raise HTTPException(
+            status_code=403,
+            detail="You have not been invited for an interview yet. Please wait for the recruiter to review your application.",
+        )
     token = str(uuid.uuid4())
     active_sessions[token] = {
         "role": "candidate",
@@ -498,6 +503,21 @@ async def get_candidate_match(
         "strengths": candidate.get("match_strengths", []),
         "gaps": candidate.get("match_gaps", []),
     }
+
+
+@app.post("/recruiter/candidates/{ct_number}/invite")
+async def invite_candidate(
+    ct_number: str,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    candidate["status"] = "invited"
+    candidate["invited_at"] = datetime.now(timezone.utc).isoformat()
+    await _write_candidates(candidates)
+    return {"success": True, "message": "Candidate invited"}
 
 
 # ---------------------------------------------------------------------------

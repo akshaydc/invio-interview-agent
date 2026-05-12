@@ -16,10 +16,12 @@ export default function Login({ onLogin, onBack }: Props) {
   const [password, setPassword] = useState('')
   const [ctNumber, setCtNumber] = useState('')
   const [error, setError] = useState('')
+  const [infoMsg, setInfoMsg] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit() {
     setError('')
+    setInfoMsg('')
     setLoading(true)
     try {
       if (tab === 'recruiter') {
@@ -47,9 +49,12 @@ export default function Login({ onLogin, onBack }: Props) {
         })
       }
     } catch (err: unknown) {
-      const msg =
-        axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Login failed.' : 'Login failed.'
-      setError(String(msg))
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        setInfoMsg('Your application is under review. You will receive an invitation once the recruiter shortlists you.')
+      } else {
+        const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Login failed.' : 'Login failed.'
+        setError(String(msg))
+      }
     } finally {
       setLoading(false)
     }
@@ -76,13 +81,13 @@ export default function Login({ onLogin, onBack }: Props) {
         <div className="login-tabs">
           <button
             className={`login-tab ${tab === 'candidate' ? 'active' : ''}`}
-            onClick={() => { setTab('candidate'); setError('') }}
+            onClick={() => { setTab('candidate'); setError(''); setInfoMsg('') }}
           >
             Candidate
           </button>
           <button
             className={`login-tab ${tab === 'recruiter' ? 'active' : ''}`}
-            onClick={() => { setTab('recruiter'); setError('') }}
+            onClick={() => { setTab('recruiter'); setError(''); setInfoMsg('') }}
           >
             Recruiter
           </button>
@@ -120,6 +125,7 @@ export default function Login({ onLogin, onBack }: Props) {
           </div>
         )}
 
+        {infoMsg && <div className="info-box">{infoMsg}</div>}
         {error && <p className="error-text">{error}</p>}
 
         <button

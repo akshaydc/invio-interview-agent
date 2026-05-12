@@ -10,12 +10,6 @@ type Props = {
   onBack: () => void
 }
 
-function matchColor(pct: number): string {
-  if (pct >= 70) return 'var(--green)'
-  if (pct >= 50) return '#f59e0b'
-  return 'var(--red)'
-}
-
 export default function ApplicationForm({ jobId, jobTitle, onBack }: Props) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -29,7 +23,6 @@ export default function ApplicationForm({ jobId, jobTitle, onBack }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [ctNumber, setCtNumber] = useState('')
-  const [matchPct, setMatchPct] = useState<number | null>(null)
 
   async function handleSubmit() {
     setError('')
@@ -49,15 +42,12 @@ export default function ApplicationForm({ jobId, jobTitle, onBack }: Props) {
       fd.append('notice_period', noticePeriod)
       if (resumeFile) fd.append('resume', resumeFile)
 
-      const res = await axios.post<{ ct_number: string; message: string; match_percentage?: number }>(
+      const res = await axios.post<{ ct_number: string; message: string }>(
         `${API}/jobs/${jobId}/apply`,
         fd,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       )
       setCtNumber(res.data.ct_number)
-      if (res.data.match_percentage !== undefined) {
-        setMatchPct(res.data.match_percentage)
-      }
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Submission failed.' : 'Submission failed.'
       setError(String(msg))
@@ -78,31 +68,8 @@ export default function ApplicationForm({ jobId, jobTitle, onBack }: Props) {
             Your CT Number is:{' '}
             <strong style={{ color: 'var(--primary)', fontSize: '1.1rem' }}>{ctNumber}</strong>
           </p>
-          {matchPct !== null && (
-            <div
-              style={{
-                background: 'var(--surface-2)',
-                border: `1px solid ${matchColor(matchPct)}`,
-                borderRadius: 10,
-                padding: '14px 24px',
-                textAlign: 'center',
-                width: '100%',
-              }}
-            >
-              <div style={{ fontSize: '2.2rem', fontWeight: 800, color: matchColor(matchPct), lineHeight: 1 }}>
-                {matchPct}%
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginTop: 4 }}>
-                Your profile is a{' '}
-                <strong style={{ color: matchColor(matchPct) }}>
-                  {matchPct >= 70 ? 'strong' : matchPct >= 50 ? 'moderate' : 'partial'}
-                </strong>{' '}
-                match for this role
-              </div>
-            </div>
-          )}
           <p className="thankyou-sub">
-            Check your email for login details. You will be contacted by the recruiter to schedule your AI interview.
+            Check your email for login details. You will be contacted by the recruiter if your profile matches.
           </p>
           <hr className="thankyou-divider" />
           <button className="btn btn-secondary thankyou-btn" onClick={onBack}>
