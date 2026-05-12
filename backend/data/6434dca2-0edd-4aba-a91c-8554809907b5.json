@@ -1,0 +1,48 @@
+{
+  "session_id": "6434dca2-0edd-4aba-a91c-8554809907b5",
+  "job_role": "Salesforce Administrator",
+  "status": "complete",
+  "created_at": "2026-05-12T12:28:03.417419+00:00",
+  "transcript": [
+    {
+      "q": "Welcome, thanks for coming in today! Let's get started - can you tell me how long you've been working with Salesforce and what editions or clouds you've had hands-on experience with?",
+      "a": "I'm working in Salesforce for 5 years now. I'm working as an admin and a developer, working on both Sales Cloud, Service Cloud, all of the clouds.",
+      "score": null
+    },
+    {
+      "q": "Great, with 5 years of experience across multiple clouds, you must have handled complex automation. Can you walk me through a situation where you had to choose between a workflow rule, process builder, and a flow, and explain why you picked the one you did?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": {
+    "communication": 6,
+    "technical_depth": 5,
+    "problem_solving": 3,
+    "cultural_fit": 6,
+    "summary": "The candidate presents with 5 years of Salesforce experience spanning both admin and developer responsibilities across multiple clouds including Sales Cloud and Service Cloud. However based on the limited transcript available there is not enough substance to fully evaluate their technical depth or problem solving capabilities. The answers given are surface level and lack specific examples or detail. The claim of working across all clouds is a broad statement that was not substantiated with concrete experience or context. Overall the candidate shows potential but the interview excerpt provided is too brief to form a confident overall assessment.",
+    "strengths": [
+      "5 years of hands on Salesforce experience is a solid tenure for an admin role",
+      "Dual experience as both admin and developer suggests versatility and a broader technical understanding",
+      "Familiarity with both Sales Cloud and Service Cloud indicates exposure to common enterprise use cases"
+    ],
+    "red_flags": [
+      "The answer is vague and lacks any specific examples or measurable accomplishments",
+      "Claiming experience with all of the clouds without elaboration raises questions about genuine depth of knowledge",
+      "No mention of certifications tools processes or specific projects which would be expected from a 5 year Salesforce professional",
+      "The limited response length suggests either a lack of confidence in communicating experience or insufficient depth to back up the claims made"
+    ],
+    "transcript": [
+      {
+        "q": "Welcome, thanks for coming in today! Let's get started - can you tell me how long you've been working with Salesforce and what editions or clouds you've had hands-on experience with?",
+        "a": "I'm working in Salesforce for 5 years now. I'm working as an admin and a developer, working on both Sales Cloud, Service Cloud, all of the clouds.",
+        "score": null
+      },
+      {
+        "q": "Great, with 5 years of experience across multiple clouds, you must have handled complex automation. Can you walk me through a situation where you had to choose between a workflow rule, process builder, and a flow, and explain why you picked the one you did?",
+        "a": "",
+        "score": null
+      }
+    ]
+  }
+}

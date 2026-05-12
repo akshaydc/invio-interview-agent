@@ -1,0 +1,7 @@
+interview-agent/
+  backend/
+    .env
+  data/
+  frontend/
+  .gitignore
+  CLAUDE.md

@@ -1,0 +1,27 @@
+{
+  "session_id": "50bf9d6d-a420-4871-a316-2165f9b5d0b9",
+  "status": "complete",
+  "created_at": "2026-05-12T11:09:28.211635+00:00",
+  "transcript": [],
+  "scorecard": {
+    "communication": 7,
+    "technical_depth": 8,
+    "problem_solving": 6,
+    "cultural_fit": 7,
+    "summary": "Strong candidate with good communication skills and structured thinking.",
+    "strengths": [
+      "clear explanations",
+      "structured thinking"
+    ],
+    "red_flags": [
+      "limited system design experience"
+    ],
+    "transcript": [
+      {
+        "q": "Tell me about yourself.",
+        "a": "I am a software engineer with 3 years of experience.",
+        "score": 7
+      }
+    ]
+  }
+}

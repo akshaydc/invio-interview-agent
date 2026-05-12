@@ -1,0 +1,19 @@
+{
+  "session_id": "1e0db89f-fb1f-4050-bac8-6c11a92fd3a9",
+  "job_role": "Software Engineer",
+  "status": "active",
+  "created_at": "2026-05-12T12:07:13.748949+00:00",
+  "transcript": [
+    {
+      "q": "Welcome, and thank you so much for coming in today. It's great to meet you. I hope you didn't have too much trouble finding us.\n\nI'm really looking forward to learning more about you and your background. We have a good conversation ahead of us, so let's dive right in.\n\nTo get things started, could you tell me a little bit about yourself and what drew you to software engineering as a career?",
+      "a": "Da, da, da, da.",
+      "score": null
+    },
+    {
+      "q": "Thank you for that. Could you tell me a bit more about your technical background and what programming languages or technologies you are most comfortable working with?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": null
+}

@@ -1,0 +1,57 @@
+{
+  "session_id": "0c6bcb41-4539-4381-a3dd-62caaabc4538",
+  "job_role": "Software Engineer",
+  "status": "complete",
+  "created_at": "2026-05-12T12:10:10.680061+00:00",
+  "transcript": [
+    {
+      "q": "Welcome, and thank you so much for coming in today. It's great to meet you. I hope you found the office without too much trouble.\n\nMy name is Sarah, and I'll be conducting your interview today for the Software Engineer position. We're really excited to be meeting with candidates and hopefully finding someone who will be a great fit for our team.\n\nTo get things started, I'd love to just hear a little bit about you in your own words. Could you tell me about your background and what led you to pursue a career in software engineering?",
+      "a": "Thank you for watching.",
+      "score": null
+    },
+    {
+      "q": "Thank you for sharing that. It sounds like you may have gotten a bit mixed up there. Just to clarify, this is a job interview for a Software Engineer position, not a video or presentation you are being watched for.\n\nNo need to feel nervous though, we can start fresh. Could you tell me a little about yourself and your background in software engineering? For example, how long have you been working in the field and what kinds of projects or technologies have you been focused on?",
+      "a": "as a software engineer in my company based on a financial domain.",
+      "score": null
+    },
+    {
+      "q": "That's great, working in the financial domain as a software engineer can be really interesting and challenging given the complexity and the high standards required in that industry.\n\nCould you tell me more about the kinds of systems or applications you have been building in that financial domain? For example, are you working on things like payment processing, trading platforms, banking applications, or something else entirely?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": {
+    "communication": 1,
+    "technical_depth": 1,
+    "problem_solving": 1,
+    "cultural_fit": 2,
+    "summary": "The candidate demonstrated an extremely limited ability to engage in a professional interview setting. When asked to introduce themselves and share their background, the candidate first responded with a phrase that suggested confusion about the context, saying thank you for watching as if addressing a video audience. After being gently redirected by the interviewer, the candidate provided only a single incomplete sentence mentioning working as a software engineer in a financial domain company. No meaningful information was shared about their experience, skills, projects, technologies, or motivations. The interview did not progress far enough to assess any technical knowledge or problem solving ability in any substantive way.",
+    "strengths": [
+      "The candidate mentioned working in a financial domain which could suggest some industry exposure if explored further"
+    ],
+    "red_flags": [
+      "The candidate appeared confused about the interview context and responded as if addressing a video audience rather than a live interviewer",
+      "Responses were extremely brief and contained almost no useful information about background or experience",
+      "The candidate showed no ability or willingness to elaborate on their experience even after being given a second opportunity with clear guidance",
+      "No technical skills, projects, or accomplishments were mentioned at any point",
+      "Overall engagement level raises serious concerns about communication ability and professional readiness for a software engineering role"
+    ],
+    "transcript": [
+      {
+        "q": "Welcome, and thank you so much for coming in today. It's great to meet you. I hope you found the office without too much trouble.\n\nMy name is Sarah, and I'll be conducting your interview today for the Software Engineer position. We're really excited to be meeting with candidates and hopefully finding someone who will be a great fit for our team.\n\nTo get things started, I'd love to just hear a little bit about you in your own words. Could you tell me about your background and what led you to pursue a career in software engineering?",
+        "a": "Thank you for watching.",
+        "score": null
+      },
+      {
+        "q": "Thank you for sharing that. It sounds like you may have gotten a bit mixed up there. Just to clarify, this is a job interview for a Software Engineer position, not a video or presentation you are being watched for.\n\nNo need to feel nervous though, we can start fresh. Could you tell me a little about yourself and your background in software engineering? For example, how long have you been working in the field and what kinds of projects or technologies have you been focused on?",
+        "a": "as a software engineer in my company based on a financial domain.",
+        "score": null
+      },
+      {
+        "q": "That's great, working in the financial domain as a software engineer can be really interesting and challenging given the complexity and the high standards required in that industry.\n\nCould you tell me more about the kinds of systems or applications you have been building in that financial domain? For example, are you working on things like payment processing, trading platforms, banking applications, or something else entirely?",
+        "a": "",
+        "score": null
+      }
+    ]
+  }
+}

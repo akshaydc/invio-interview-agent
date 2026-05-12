@@ -1,0 +1,48 @@
+{
+  "session_id": "102f4e88-7485-40a7-baa9-cb055da15a34",
+  "job_role": "Salesforce Administrator",
+  "job_description": "We are looking for a salesforce administrator with 3+ years experience in Python and React",
+  "ct_number": "CT2026005",
+  "status": "complete",
+  "created_at": "2026-05-12T13:10:26.268972+00:00",
+  "transcript": [
+    {
+      "q": "Can you walk me through a Salesforce project where you used Python to integrate or automate processes within the Salesforce ecosystem?",
+      "a": "\u0c87\u0c82\u0c97\u0cc6 \u0c97\u0ca4\u0cbe\u0ca8\u0cbf\u0c95\u0cb2\u0cb2\u0ccd\u0cb2\u0cbf \u0cb0\u0cc6\u0c95\u0cbe\u0ca1\u0ccd \u0cae\u0cbe\u0ca1\u0cc1\u0c97\u0cc6 \u0cb0\u0cbf\u0c95\u0cbe\u0ca1\u0ccd \u0cae\u0cbe\u0ca1\u0cc1\u0c97\u0cc6..",
+      "score": null
+    },
+    {
+      "q": "I'm sorry, I didn't quite understand your response. Could you please answer in English so we can continue the interview effectively?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": {
+    "communication": 1,
+    "technical_depth": 1,
+    "problem_solving": 1,
+    "cultural_fit": 2,
+    "summary": "The candidate did not provide a coherent or relevant response to the interview question. The response appears to be in Kannada and does not address the question about Salesforce projects or Python integration in any meaningful or technical way. There is insufficient information to evaluate the candidate's qualifications for the Salesforce Administrator role.",
+    "strengths": [],
+    "red_flags": [
+      "Response was not in the expected language for the interview, making evaluation impossible",
+      "No technical content provided regarding Salesforce administration",
+      "No demonstration of Python or integration knowledge",
+      "Unable to assess any relevant skills or experience from the response",
+      "Response appears incomplete or incoherent",
+      "No evidence of basic communication skills required for the role"
+    ],
+    "transcript": [
+      {
+        "q": "Can you walk me through a Salesforce project where you used Python to integrate or automate processes within the Salesforce ecosystem?",
+        "a": "\u0c87\u0c82\u0c97\u0cc6 \u0c97\u0ca4\u0cbe\u0ca8\u0cbf\u0c95\u0cb2\u0cb2\u0ccd\u0cb2\u0cbf \u0cb0\u0cc6\u0c95\u0cbe\u0ca1\u0ccd \u0cae\u0cbe\u0ca1\u0cc1\u0c97\u0cc6 \u0cb0\u0cbf\u0c95\u0cbe\u0ca1\u0ccd \u0cae\u0cbe\u0ca1\u0cc1\u0c97\u0cc6..",
+        "score": null
+      },
+      {
+        "q": "I'm sorry, I didn't quite understand your response. Could you please answer in English so we can continue the interview effectively?",
+        "a": "",
+        "score": null
+      }
+    ]
+  }
+}

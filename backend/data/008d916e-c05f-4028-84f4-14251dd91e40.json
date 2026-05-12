@@ -1,0 +1,19 @@
+{
+  "session_id": "008d916e-c05f-4028-84f4-14251dd91e40",
+  "job_role": "Software Engineer",
+  "status": "active",
+  "created_at": "2026-05-12T12:00:07.962120+00:00",
+  "transcript": [
+    {
+      "q": "Welcome, and thank you so much for coming in today. It's great to have you here. I hope you found the place alright and that your journey wasn't too difficult.\n\nMy name is Sarah, and I'll be conducting your interview today. We're really excited to be speaking with candidates for this Software Engineer role, and I'm looking forward to learning more about you and your background.\n\nSo let's start off nice and easy. Could you tell me a little bit about yourself and what drew you to apply for this position?",
+      "a": "\u0b9a\u0ba8\u0bcd\u0ba4\u0bb0\u0bcd \u0b87\u0bb2\u0bcd\u0bb2\u0bcb \u0b86\u0ba4\u0bbf\u0b95\u0bcd\u0b95",
+      "score": null
+    },
+    {
+      "q": "Thank you for your response. It seems like you may have responded in Tamil. I want to make sure we have a productive conversation, so I just want to confirm, are you comfortable conducting this interview in English? If you prefer to respond in Tamil, I can try to accommodate that, but I want to make sure we understand each other clearly throughout our discussion.\n\nCould you tell me a bit about your background and experience in software engineering, in whichever language you are most comfortable with?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": null
+}

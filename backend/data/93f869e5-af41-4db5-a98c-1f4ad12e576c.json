@@ -1,0 +1,14 @@
+{
+  "session_id": "93f869e5-af41-4db5-a98c-1f4ad12e576c",
+  "job_role": "Software Engineer",
+  "status": "active",
+  "created_at": "2026-05-12T11:17:39.501943+00:00",
+  "transcript": [
+    {
+      "q": "# Welcome! \ud83d\udc4b\n\nThank you so much for coming in today \u2014 it's great to meet you! I'm Alex, and I'll be conducting your interview for the Software Engineer position here. We're really excited to learn more about you and your experience.\n\nBefore we dive into the technical side of things, I'd love to start with something straightforward:\n\n---\n\n**Could you take a few minutes to tell me a little about yourself \u2014 your background, what you've been working on recently, and what drew you to apply for this role?**\n\nTake your time, there's no rush!",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": null
+}

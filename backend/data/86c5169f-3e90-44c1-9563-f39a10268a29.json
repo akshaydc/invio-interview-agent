@@ -1,0 +1,48 @@
+{
+  "session_id": "86c5169f-3e90-44c1-9563-f39a10268a29",
+  "job_role": "Software Engineer",
+  "job_description": "",
+  "status": "complete",
+  "created_at": "2026-05-12T12:46:42.091227+00:00",
+  "transcript": [
+    {
+      "q": "Tell me about a recent project you worked on and what your specific role was.",
+      "a": "Okay.",
+      "score": null
+    },
+    {
+      "q": "Can you describe a specific technical challenge you faced in that project and how you solved it?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": {
+    "communication": 1,
+    "technical_depth": 1,
+    "problem_solving": 1,
+    "cultural_fit": 3,
+    "summary": "The candidate provided an extremely minimal response to a straightforward opening question, offering only the word Okay with no actual content or elaboration. This single word response makes it nearly impossible to evaluate any meaningful competency across the core areas being assessed. There is no information available about past projects, technical experience, problem solving approach, or personality fit. This could indicate nervousness, lack of preparation, misunderstanding of the question, or simply disengagement from the interview process.",
+    "strengths": [
+      "Showed up to the interview which indicates some baseline level of interest or commitment"
+    ],
+    "red_flags": [
+      "Provided a one word response to a foundational interview question with zero elaboration",
+      "No technical content was shared making it impossible to assess engineering capability",
+      "Complete absence of storytelling or communication skills in the response",
+      "Extreme brevity may suggest lack of relevant experience to draw from",
+      "No project details role description or accomplishments were mentioned whatsoever"
+    ],
+    "transcript": [
+      {
+        "q": "Tell me about a recent project you worked on and what your specific role was.",
+        "a": "Okay.",
+        "score": null
+      },
+      {
+        "q": "Can you describe a specific technical challenge you faced in that project and how you solved it?",
+        "a": "",
+        "score": null
+      }
+    ]
+  }
+}

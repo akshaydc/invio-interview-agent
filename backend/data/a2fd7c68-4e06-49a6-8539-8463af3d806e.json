@@ -1,0 +1,140 @@
+{
+  "session_id": "a2fd7c68-4e06-49a6-8539-8463af3d806e",
+  "job_role": "Salesforce Administrator",
+  "status": "complete",
+  "created_at": "2026-05-12T12:19:30.221214+00:00",
+  "transcript": [
+    {
+      "q": "Welcome, thanks for coming in today! Let's get started - can you tell me how long you have been working with Salesforce and what editions or products you have hands-on experience with?",
+      "a": "I have been working with Salesforce for 5 and a half years now. I have been working on sales cloud, service cloud, education cloud, marketing cloud and all the other major platforms as a Salesforce administrator and a developer.",
+      "score": null
+    },
+    {
+      "q": "That is great experience across multiple clouds. Can you walk me through a complex automation you have built in Salesforce, and explain why you chose that particular tool over other available options?",
+      "a": "Complex solution that I built with Salesforce is an integration with an external system. I could not do it with any other tool because the native Salesforce features that is the integration API calls, REST calls, all of that help me pick up the required data and send it seamlessly without any issues and have the change.",
+      "score": null
+    },
+    {
+      "q": "Good, integrations are definitely a key skill. When you built that REST API integration, how did you handle authentication and error handling to ensure data integrity between Salesforce and the external system?",
+      "a": "The data integrity and the security is handled through the error logging object where the errors are maintained through the error logging object but I don't know much of the other thing what was built because I took help from AI and built it.",
+      "score": null
+    },
+    {
+      "q": "I appreciate your honesty. As a Salesforce Administrator, how comfortable are you with debugging issues in Flow or Process Builder without relying on external tools like AI?",
+      "a": "Debugging is not an issue for me. I can go to the debug mode in the flow and debug it flow also the other others also I can just set up the debug labs for the user and test it as needed",
+      "score": null
+    },
+    {
+      "q": "Good to know. Can you explain what specific information you look for in the Flow debug logs to identify and fix a fault path error?",
+      "a": "We have the failed flow interviews, that failed flow interviews gives me the idea on what is failed, why is it failed and there we can test it out.",
+      "score": null
+    },
+    {
+      "q": "That is a good starting point. Can you tell me the difference between a scheduled path and a fault path in a Flow, and give me an example of when you would use each one?",
+      "a": "I don't know much about this.",
+      "score": null
+    },
+    {
+      "q": "That is fine, let us move on. Can you explain how you would use permission sets versus profiles to manage user access in Salesforce, and when would you choose one over the other?",
+      "a": "I don't know.",
+      "score": null
+    },
+    {
+      "q": "Can you tell me what a role hierarchy is in Salesforce and how it impacts record visibility for users?",
+      "a": "I don't know about this.",
+      "score": null
+    },
+    {
+      "q": "With 5 and a half years of Salesforce experience, can you tell me at least one core administrative task you perform regularly in your day to day work?",
+      "a": "Logging into Salesforce",
+      "score": null
+    },
+    {
+      "q": "Can you describe what you actually do once you log in, such as any configuration, user management, or data tasks you handle on a regular basis?",
+      "a": "I do nothing, I just log in and log out later.",
+      "score": null
+    },
+    {
+      "q": "I appreciate your honesty, but based on your responses today it seems like your Salesforce experience may not align with what we are looking for in this role. We will be in touch regarding next steps.",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": {
+    "communication": 4,
+    "technical_depth": 1,
+    "problem_solving": 2,
+    "cultural_fit": 3,
+    "summary": "The candidate claims 5 and a half years of Salesforce experience across multiple clouds including Sales Cloud, Service Cloud, Education Cloud, and Marketing Cloud. However, the interview revealed a serious and consistent disconnect between the stated experience and demonstrated knowledge. The candidate was unable to answer foundational Salesforce administration questions including permission sets versus profiles, role hierarchy, scheduled paths versus fault paths in Flow, and could not describe a single meaningful daily task beyond logging in and out. The candidate admitted to relying on AI to build the REST API integration they initially presented as their own complex work, and explicitly stated they do nothing in Salesforce on a day to day basis. This raises significant concerns about the authenticity of the resume and the candidate's readiness for any Salesforce Administrator role.",
+    "strengths": [
+      "The candidate showed a degree of honesty by admitting they used AI assistance and by acknowledging gaps in their knowledge rather than fabricating answers",
+      "The candidate demonstrated basic awareness of Flow debug mode and failed flow interviews as a troubleshooting starting point",
+      "The candidate showed some familiarity with REST API concepts and error logging objects at a surface level"
+    ],
+    "red_flags": [
+      "The candidate explicitly stated they log in and log out and do nothing, which directly contradicts 5 and a half years of claimed experience",
+      "Complete inability to answer fundamental Salesforce Admin questions such as role hierarchy, permission sets versus profiles, and Flow path types",
+      "Admitted that the integration they initially presented as their own work was built with AI assistance with limited personal understanding",
+      "Resume and stated experience appear to be significantly misrepresented based on the depth of answers provided throughout the interview",
+      "No evidence of any hands on configuration, user management, or data work despite claiming experience across five major Salesforce platforms",
+      "The candidate showed no curiosity, no effort to reason through unknown questions, and no ability to connect past experience to any concrete examples"
+    ],
+    "transcript": [
+      {
+        "q": "Welcome, thanks for coming in today! Let's get started - can you tell me how long you have been working with Salesforce and what editions or products you have hands-on experience with?",
+        "a": "I have been working with Salesforce for 5 and a half years now. I have been working on sales cloud, service cloud, education cloud, marketing cloud and all the other major platforms as a Salesforce administrator and a developer.",
+        "score": null
+      },
+      {
+        "q": "That is great experience across multiple clouds. Can you walk me through a complex automation you have built in Salesforce, and explain why you chose that particular tool over other available options?",
+        "a": "Complex solution that I built with Salesforce is an integration with an external system. I could not do it with any other tool because the native Salesforce features that is the integration API calls, REST calls, all of that help me pick up the required data and send it seamlessly without any issues and have the change.",
+        "score": null
+      },
+      {
+        "q": "Good, integrations are definitely a key skill. When you built that REST API integration, how did you handle authentication and error handling to ensure data integrity between Salesforce and the external system?",
+        "a": "The data integrity and the security is handled through the error logging object where the errors are maintained through the error logging object but I don't know much of the other thing what was built because I took help from AI and built it.",
+        "score": null
+      },
+      {
+        "q": "I appreciate your honesty. As a Salesforce Administrator, how comfortable are you with debugging issues in Flow or Process Builder without relying on external tools like AI?",
+        "a": "Debugging is not an issue for me. I can go to the debug mode in the flow and debug it flow also the other others also I can just set up the debug labs for the user and test it as needed",
+        "score": null
+      },
+      {
+        "q": "Good to know. Can you explain what specific information you look for in the Flow debug logs to identify and fix a fault path error?",
+        "a": "We have the failed flow interviews, that failed flow interviews gives me the idea on what is failed, why is it failed and there we can test it out.",
+        "score": null
+      },
+      {
+        "q": "That is a good starting point. Can you tell me the difference between a scheduled path and a fault path in a Flow, and give me an example of when you would use each one?",
+        "a": "I don't know much about this.",
+        "score": null
+      },
+      {
+        "q": "That is fine, let us move on. Can you explain how you would use permission sets versus profiles to manage user access in Salesforce, and when would you choose one over the other?",
+        "a": "I don't know.",
+        "score": null
+      },
+      {
+        "q": "Can you tell me what a role hierarchy is in Salesforce and how it impacts record visibility for users?",
+        "a": "I don't know about this.",
+        "score": null
+      },
+      {
+        "q": "With 5 and a half years of Salesforce experience, can you tell me at least one core administrative task you perform regularly in your day to day work?",
+        "a": "Logging into Salesforce",
+        "score": null
+      },
+      {
+        "q": "Can you describe what you actually do once you log in, such as any configuration, user management, or data tasks you handle on a regular basis?",
+        "a": "I do nothing, I just log in and log out later.",
+        "score": null
+      },
+      {
+        "q": "I appreciate your honesty, but based on your responses today it seems like your Salesforce experience may not align with what we are looking for in this role. We will be in touch regarding next steps.",
+        "a": "",
+        "score": null
+      }
+    ]
+  }
+}

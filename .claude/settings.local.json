@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(& \"c:\\\\Users\\\\Akshay.DC\\\\Documents\\\\interview-agent\\\\backend\\\\.venv\\\\Scripts\\\\python.exe\" -m pip list --format=freeze 2>&1)",
+      "PowerShell(python -m pip list --format=freeze 2>&1)",
+      "PowerShell(python -c \"import ast; ast.parse\\(open\\('c:/Users/Akshay.DC/Documents/interview-agent/backend/main.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")"
+    ]
+  }
+}

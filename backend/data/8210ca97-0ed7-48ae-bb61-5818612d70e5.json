@@ -1,0 +1,19 @@
+{
+  "session_id": "8210ca97-0ed7-48ae-bb61-5818612d70e5",
+  "job_role": "Software Engineer",
+  "status": "active",
+  "created_at": "2026-05-12T11:52:33.001849+00:00",
+  "transcript": [
+    {
+      "q": "Welcome, and thank you so much for coming in today. It's great to meet you, and I'm glad you could make the time. My name is Sarah, and I'll be conducting your interview for the Software Engineer position here. We're really excited about the candidates we've been speaking with, and I'm looking forward to learning more about you and your background.\n\nBefore we dive into the technical side of things, I'd love to just get a sense of who you are and where you're coming from. So to start things off, could you tell me a little bit about yourself and what led you to pursue a career in software engineering?",
+      "a": "Thank you for watching and don't forget to like, comment, and subscribe!",
+      "score": null
+    },
+    {
+      "q": "Ha, it sounds like you might have confused this for a video channel for a moment there. Let me bring us back on track.\n\nCould you tell me a bit about your background and experience as a software engineer, and what specifically drew you to apply for this position?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": null
+}

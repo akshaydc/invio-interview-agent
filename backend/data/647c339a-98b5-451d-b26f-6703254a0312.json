@@ -1,0 +1,46 @@
+{
+  "session_id": "647c339a-98b5-451d-b26f-6703254a0312",
+  "job_role": "Software Engineer",
+  "job_description": "",
+  "status": "complete",
+  "created_at": "2026-05-12T12:51:32.845382+00:00",
+  "transcript": [
+    {
+      "q": "Tell me about a recent technical challenge you faced and how you solved it.",
+      "a": "Nothing, nothing to say.",
+      "score": null
+    },
+    {
+      "q": "What programming languages are you most comfortable working with?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": {
+    "communication": 1,
+    "technical_depth": 1,
+    "problem_solving": 1,
+    "cultural_fit": 2,
+    "summary": "The candidate provided essentially no response to a fundamental interview question about technical experience. With a one word dismissal of a core question that any software engineer should be able to answer, the candidate demonstrated a complete unwillingness or inability to engage in the interview process. There is no basis to evaluate any technical competency, problem solving ability, or communication skill from this interaction.",
+    "strengths": [],
+    "red_flags": [
+      "Candidate refused or was unable to answer a basic and expected interview question",
+      "Zero technical information was shared making it impossible to assess any engineering capability",
+      "The response suggests either a lack of preparation a lack of interest in the role or an inability to communicate professionally",
+      "No evidence of any problem solving experience or technical depth whatsoever",
+      "The candidate showed no effort to engage which raises serious concerns about motivation and cultural fit"
+    ],
+    "transcript": [
+      {
+        "q": "Tell me about a recent technical challenge you faced and how you solved it.",
+        "a": "Nothing, nothing to say.",
+        "score": null
+      },
+      {
+        "q": "What programming languages are you most comfortable working with?",
+        "a": "",
+        "score": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "session_id": "06655ce6-39c2-4f0d-be3b-327ecb0cceab",
+  "job_role": "Software Engineer",
+  "status": "complete",
+  "created_at": "2026-05-12T12:02:28.523391+00:00",
+  "transcript": [
+    {
+      "q": "Welcome, and thank you so much for coming in today. It is great to meet you and I am really glad you could make the time. We are excited to be talking with candidates for this Software Engineer role and I am looking forward to learning more about you.\n\nBefore we dive into the technical side of things, I would love to just get a sense of who you are and where you are coming from. So to start things off, could you tell me a little bit about yourself and what drew you to apply for this position?",
+      "a": "\u0bb5\u0ba3\u0b95\u0bcd\u0b95\u0bbe\u0bb2 \u0b87\u0ba8\u0bcd\u0b9c\u0bb0\u0bae\u0ba8\u0bbf \u0bb5\u0ba3\u0b95\u0bcd\u0b95\u0bbe\u0bb2 \u0b87\u0ba8\u0bcd\u0b9c\u0bb0\u0bae\u0ba8\u0bbf?",
+      "score": null
+    },
+    {
+      "q": "Thank you for your response. It seems like there may be a language or technical issue with what came through. I want to make sure we have a good conversation today.\n\nCould you tell me a little bit about your background and experience as a software engineer, in English if possible, so I can better understand your qualifications?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": {
+    "communication": 1,
+    "technical_depth": 1,
+    "problem_solving": 1,
+    "cultural_fit": 2,
+    "summary": "The interview was not able to progress in any meaningful way. The candidate responded to the opening question in what appears to be Tamil script, and no substantive information was shared about their background, experience, motivations, or technical capabilities. It is entirely possible there was a language barrier or a miscommunication about the language in which the interview would be conducted. No assessment of technical skills, problem solving ability, or cultural fit could be made based on the available transcript.",
+    "strengths": [
+      "No strengths could be identified from the transcript as provided"
+    ],
+    "red_flags": [
+      "Candidate did not respond in the language the interview was being conducted in, making communication impossible",
+      "No information was provided about background or experience",
+      "No motivation or interest in the role was communicated",
+      "The interview could not progress beyond the opening question",
+      "It is unclear whether the candidate understood the questions being asked"
+    ],
+    "transcript": [
+      {
+        "q": "Welcome, and thank you so much for coming in today. It is great to meet you and I am really glad you could make the time. We are excited to be talking with candidates for this Software Engineer role and I am looking forward to learning more about you.\n\nBefore we dive into the technical side of things, I would love to just get a sense of who you are and where you are coming from. So to start things off, could you tell me a little bit about yourself and what drew you to apply for this position?",
+        "a": "\u0bb5\u0ba3\u0b95\u0bcd\u0b95\u0bbe\u0bb2 \u0b87\u0ba8\u0bcd\u0b9c\u0bb0\u0bae\u0ba8\u0bbf \u0bb5\u0ba3\u0b95\u0bcd\u0b95\u0bbe\u0bb2 \u0b87\u0ba8\u0bcd\u0b9c\u0bb0\u0bae\u0ba8\u0bbf?",
+        "score": null
+      },
+      {
+        "q": "Thank you for your response. It seems like there may be a language or technical issue with what came through. I want to make sure we have a good conversation today.\n\nCould you tell me a little bit about your background and experience as a software engineer, in English if possible, so I can better understand your qualifications?",
+        "a": "",
+        "score": null
+      }
+    ]
+  }
+}

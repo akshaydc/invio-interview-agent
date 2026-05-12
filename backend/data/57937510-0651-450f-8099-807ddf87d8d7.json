@@ -1,0 +1,24 @@
+{
+  "session_id": "57937510-0651-450f-8099-807ddf87d8d7",
+  "job_role": "Software Engineer",
+  "status": "active",
+  "created_at": "2026-05-12T11:50:22.728567+00:00",
+  "transcript": [
+    {
+      "q": "Welcome, and thank you so much for coming in today. It's great to meet you. I hope you had no trouble finding the place and that you're feeling comfortable. We're really excited to learn more about you and your background.\n\nSo let's get started. To kick things off, could you tell me a little bit about yourself and what led you to pursue a career in software engineering?",
+      "a": "Thank you. Bye bye. Bye bye. ",
+      "score": null
+    },
+    {
+      "q": "It seems like you might be stepping away. Before you go, I just want to ask, are you still interested in continuing the interview today, or would you like to reschedule for another time?",
+      "a": "Can we continue?",
+      "score": null
+    },
+    {
+      "q": "Of course, absolutely! Let's pick right back up. \n\nSo going back to my question, could you tell me a little bit about yourself and what led you to pursue a career in software engineering?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": null
+}

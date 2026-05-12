@@ -1,0 +1,19 @@
+{
+  "session_id": "b34cad61-3967-43c9-8e84-fca568c6e6b4",
+  "job_role": "Software Engineer",
+  "status": "active",
+  "created_at": "2026-05-12T11:41:57.847732+00:00",
+  "transcript": [
+    {
+      "q": "Welcome, and thank you so much for coming in today. It's great to meet you. I hope you didn't have too much trouble finding us.\n\nWe're really excited to be speaking with candidates for this Software Engineer position. Before we dive into the technical stuff, I'd love to just get to know you a little bit.\n\nSo to start things off, could you tell me a little bit about yourself and what drew you to apply for this role?",
+      "a": "My real name is Venkatesh, not Rahul Antang Rao.",
+      "score": null
+    },
+    {
+      "q": "Thank you for clarifying that, Venkatesh. It's great to meet you properly.\n\nSo Venkatesh, could you tell me a little bit about yourself and what drew you to apply for this Software Engineer role?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": null
+}
