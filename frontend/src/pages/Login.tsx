@@ -7,9 +7,10 @@ type Tab = 'recruiter' | 'candidate'
 
 type Props = {
   onLogin: (info: AuthInfo) => void
+  onBack?: () => void
 }
 
-export default function Login({ onLogin }: Props) {
+export default function Login({ onLogin, onBack }: Props) {
   const [tab, setTab] = useState<Tab>('candidate')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -63,6 +64,14 @@ export default function Login({ onLogin }: Props) {
       <div className="login-card">
         <h1 className="login-title">Invio</h1>
         <p className="login-subtitle">AI Interview Portal</p>
+        {onBack && (
+          <button
+            style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.85rem', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+            onClick={onBack}
+          >
+            &#8592; Back to job listings
+          </button>
+        )}
 
         <div className="login-tabs">
           <button

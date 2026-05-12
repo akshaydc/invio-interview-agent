@@ -3,6 +3,9 @@ import Login from './pages/Login'
 import RecruiterDashboard from './pages/RecruiterDashboard'
 import CandidateInterview from './pages/CandidateInterview'
 import ScorecardView from './pages/ScorecardView'
+import JobListings, { type Job } from './pages/JobListings'
+import JobDetail from './pages/JobDetail'
+import ApplicationForm from './pages/ApplicationForm'
 import './index.css'
 
 export type AuthInfo = {
@@ -14,12 +17,22 @@ export type AuthInfo = {
   jobDescription?: string
 }
 
-type Page = 'login' | 'recruiter-dashboard' | 'recruiter-scorecard' | 'candidate-interview'
+type Page =
+  | 'job-listings'
+  | 'job-detail'
+  | 'application-form'
+  | 'login'
+  | 'recruiter-dashboard'
+  | 'recruiter-scorecard'
+  | 'candidate-interview'
+
+const WIDE_PAGES: Page[] = ['job-listings', 'job-detail', 'application-form']
 
 function App() {
-  const [page, setPage] = useState<Page>('login')
+  const [page, setPage] = useState<Page>('job-listings')
   const [auth, setAuth] = useState<AuthInfo | null>(null)
   const [scorecardCt, setScorecardCt] = useState<string>('')
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null)
 
   function handleLogin(info: AuthInfo) {
     setAuth(info)
@@ -28,7 +41,7 @@ function App() {
 
   function handleLogout() {
     setAuth(null)
-    setPage('login')
+    setPage('job-listings')
   }
 
   function handleViewScorecard(ctNumber: string) {
@@ -36,9 +49,39 @@ function App() {
     setPage('recruiter-scorecard')
   }
 
+  function handleSelectJob(job: Job) {
+    setSelectedJob(job)
+    setPage('job-detail')
+  }
+
   return (
-    <div className="app">
-      {page === 'login' && <Login onLogin={handleLogin} />}
+    <div className="app" style={WIDE_PAGES.includes(page) ? { maxWidth: '1100px' } : {}}>
+      {page === 'job-listings' && (
+        <JobListings
+          onSelectJob={handleSelectJob}
+          onLoginClick={() => setPage('login')}
+        />
+      )}
+
+      {page === 'job-detail' && selectedJob && (
+        <JobDetail
+          job={selectedJob}
+          onApply={() => setPage('application-form')}
+          onBack={() => setPage('job-listings')}
+        />
+      )}
+
+      {page === 'application-form' && selectedJob && (
+        <ApplicationForm
+          jobId={selectedJob.id}
+          jobTitle={selectedJob.title}
+          onBack={() => setPage('job-detail')}
+        />
+      )}
+
+      {page === 'login' && (
+        <Login onLogin={handleLogin} onBack={() => setPage('job-listings')} />
+      )}
 
       {page === 'recruiter-dashboard' && auth && (
         <RecruiterDashboard

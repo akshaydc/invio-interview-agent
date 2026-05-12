@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import smtplib
 import traceback
 import uuid
@@ -40,8 +41,83 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+JOBS_FILE = DATA_DIR / "jobs.json"
+
+_SEED_JOBS = [
+    {
+        "id": "b1e2c3d4-0001-0000-0000-000000000001",
+        "title": "Software Engineer",
+        "department": "Engineering",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "3-5 years",
+        "description": (
+            "We are looking for a Software Engineer to join our growing engineering team. "
+            "You will design, develop, and maintain scalable backend and frontend systems. "
+            "You will work closely with product managers and designers to ship high-quality features "
+            "that impact thousands of users. Strong problem-solving skills and a passion for clean code are a must."
+        ),
+        "requirements": ["Python", "React", "FastAPI", "PostgreSQL", "REST APIs", "Git"],
+        "status": "open",
+        "created_at": "2026-01-15T00:00:00+00:00",
+    },
+    {
+        "id": "b1e2c3d4-0002-0000-0000-000000000002",
+        "title": "Salesforce Administrator",
+        "department": "Sales Operations",
+        "location": "Hybrid – Mumbai",
+        "job_type": "Full-time",
+        "experience": "2-4 years",
+        "description": (
+            "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform. "
+            "You will configure Salesforce to meet evolving business requirements, maintain data integrity, "
+            "build reports and dashboards, and support sales and operations teams with day-to-day needs. "
+            "Salesforce Admin certification is highly preferred."
+        ),
+        "requirements": [
+            "Salesforce Administration",
+            "Flows & Process Builder",
+            "Reports & Dashboards",
+            "Data Loader",
+            "Apex basics",
+            "Salesforce Admin Certification",
+        ],
+        "status": "open",
+        "created_at": "2026-02-01T00:00:00+00:00",
+    },
+    {
+        "id": "b1e2c3d4-0003-0000-0000-000000000003",
+        "title": "Product Manager",
+        "department": "Product",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "4-7 years",
+        "description": (
+            "We are seeking a Product Manager to drive strategy and execution for our core platform. "
+            "You will gather requirements from stakeholders, define the product roadmap, write PRDs, "
+            "and work cross-functionally with engineering, design, and sales to deliver impactful products. "
+            "Experience in SaaS or HR-tech is a plus."
+        ),
+        "requirements": [
+            "Product Roadmapping",
+            "Stakeholder Management",
+            "Data-driven Decision Making",
+            "Agile / Scrum",
+            "User Research",
+            "PRD Writing",
+        ],
+        "status": "open",
+        "created_at": "2026-02-15T00:00:00+00:00",
+    },
+]
+
 if not CANDIDATES_FILE.exists():
     CANDIDATES_FILE.write_text("[]")
+
+if not JOBS_FILE.exists():
+    JOBS_FILE.write_text("[]")
+if not json.loads(JOBS_FILE.read_text()):
+    JOBS_FILE.write_text(json.dumps(_SEED_JOBS, indent=2))
 
 MOCK_SCORECARD = {
     "communication": 7,
@@ -78,6 +154,37 @@ class CreateCandidateRequest(BaseModel):
 class StartSessionRequest(BaseModel):
     job_role: str = "Software Engineer"
     job_description: str = ""
+
+
+class CreateJobRequest(BaseModel):
+    title: str
+    department: str
+    location: str
+    job_type: str
+    experience: str
+    description: str
+    requirements: list[str]
+
+
+class UpdateJobRequest(BaseModel):
+    title: str | None = None
+    department: str | None = None
+    location: str | None = None
+    job_type: str | None = None
+    experience: str | None = None
+    description: str | None = None
+    requirements: list[str] | None = None
+    status: str | None = None
+
+
+class ApplyRequest(BaseModel):
+    name: str
+    email: str
+    phone: str
+    current_role: str
+    current_ctc: str
+    expected_ctc: str
+    notice_period: str
 
 
 # ---------------------------------------------------------------------------
@@ -119,6 +226,16 @@ async def _write_session(session_id: str, data: dict) -> None:
     path = DATA_DIR / f"{session_id}.json"
     async with aiofiles.open(path, "w") as f:
         await f.write(json.dumps(data, indent=2))
+
+
+async def _read_jobs() -> list:
+    async with aiofiles.open(JOBS_FILE, "r") as f:
+        return json.loads(await f.read())
+
+
+async def _write_jobs(jobs: list) -> None:
+    async with aiofiles.open(JOBS_FILE, "w") as f:
+        await f.write(json.dumps(jobs, indent=2))
 
 
 def _build_claude_messages(transcript: list[dict]) -> list[dict]:
@@ -314,6 +431,116 @@ async def get_candidate_scorecard(
     if not scorecard:
         raise HTTPException(status_code=404, detail="Scorecard not yet available")
     return {"candidate": candidate, "scorecard": scorecard}
+
+
+# ---------------------------------------------------------------------------
+# Public job endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/jobs")
+async def list_jobs() -> list:
+    jobs = await _read_jobs()
+    return [j for j in jobs if j.get("status") == "open"]
+
+
+@app.get("/jobs/{job_id}")
+async def get_job(job_id: str) -> dict:
+    jobs = await _read_jobs()
+    job = next((j for j in jobs if j["id"] == job_id), None)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
+
+
+@app.post("/jobs/{job_id}/apply")
+async def apply_for_job(job_id: str, body: ApplyRequest) -> dict:
+    jobs = await _read_jobs()
+    job = next((j for j in jobs if j["id"] == job_id), None)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.get("status") != "open":
+        raise HTTPException(status_code=400, detail="This position is no longer accepting applications")
+
+    candidates = await _read_candidates()
+    year = datetime.now(timezone.utc).year
+    existing_ct = {c["ct_number"] for c in candidates}
+    ct_number = None
+    for _ in range(20):
+        n = random.randint(1, 9999)
+        candidate_ct = f"CT{year}{n:04d}"
+        if candidate_ct not in existing_ct:
+            ct_number = candidate_ct
+            break
+    if not ct_number:
+        raise HTTPException(status_code=500, detail="Could not generate unique CT number")
+
+    candidate = {
+        "name": body.name,
+        "ct_number": ct_number,
+        "email": body.email,
+        "phone": body.phone,
+        "current_role": body.current_role,
+        "current_ctc": body.current_ctc,
+        "expected_ctc": body.expected_ctc,
+        "notice_period": body.notice_period,
+        "job_id": job_id,
+        "job_role": job["title"],
+        "job_description": job["description"],
+        "session_id": None,
+        "status": "applied",
+        "applied_at": datetime.now(timezone.utc).isoformat(),
+    }
+    candidates.append(candidate)
+    await _write_candidates(candidates)
+    return {"ct_number": ct_number, "message": "Application submitted"}
+
+
+# ---------------------------------------------------------------------------
+# Recruiter job management endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/recruiter/jobs")
+async def list_all_jobs(_auth: dict = Depends(verify_recruiter_token)) -> list:
+    return await _read_jobs()
+
+
+@app.post("/recruiter/jobs")
+async def create_job(
+    body: CreateJobRequest,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    jobs = await _read_jobs()
+    job = {
+        "id": str(uuid.uuid4()),
+        "title": body.title,
+        "department": body.department,
+        "location": body.location,
+        "job_type": body.job_type,
+        "experience": body.experience,
+        "description": body.description,
+        "requirements": body.requirements,
+        "status": "open",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    jobs.append(job)
+    await _write_jobs(jobs)
+    return job
+
+
+@app.put("/recruiter/jobs/{job_id}")
+async def update_job(
+    job_id: str,
+    body: UpdateJobRequest,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    jobs = await _read_jobs()
+    job = next((j for j in jobs if j["id"] == job_id), None)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    updates = body.model_dump(exclude_none=True)
+    job.update(updates)
+    await _write_jobs(jobs)
+    return job
 
 
 # ---------------------------------------------------------------------------
