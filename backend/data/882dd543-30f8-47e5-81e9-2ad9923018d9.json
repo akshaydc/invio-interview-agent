@@ -1,0 +1,60 @@
+{
+  "session_id": "882dd543-30f8-47e5-81e9-2ad9923018d9",
+  "job_role": "Salesforce Administrator",
+  "job_description": "recruiting for an salesforce administrator with 3+ years of experience",
+  "ct_number": "CT023412",
+  "status": "complete",
+  "created_at": "2026-05-12T13:40:23.152500+00:00",
+  "transcript": [
+    {
+      "q": "Let's get started. Can you walk me through your current or most recent role as a Salesforce Administrator and how long you've been working with Salesforce?",
+      "a": "I don't know anything about Ainsworth.",
+      "score": null
+    },
+    {
+      "q": "That's okay, let's focus on your Salesforce experience. How many years have you been working as a Salesforce Administrator?",
+      "a": "I've been working as a Salesforce Administrator for two years now.",
+      "score": null
+    },
+    {
+      "q": "Can you describe a complex automation you've built in Salesforce, such as a Flow or Process Builder, and what business problem it solved?",
+      "a": "",
+      "score": null
+    }
+  ],
+  "scorecard": {
+    "communication": 3,
+    "technical_depth": 1,
+    "problem_solving": 1,
+    "cultural_fit": 2,
+    "summary": "The candidate demonstrated very limited engagement during the interview. When asked about their Salesforce experience, they initially responded with an irrelevant and confusing statement about not knowing anything about Ainsworth, suggesting either a lack of preparation, nerves, or possible confusion about the interview context. The only substantive information provided was that they have two years of experience as a Salesforce Administrator, but no further technical depth, examples, or elaboration were offered. The interview was extremely brief and did not yield enough information to properly evaluate the candidate across most competency areas.",
+    "strengths": [
+      "Claims two years of Salesforce Administrator experience"
+    ],
+    "red_flags": [
+      "Unprepared and confused at the start of the interview with an irrelevant response",
+      "Unable or unwilling to elaborate on Salesforce experience",
+      "Extremely poor communication and engagement throughout the interview",
+      "No technical knowledge or problem-solving ability demonstrated",
+      "Lack of preparation suggests low interest in the role or the company",
+      "Interview was too brief to establish any meaningful competency signals"
+    ],
+    "transcript": [
+      {
+        "q": "Let's get started. Can you walk me through your current or most recent role as a Salesforce Administrator and how long you've been working with Salesforce?",
+        "a": "I don't know anything about Ainsworth.",
+        "score": null
+      },
+      {
+        "q": "That's okay, let's focus on your Salesforce experience. How many years have you been working as a Salesforce Administrator?",
+        "a": "I've been working as a Salesforce Administrator for two years now.",
+        "score": null
+      },
+      {
+        "q": "Can you describe a complex automation you've built in Salesforce, such as a Flow or Process Builder, and what business problem it solved?",
+        "a": "",
+        "score": null
+      }
+    ]
+  }
+}
