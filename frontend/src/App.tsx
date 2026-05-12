@@ -16,6 +16,7 @@ export type AuthInfo = {
   ctNumber?: string
   jobRole?: string
   jobDescription?: string
+  status?: string
 }
 
 type Page =
@@ -119,6 +120,8 @@ function App() {
           candidateName={auth.name ?? ''}
           jobRole={auth.jobRole ?? ''}
           jobDescription={auth.jobDescription ?? ''}
+          candidateStatus={auth.status ?? 'applied'}
+          ctNumber={auth.ctNumber ?? ''}
           onLogout={handleLogout}
         />
       )}

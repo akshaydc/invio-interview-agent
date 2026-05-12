@@ -321,10 +321,16 @@ async def _analyze_resume_match(
 
     prompt = (
         f"Compare this resume with the job description.{compensation_instruction}"
+        "Based on the overall match, also provide a hiring recommendation: "
+        "'Strong Hire' (80%+ match, strong skills alignment), "
+        "'Hire' (65-79% match, good overall fit), "
+        "'Consider' (50-64% match, some gaps but potential), "
+        "'Reject' (below 50% match, significant gaps). "
         "Return ONLY valid JSON with no extra text:\n"
         '{"match_percentage": 75, "match_summary": "...", '
         '"strengths": ["...", "..."], "gaps": ["...", "..."], '
-        '"compensation_fit": "good", "notice_fit": "good"}\n\n'
+        '"compensation_fit": "good", "notice_fit": "good", '
+        '"recommendation": "Hire"}\n\n'
         f"Job Description: {job['description']}\n"
         f"Requirements: {requirements_str}\n\n"
         f"Resume: {resume_text}"
@@ -447,12 +453,7 @@ async def candidate_login(body: CandidateLoginRequest) -> dict:
     candidates = await _read_candidates()
     candidate = next((c for c in candidates if c["ct_number"] == body.ct_number), None)
     if not candidate:
-        raise HTTPException(status_code=404, detail="Candidate not found. Please ask your recruiter.")
-    if candidate.get("status") == "applied":
-        raise HTTPException(
-            status_code=403,
-            detail="You have not been invited for an interview yet. Please wait for the recruiter to review your application.",
-        )
+        raise HTTPException(status_code=404, detail="CT number not found. Please check and try again.")
     token = str(uuid.uuid4())
     active_sessions[token] = {
         "role": "candidate",
@@ -469,7 +470,7 @@ async def candidate_login(body: CandidateLoginRequest) -> dict:
         "job_role": candidate["job_role"],
         "job_description": candidate.get("job_description", ""),
         "session_id": candidate.get("session_id"),
-        "status": candidate.get("status", "not_started"),
+        "status": candidate.get("status", "applied"),
     }
 
 
@@ -542,19 +543,47 @@ async def get_candidate_match(
     }
 
 
-@app.post("/recruiter/candidates/{ct_number}/invite")
-async def invite_candidate(
-    ct_number: str,
-    _auth: dict = Depends(verify_recruiter_token),
-) -> dict:
+async def _set_candidate_status(ct_number: str, status: str, ts_key: str) -> dict:
     candidates = await _read_candidates()
     candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
-    candidate["status"] = "invited"
-    candidate["invited_at"] = datetime.now(timezone.utc).isoformat()
+    candidate["status"] = status
+    candidate[ts_key] = datetime.now(timezone.utc).isoformat()
     await _write_candidates(candidates)
-    return {"success": True, "message": "Candidate invited"}
+    return {"success": True}
+
+
+@app.post("/recruiter/candidates/{ct_number}/schedule")
+async def schedule_candidate(
+    ct_number: str,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    return await _set_candidate_status(ct_number, "interview_scheduled", "scheduled_at")
+
+
+@app.post("/recruiter/candidates/{ct_number}/invite")
+async def invite_candidate_alias(
+    ct_number: str,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    return await _set_candidate_status(ct_number, "interview_scheduled", "scheduled_at")
+
+
+@app.post("/recruiter/candidates/{ct_number}/reject")
+async def reject_candidate(
+    ct_number: str,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    return await _set_candidate_status(ct_number, "rejected", "rejected_at")
+
+
+@app.post("/recruiter/candidates/{ct_number}/cancel-schedule")
+async def cancel_schedule(
+    ct_number: str,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    return await _set_candidate_status(ct_number, "applied", "updated_at")
 
 
 # ---------------------------------------------------------------------------
@@ -649,6 +678,7 @@ async def apply_for_job(
         "match_gaps": match_result.get("gaps", []),
         "compensation_fit": match_result.get("compensation_fit"),
         "notice_fit": match_result.get("notice_fit"),
+        "recommendation": match_result.get("recommendation"),
         "session_id": None,
         "status": "applied",
         "applied_at": datetime.now(timezone.utc).isoformat(),
@@ -745,6 +775,7 @@ async def update_job(
             candidate["match_gaps"] = match_result.get("gaps", [])
             candidate["compensation_fit"] = match_result.get("compensation_fit")
             candidate["notice_fit"] = match_result.get("notice_fit")
+            candidate["recommendation"] = match_result.get("recommendation")
             recalculated += 1
     if recalculated > 0:
         await _write_candidates(candidates)
@@ -818,7 +849,6 @@ async def start_session(
         for c in candidates:
             if c["ct_number"] == ct_number:
                 c["session_id"] = session_id
-                c["status"] = "in_progress"
                 break
         await _write_candidates(candidates)
 
@@ -862,6 +892,19 @@ async def process_audio(session_id: str, audio: UploadFile = File(...)) -> Respo
             transcript[-1]["a"] = candidate_answer
         else:
             transcript.append({"q": "", "a": candidate_answer, "score": None})
+
+        answered_count = sum(1 for e in transcript if e.get("q") and e.get("a"))
+        if answered_count >= 7:
+            session["transcript"] = transcript
+            await _write_session(session_id, session)
+            return Response(
+                content=json.dumps({
+                    "response": "Thank you for completing all questions. Your interview is now complete.",
+                    "candidate_answer": candidate_answer,
+                    "auto_end": True,
+                }),
+                media_type="application/json",
+            )
 
         n_questions = sum(1 for e in transcript if e.get("q"))
         next_question = "That's a great point. Can you walk me through a specific example from your previous work?"
@@ -938,11 +981,9 @@ async def proctor_frame(session_id: str, body: ProctorRequest) -> dict:
                         {
                             "type": "text",
                             "text": (
-                                "Look at this image from a video interview. "
-                                "Return JSON only, no markdown: "
-                                "{\"faces\": <0/1/2+>, \"looking_at_screen\": <true/false>, "
-                                "\"flag\": <true if 0 faces or multiple faces or clearly looking away>, "
-                                "\"reason\": \"<short reason if flagged, else empty string>\"}"
+                                "Is there exactly one person visible and looking at the screen? "
+                                "Return ONLY valid JSON: "
+                                "{\"faces\": 0, \"looking_at_screen\": true, \"flag\": false, \"reason\": \"\"}"
                             ),
                         },
                     ],
@@ -1030,7 +1071,7 @@ async def end_session(
         candidates = await _read_candidates()
         for c in candidates:
             if c["ct_number"] == ct_number:
-                c["status"] = "completed"
+                c["status"] = "interview_complete"
                 candidate_name = c.get("name", "")
                 break
         await _write_candidates(candidates)

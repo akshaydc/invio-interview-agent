@@ -11,12 +11,10 @@ type Props = {
 export default function CandidateLogin({ onLogin, onBack }: Props) {
   const [ctNumber, setCtNumber] = useState('')
   const [error, setError] = useState('')
-  const [infoMsg, setInfoMsg] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit() {
     setError('')
-    setInfoMsg('')
     if (!ctNumber.trim()) {
       setError('Please enter your CT Number.')
       return
@@ -30,6 +28,7 @@ export default function CandidateLogin({ onLogin, onBack }: Props) {
         ct_number: string
         job_role: string
         job_description: string
+        status: string
       }>(`${API}/auth/candidate/login`, { ct_number: ctNumber.trim() })
       onLogin({
         token: res.data.token,
@@ -38,14 +37,11 @@ export default function CandidateLogin({ onLogin, onBack }: Props) {
         ctNumber: res.data.ct_number,
         jobRole: res.data.job_role,
         jobDescription: res.data.job_description,
+        status: res.data.status,
       })
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.status === 403) {
-        setInfoMsg('Your application is under review. You will receive an invitation once the recruiter shortlists you.')
-      } else {
-        const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Login failed.' : 'Login failed.'
-        setError(String(msg))
-      }
+      const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Login failed.' : 'Login failed.'
+      setError(String(msg))
     } finally {
       setLoading(false)
     }
@@ -72,7 +68,6 @@ export default function CandidateLogin({ onLogin, onBack }: Props) {
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
           />
         </div>
-        {infoMsg && <div className="info-box">{infoMsg}</div>}
         {error && <p className="error-text">{error}</p>}
         <button className="btn btn-primary login-btn" onClick={handleSubmit} disabled={loading}>
           {loading ? 'Signing in...' : 'Sign In'}

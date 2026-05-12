@@ -13,7 +13,7 @@ const JOB_ROLES = [
   'QA Engineer',
 ]
 
-type CandidateStatus = 'not_started' | 'applied' | 'invited' | 'in_progress' | 'interviewing' | 'completed'
+type CandidateStatus = 'not_started' | 'applied' | 'interview_scheduled' | 'interview_complete' | 'rejected'
 
 type Candidate = {
   name: string
@@ -34,8 +34,8 @@ type Candidate = {
   match_gaps?: string[]
   compensation_fit?: string
   notice_fit?: string
+  recommendation?: string
   applied_at?: string
-  invited_at?: string
 }
 
 type Job = {
@@ -62,19 +62,23 @@ type Props = {
 const STATUS_LABELS: Record<string, string> = {
   not_started: 'Not Started',
   applied: 'Applied',
-  invited: 'Invited',
-  in_progress: 'Interviewing',
-  interviewing: 'Interviewing',
-  completed: 'Completed',
+  interview_scheduled: 'Scheduled',
+  interview_complete: 'Completed',
+  rejected: 'Rejected',
 }
 
 const STATUS_CLASSES: Record<string, string> = {
   not_started: 'badge badge--muted',
   applied: 'badge badge--muted',
-  invited: 'badge badge--blue',
-  in_progress: 'badge badge--amber',
-  interviewing: 'badge badge--amber',
-  completed: 'badge badge--green',
+  interview_scheduled: 'badge badge--blue',
+  interview_complete: 'badge badge--green',
+  rejected: 'badge badge--red',
+}
+
+function recommendationBadge(rec: string | undefined) {
+  if (!rec) return null
+  const key = rec.toLowerCase().replace(/\s+/g, '-')
+  return <span className={`rec-badge rec-badge--${key}`}>{rec}</span>
 }
 
 function matchBadge(pct: number | null | undefined) {
@@ -95,7 +99,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [showCandidateForm, setShowCandidateForm] = useState(false)
   const [candidateFormError, setCandidateFormError] = useState('')
   const [candidateFormLoading, setCandidateFormLoading] = useState(false)
-  const [invitingCt, setInvitingCt] = useState<string | null>(null)
+  const [actionCt, setActionCt] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [ctNumber, setCtNumber] = useState('')
   const [jobRole, setJobRole] = useState('Software Engineer')
@@ -168,18 +172,34 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     setExpandedCt(prev => prev === ct ? null : ct)
   }
 
-  async function handleInvite(ct: string) {
-    setInvitingCt(ct)
+  async function handleSchedule(ct: string) {
+    setActionCt(ct)
     try {
-      await axios.post(`${API}/recruiter/candidates/${ct}/invite`, {}, { headers })
+      await axios.post(`${API}/recruiter/candidates/${ct}/schedule`, {}, { headers })
       setCandidates(prev =>
-        prev.map(c => c.ct_number === ct ? { ...c, status: 'invited' as CandidateStatus } : c)
+        prev.map(c => c.ct_number === ct ? { ...c, status: 'interview_scheduled' as CandidateStatus } : c)
       )
-    } catch {
-      // silent — table will refresh on next load
-    } finally {
-      setInvitingCt(null)
-    }
+    } catch { /* silent */ } finally { setActionCt(null) }
+  }
+
+  async function handleReject(ct: string) {
+    setActionCt(ct)
+    try {
+      await axios.post(`${API}/recruiter/candidates/${ct}/reject`, {}, { headers })
+      setCandidates(prev =>
+        prev.map(c => c.ct_number === ct ? { ...c, status: 'rejected' as CandidateStatus } : c)
+      )
+    } catch { /* silent */ } finally { setActionCt(null) }
+  }
+
+  async function handleCancelSchedule(ct: string) {
+    setActionCt(ct)
+    try {
+      await axios.post(`${API}/recruiter/candidates/${ct}/cancel-schedule`, {}, { headers })
+      setCandidates(prev =>
+        prev.map(c => c.ct_number === ct ? { ...c, status: 'applied' as CandidateStatus } : c)
+      )
+    } catch { /* silent */ } finally { setActionCt(null) }
   }
 
   async function handleCreateCandidate() {
@@ -418,6 +438,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                       <th>CT Number</th>
                       <th>Job Role</th>
                       <th>Match %</th>
+                      <th>Rec.</th>
                       <th>Status</th>
                       <th>Action</th>
                     </tr>
@@ -434,6 +455,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                           <td style={{ color: 'var(--muted)', fontFamily: 'monospace' }}>{c.ct_number}</td>
                           <td>{c.job_role}</td>
                           <td onClick={e => e.stopPropagation()}>{matchBadge(c.match_percentage)}</td>
+                          <td onClick={e => e.stopPropagation()}>{recommendationBadge(c.recommendation)}</td>
                           <td onClick={e => e.stopPropagation()}>
                             <span className={STATUS_CLASSES[c.status] ?? 'badge badge--muted'}>
                               {STATUS_LABELS[c.status] ?? c.status}
@@ -441,16 +463,36 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                           </td>
                           <td onClick={e => e.stopPropagation()}>
                             {c.status === 'applied' && (
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                <button
+                                  className="btn btn-primary"
+                                  style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                                  disabled={actionCt === c.ct_number}
+                                  onClick={() => handleSchedule(c.ct_number)}
+                                >
+                                  Schedule
+                                </button>
+                                <button
+                                  className="btn btn-danger"
+                                  style={{ padding: '6px 12px', fontSize: '0.82rem', alignSelf: 'unset' }}
+                                  disabled={actionCt === c.ct_number}
+                                  onClick={() => handleReject(c.ct_number)}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            )}
+                            {c.status === 'interview_scheduled' && (
                               <button
-                                className="btn btn-primary"
+                                className="btn btn-secondary"
                                 style={{ padding: '6px 14px', fontSize: '0.82rem' }}
-                                disabled={invitingCt === c.ct_number}
-                                onClick={() => handleInvite(c.ct_number)}
+                                disabled={actionCt === c.ct_number}
+                                onClick={() => handleCancelSchedule(c.ct_number)}
                               >
-                                {invitingCt === c.ct_number ? 'Inviting...' : 'Invite'}
+                                Cancel
                               </button>
                             )}
-                            {c.status === 'completed' && (
+                            {c.status === 'interview_complete' && (
                               <button
                                 className="btn btn-secondary"
                                 style={{ padding: '6px 14px', fontSize: '0.82rem' }}
@@ -568,24 +610,47 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                   </p>
                                 )}
 
+                                {/* ── Recommendation ── */}
+                                {c.recommendation && (
+                                  <div style={{ marginTop: 16 }}>
+                                    <p className="role-label" style={{ marginBottom: 6 }}>AI Recommendation</p>
+                                    {recommendationBadge(c.recommendation)}
+                                  </div>
+                                )}
+
                                 {/* ── Action buttons ── */}
                                 <div className="candidate-panel-actions">
                                   {c.status === 'applied' && (
+                                    <>
+                                      <button
+                                        className="btn btn-primary"
+                                        style={{ fontSize: '0.875rem', padding: '8px 20px' }}
+                                        disabled={actionCt === c.ct_number}
+                                        onClick={e => { e.stopPropagation(); handleSchedule(c.ct_number) }}
+                                      >
+                                        {actionCt === c.ct_number ? 'Scheduling…' : 'Schedule Interview'}
+                                      </button>
+                                      <button
+                                        className="btn btn-danger"
+                                        style={{ fontSize: '0.875rem', padding: '8px 20px', alignSelf: 'unset' }}
+                                        disabled={actionCt === c.ct_number}
+                                        onClick={e => { e.stopPropagation(); handleReject(c.ct_number) }}
+                                      >
+                                        Reject
+                                      </button>
+                                    </>
+                                  )}
+                                  {c.status === 'interview_scheduled' && (
                                     <button
-                                      className="btn btn-primary"
+                                      className="btn btn-secondary"
                                       style={{ fontSize: '0.875rem', padding: '8px 20px' }}
-                                      disabled={invitingCt === c.ct_number}
-                                      onClick={e => { e.stopPropagation(); handleInvite(c.ct_number) }}
+                                      disabled={actionCt === c.ct_number}
+                                      onClick={e => { e.stopPropagation(); handleCancelSchedule(c.ct_number) }}
                                     >
-                                      {invitingCt === c.ct_number ? 'Inviting...' : 'Invite for Interview'}
+                                      {actionCt === c.ct_number ? 'Cancelling…' : 'Cancel Schedule'}
                                     </button>
                                   )}
-                                  {c.status === 'invited' && (
-                                    <span style={{ fontSize: '0.875rem', color: 'var(--primary)' }}>
-                                      Invitation sent
-                                    </span>
-                                  )}
-                                  {c.status === 'completed' && (
+                                  {c.status === 'interview_complete' && (
                                     <button
                                       className="btn btn-secondary"
                                       style={{ fontSize: '0.875rem', padding: '8px 20px' }}
