@@ -3,6 +3,7 @@ import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
 
 type TranscriptEntry = { q: string; a: string; score: number | null }
+type Violation = { type: string; timestamp: string; reason?: string }
 
 type Scorecard = {
   communication: number
@@ -13,6 +14,14 @@ type Scorecard = {
   strengths: string[]
   red_flags: string[]
   transcript: TranscriptEntry[]
+  violations?: Violation[]
+}
+
+function violationLabel(type: string) {
+  if (type === 'tab_switch') return 'Tab switch'
+  if (type === 'window_blur') return 'Window focus lost'
+  if (type === 'face_detection') return 'Face detection'
+  return type
 }
 
 type Candidate = {
@@ -122,6 +131,34 @@ export default function ScorecardView({ token, ctNumber, onBack }: Props) {
               </div>
             </div>
           )}
+
+          <div className="card">
+            <h3>Proctoring Report</h3>
+            {!scorecard.violations || scorecard.violations.length === 0 ? (
+              <p style={{ color: 'var(--green)', marginTop: 12, fontSize: '0.95rem' }}>
+                No violations detected — clean interview.
+              </p>
+            ) : (
+              <>
+                <p style={{ color: 'var(--red)', fontWeight: 600, marginTop: 12, marginBottom: 12 }}>
+                  {scorecard.violations.length} warning{scorecard.violations.length !== 1 ? 's' : ''} detected
+                </p>
+                <ul className="tag-list tag-list--red">
+                  {scorecard.violations.map((v, i) => (
+                    <li key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                      <span>
+                        <strong>{violationLabel(v.type)}</strong>
+                        {v.reason ? ` — ${v.reason}` : ''}
+                      </span>
+                      <span className="muted" style={{ fontSize: '0.8rem', fontFamily: 'monospace' }}>
+                        {new Date(v.timestamp).toLocaleTimeString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
         </>
       )}
     </div>

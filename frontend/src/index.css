@@ -1050,3 +1050,131 @@ body {
   color: var(--red);
   border: 1px solid rgba(248, 113, 113, 0.25);
 }
+
+/* ── Camera self-view (fixed top-right) ── */
+.camera-self-view {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 160px;
+  height: 120px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+  z-index: 200;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Proctoring badge ── */
+.proctor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--green);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  white-space: nowrap;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.proctor-badge--warn {
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--red);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+/* ── Audio visualizer ── */
+.audio-visualizer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 5px;
+  height: 56px;
+  padding: 8px 0;
+}
+
+.audio-bar {
+  width: 8px;
+  border-radius: 4px;
+  background: var(--border);
+  transition: height 0.08s ease, background 0.2s ease;
+  min-height: 4px;
+}
+
+.audio-bar--active {
+  background: var(--green);
+}
+
+/* ── Listen status text ── */
+.listen-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+}
+
+.listen-text {
+  font-size: 0.9rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.listen-text--recording {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.listen-text--muted {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.rec-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: rec-pulse 1s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* ── Warning modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 24px;
+}
+
+.modal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px 32px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: fade-in-up 0.25s ease-out both;
+}

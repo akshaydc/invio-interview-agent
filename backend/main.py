@@ -196,6 +196,14 @@ class ApplyRequest(BaseModel):
     notice_period: str
 
 
+class ProctorRequest(BaseModel):
+    image: str  # base64 data URL
+
+
+class EndSessionRequest(BaseModel):
+    violations: list[dict] = []
+
+
 # ---------------------------------------------------------------------------
 # Auth helpers
 # ---------------------------------------------------------------------------
@@ -902,8 +910,72 @@ async def process_audio(session_id: str, audio: UploadFile = File(...)) -> Respo
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/session/{session_id}/proctor")
+async def proctor_frame(session_id: str, body: ProctorRequest) -> dict:
+    result: dict = {"faces": 1, "looking_at_screen": True, "flag": False, "reason": ""}
+
+    if ANTHROPIC_API_KEY:
+        try:
+            image_data = body.image
+            if "," in image_data:
+                image_data = image_data.split(",", 1)[1]
+
+            client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+            response = await client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=256,
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/jpeg",
+                                "data": image_data,
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": (
+                                "Look at this image from a video interview. "
+                                "Return JSON only, no markdown: "
+                                "{\"faces\": <0/1/2+>, \"looking_at_screen\": <true/false>, "
+                                "\"flag\": <true if 0 faces or multiple faces or clearly looking away>, "
+                                "\"reason\": \"<short reason if flagged, else empty string>\"}"
+                            ),
+                        },
+                    ],
+                }],
+            )
+            raw = response.content[0].text.strip()
+            result = json.loads(_strip_code_fence(raw))
+        except Exception:
+            pass  # never block interview for proctoring errors
+
+    if result.get("flag"):
+        try:
+            session = await _read_session(session_id)
+            violations = session.get("violations", [])
+            violations.append({
+                "type": "face_detection",
+                "reason": result.get("reason", ""),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+            session["violations"] = violations
+            await _write_session(session_id, session)
+        except Exception:
+            pass
+
+    return result
+
+
 @app.post("/session/{session_id}/end")
-async def end_session(session_id: str, background_tasks: BackgroundTasks) -> dict:
+async def end_session(
+    session_id: str,
+    background_tasks: BackgroundTasks,
+    body: EndSessionRequest | None = None,
+) -> dict:
     session = await _read_session(session_id)
     job_role = session.get("job_role", "Software Engineer")
     ct_number = session.get("ct_number")
@@ -944,6 +1016,11 @@ async def end_session(session_id: str, background_tasks: BackgroundTasks) -> dic
         scorecard = MOCK_SCORECARD.copy()
 
     scorecard["transcript"] = session["transcript"]
+
+    client_violations = body.violations if body else []
+    server_violations = session.get("violations", [])
+    scorecard["violations"] = client_violations + server_violations
+
     session["status"] = "complete"
     session["scorecard"] = scorecard
     await _write_session(session_id, session)
