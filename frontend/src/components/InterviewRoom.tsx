@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import axios from 'axios'
-import type { ScorecardData } from '../App'
+import type { ScorecardData } from '../types'
 import { API_BASE_URL as API } from '../config'
 
 type TranscriptEntry = { q: string; a: string; score: number | null }
