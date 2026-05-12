@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import random
@@ -9,11 +10,17 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
 
+try:
+    import PyPDF2
+    _PYPDF2_AVAILABLE = True
+except ImportError:
+    _PYPDF2_AVAILABLE = False
+
 import aiofiles
 import anthropic
 import openai
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, Depends, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -258,6 +265,46 @@ def _strip_code_fence(text: str) -> str:
     return inner.strip()
 
 
+def _extract_resume_text(file_bytes: bytes, filename: str) -> str:
+    if filename.lower().endswith(".pdf"):
+        if not _PYPDF2_AVAILABLE:
+            return ""
+        try:
+            reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
+            return "\n".join(
+                page.extract_text() or "" for page in reader.pages
+            ).strip()
+        except Exception:
+            return ""
+    return file_bytes.decode("utf-8", errors="replace").strip()
+
+
+async def _analyze_resume_match(resume_text: str, job: dict) -> dict:
+    if not ANTHROPIC_API_KEY or not resume_text:
+        return {}
+    requirements_str = ", ".join(job.get("requirements", []))
+    prompt = (
+        "Compare this resume with the job description and give a match percentage (0-100) "
+        "and a 3-line summary of fit. Return ONLY valid JSON with no extra text:\n"
+        '{"match_percentage": 75, "match_summary": "...", '
+        '"strengths": ["...", "..."], "gaps": ["...", "..."]}\n\n'
+        f"Job Description: {job['description']}\n"
+        f"Requirements: {requirements_str}\n\n"
+        f"Resume: {resume_text}"
+    )
+    try:
+        client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+        response = await client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=512,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.content[0].text
+        return json.loads(_strip_code_fence(raw))
+    except Exception:
+        return {}
+
+
 # ---------------------------------------------------------------------------
 # Email
 # ---------------------------------------------------------------------------
@@ -433,6 +480,26 @@ async def get_candidate_scorecard(
     return {"candidate": candidate, "scorecard": scorecard}
 
 
+@app.get("/recruiter/candidates/{ct_number}/match")
+async def get_candidate_match(
+    ct_number: str,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    if candidate.get("match_percentage") is None:
+        raise HTTPException(status_code=404, detail="No match analysis available")
+    return {
+        "ct_number": ct_number,
+        "match_percentage": candidate.get("match_percentage"),
+        "match_summary": candidate.get("match_summary"),
+        "strengths": candidate.get("match_strengths", []),
+        "gaps": candidate.get("match_gaps", []),
+    }
+
+
 # ---------------------------------------------------------------------------
 # Public job endpoints
 # ---------------------------------------------------------------------------
@@ -453,7 +520,17 @@ async def get_job(job_id: str) -> dict:
 
 
 @app.post("/jobs/{job_id}/apply")
-async def apply_for_job(job_id: str, body: ApplyRequest) -> dict:
+async def apply_for_job(
+    job_id: str,
+    name: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(...),
+    current_role: str = Form(""),
+    current_ctc: str = Form(""),
+    expected_ctc: str = Form(""),
+    notice_period: str = Form(""),
+    resume: UploadFile | None = File(None),
+) -> dict:
     jobs = await _read_jobs()
     job = next((j for j in jobs if j["id"] == job_id), None)
     if not job:
@@ -474,25 +551,41 @@ async def apply_for_job(job_id: str, body: ApplyRequest) -> dict:
     if not ct_number:
         raise HTTPException(status_code=500, detail="Could not generate unique CT number")
 
+    resume_text = ""
+    if resume and resume.filename:
+        file_bytes = await resume.read()
+        resume_text = _extract_resume_text(file_bytes, resume.filename)
+
+    match_result = await _analyze_resume_match(resume_text, job)
+
     candidate = {
-        "name": body.name,
+        "name": name,
         "ct_number": ct_number,
-        "email": body.email,
-        "phone": body.phone,
-        "current_role": body.current_role,
-        "current_ctc": body.current_ctc,
-        "expected_ctc": body.expected_ctc,
-        "notice_period": body.notice_period,
+        "email": email,
+        "phone": phone,
+        "current_role": current_role,
+        "current_ctc": current_ctc,
+        "expected_ctc": expected_ctc,
+        "notice_period": notice_period,
         "job_id": job_id,
         "job_role": job["title"],
         "job_description": job["description"],
+        "resume_text": resume_text,
+        "match_percentage": match_result.get("match_percentage"),
+        "match_summary": match_result.get("match_summary"),
+        "match_strengths": match_result.get("strengths", []),
+        "match_gaps": match_result.get("gaps", []),
         "session_id": None,
         "status": "applied",
         "applied_at": datetime.now(timezone.utc).isoformat(),
     }
     candidates.append(candidate)
     await _write_candidates(candidates)
-    return {"ct_number": ct_number, "message": "Application submitted"}
+
+    response: dict = {"ct_number": ct_number, "message": "Application submitted"}
+    if match_result.get("match_percentage") is not None:
+        response["match_percentage"] = match_result["match_percentage"]
+    return response
 
 
 # ---------------------------------------------------------------------------

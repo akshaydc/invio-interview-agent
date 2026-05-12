@@ -20,6 +20,10 @@ type Candidate = {
   job_description: string
   session_id: string | null
   status: 'not_started' | 'in_progress' | 'completed' | 'applied'
+  match_percentage?: number | null
+  match_summary?: string
+  match_strengths?: string[]
+  match_gaps?: string[]
 }
 
 type Job = {
@@ -55,10 +59,18 @@ const STATUS_CLASSES: Record<string, string> = {
   applied: 'badge badge--muted',
 }
 
+function matchBadge(pct: number | null | undefined) {
+  if (pct == null) return <span className="muted">—</span>
+  const cls = pct >= 70 ? 'match-badge match-badge--green' : pct >= 50 ? 'match-badge match-badge--amber' : 'match-badge match-badge--red'
+  return <span className={cls}>{pct}%</span>
+}
+
 type Tab = 'candidates' | 'jobs'
 
 export default function RecruiterDashboard({ token, onLogout, onViewScorecard }: Props) {
   const [tab, setTab] = useState<Tab>('candidates')
+  const [expandedCt, setExpandedCt] = useState<string | null>(null)
+  const [copiedCt, setCopiedCt] = useState<string | null>(null)
 
   // Candidates state
   const [candidates, setCandidates] = useState<Candidate[]>([])
@@ -114,6 +126,22 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   useEffect(() => { fetchCandidates() }, [])
   useEffect(() => { if (tab === 'jobs') fetchJobs() }, [tab])
+
+  function toggleExpand(ct: string) {
+    setExpandedCt(prev => prev === ct ? null : ct)
+  }
+
+  async function handleInvite(ct: string) {
+    try {
+      await navigator.clipboard.writeText(ct)
+      setCopiedCt(ct)
+      setTimeout(() => setCopiedCt(null), 2000)
+    } catch {
+      // fallback: just indicate the CT number
+      setCopiedCt(ct)
+      setTimeout(() => setCopiedCt(null), 2000)
+    }
+  }
 
   async function handleCreateCandidate() {
     setCandidateFormError('')
@@ -276,25 +304,105 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                       <th>Name</th>
                       <th>CT Number</th>
                       <th>Job Role</th>
+                      <th>Match %</th>
                       <th>Status</th>
-                      <th>Action</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     {candidates.map((c) => (
-                      <tr key={c.ct_number}>
-                        <td>{c.name}</td>
-                        <td style={{ color: 'var(--muted)', fontFamily: 'monospace' }}>{c.ct_number}</td>
-                        <td>{c.job_role}</td>
-                        <td><span className={STATUS_CLASSES[c.status] ?? 'badge badge--muted'}>{STATUS_LABELS[c.status] ?? c.status}</span></td>
-                        <td>
-                          {c.status === 'completed' && (
-                            <button className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.85rem' }} onClick={() => onViewScorecard(c.ct_number)}>
-                              View Scorecard
-                            </button>
-                          )}
-                        </td>
-                      </tr>
+                      <>
+                        <tr
+                          key={c.ct_number}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => toggleExpand(c.ct_number)}
+                        >
+                          <td style={{ fontWeight: 500 }}>{c.name}</td>
+                          <td style={{ color: 'var(--muted)', fontFamily: 'monospace' }}>{c.ct_number}</td>
+                          <td>{c.job_role}</td>
+                          <td>{matchBadge(c.match_percentage)}</td>
+                          <td><span className={STATUS_CLASSES[c.status] ?? 'badge badge--muted'}>{STATUS_LABELS[c.status] ?? c.status}</span></td>
+                          <td style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>
+                            {expandedCt === c.ct_number ? '▲' : '▼'}
+                          </td>
+                        </tr>
+
+                        {expandedCt === c.ct_number && (
+                          <tr key={`${c.ct_number}-detail`}>
+                            <td colSpan={6} style={{ padding: 0, background: 'var(--surface-2)' }}>
+                              <div className="candidate-panel">
+                                {/* Match score section */}
+                                {c.match_percentage != null ? (
+                                  <div className="candidate-panel-match">
+                                    <div
+                                      className="candidate-match-score"
+                                      style={{
+                                        color: c.match_percentage >= 70
+                                          ? 'var(--green)'
+                                          : c.match_percentage >= 50
+                                          ? '#f59e0b'
+                                          : 'var(--red)',
+                                      }}
+                                    >
+                                      {c.match_percentage}%
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                      <p className="role-label" style={{ marginBottom: 6 }}>Match Summary</p>
+                                      <p style={{ color: 'var(--text)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                                        {c.match_summary || '—'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="muted" style={{ fontSize: '0.875rem' }}>No resume analysis available.</p>
+                                )}
+
+                                {/* Strengths & Gaps */}
+                                {(c.match_strengths?.length || c.match_gaps?.length) ? (
+                                  <div className="two-col" style={{ marginTop: 16 }}>
+                                    {c.match_strengths && c.match_strengths.length > 0 && (
+                                      <div>
+                                        <p className="role-label" style={{ marginBottom: 8 }}>Strengths</p>
+                                        <ul className="tag-list tag-list--green">
+                                          {c.match_strengths.map((s, i) => <li key={i}>{s}</li>)}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {c.match_gaps && c.match_gaps.length > 0 && (
+                                      <div>
+                                        <p className="role-label" style={{ marginBottom: 8 }}>Gaps</p>
+                                        <ul className="tag-list tag-list--red">
+                                          {c.match_gaps.map((g, i) => <li key={i}>{g}</li>)}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : null}
+
+                                {/* Action buttons */}
+                                <div className="candidate-panel-actions">
+                                  <button
+                                    className="btn btn-primary"
+                                    style={{ fontSize: '0.875rem', padding: '8px 20px' }}
+                                    onClick={(e) => { e.stopPropagation(); handleInvite(c.ct_number) }}
+                                  >
+                                    {copiedCt === c.ct_number ? 'CT Copied!' : 'Invite for Interview'}
+                                  </button>
+                                  {c.status === 'completed' && (
+                                    <button
+                                      className="btn btn-secondary"
+                                      style={{ fontSize: '0.875rem', padding: '8px 20px' }}
+                                      onClick={(e) => { e.stopPropagation(); onViewScorecard(c.ct_number) }}
+                                    >
+                                      View Scorecard
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
                     ))}
                   </tbody>
                 </table>
