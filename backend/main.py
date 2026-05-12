@@ -255,6 +255,11 @@ async def _write_jobs(jobs: list) -> None:
         await f.write(json.dumps(jobs, indent=2))
 
 
+async def _find_candidate_by_session(session_id: str) -> dict | None:
+    candidates = await _read_candidates()
+    return next((c for c in candidates if c.get("session_id") == session_id), None)
+
+
 def _build_claude_messages(transcript: list[dict]) -> list[dict]:
     messages = []
     for entry in transcript:
@@ -1068,14 +1073,21 @@ async def end_session(
     await _write_session(session_id, session)
 
     candidate_name = ""
-    if ct_number:
+    try:
         candidates = await _read_candidates()
+        updated = False
         for c in candidates:
-            if c["ct_number"] == ct_number:
+            if c.get("session_id") == session_id:
                 c["status"] = "interview_complete"
                 candidate_name = c.get("name", "")
+                updated = True
                 break
-        await _write_candidates(candidates)
+        if updated:
+            await _write_candidates(candidates)
+        else:
+            print(f"Warning: no candidate linked to session {session_id}")
+    except Exception as e:
+        print(f"Warning: failed to update candidate status: {e}")
 
     background_tasks.add_task(send_scorecard_email, scorecard, job_role, session_id, candidate_name)
     return scorecard

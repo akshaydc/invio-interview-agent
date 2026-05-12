@@ -15,10 +15,8 @@ type Props = {
   onDone: () => void
 }
 
-const BASE_THRESHOLD = 0.03
-const SPEAK_DEBOUNCE_MS = 800
-const SILENCE_TIMEOUT_MS = 2500
-const MIN_AUDIO_BYTES = 5000
+const SPEAK_THRESHOLD = 0.010
+const MIN_AUDIO_BYTES = 2000
 const END_LOCKOUT_MS = 5 * 60 * 1000
 
 export default function InterviewRoom({ token, candidateName, jobRole, onDone }: Props) {
@@ -51,13 +49,12 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
   const violationsRef = useRef<Violation[]>([])
   const transcriptListRef = useRef<HTMLDivElement | null>(null)
   const currentQuestionRef = useRef<HTMLDivElement | null>(null)
-  const speakState = useRef({ firstAbove: 0, lastAbove: 0, capturing: false })
   const startTimeRef = useRef(0)
   const endingRef = useRef(false)
   const shouldAutoEndRef = useRef(false)
   const sampleCountRef = useRef(0)
-  // Calibration: sample background noise for 2s after interview starts, set dynamic threshold
-  const calibrationRef = useRef({ samples: [] as number[], done: false, threshold: BASE_THRESHOLD })
+  const consecutiveAboveRef = useRef(0)
+  const consecutiveSilentRef = useRef(0)
 
   useEffect(() => { stageRef.current = stage }, [stage])
   useEffect(() => { listenStatusRef.current = listenStatus }, [listenStatus])
@@ -109,7 +106,8 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
     utterance.volume = 1
     utterance.onend = () => {
       isAISpeakingRef.current = false
-      speakState.current = { firstAbove: 0, lastAbove: 0, capturing: false }
+      consecutiveAboveRef.current = 0
+      consecutiveSilentRef.current = 0
       setListenStatus('listening')
       listenStatusRef.current = 'listening'
     }
@@ -157,49 +155,39 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
 
     const buf = new Float32Array(analyser.fftSize)
     analyser.getFloatTimeDomainData(buf)
-    const rms = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length)
-
-    const cal = calibrationRef.current
-    setVolumeLevel(Math.min(rms / cal.threshold, 1))
-
-    // Calibrate background noise during the first 2 seconds
-    if (!cal.done) {
-      cal.samples.push(rms)
-      if (Date.now() - startTimeRef.current >= 2000) {
-        const avg = cal.samples.length > 0
-          ? cal.samples.reduce((a, b) => a + b, 0) / cal.samples.length
-          : 0
-        cal.threshold = Math.max(BASE_THRESHOLD, avg * 2)
-        cal.done = true
-        console.log('Calibration done — background avg:', avg.toFixed(5), '| dynamic threshold:', cal.threshold.toFixed(5))
-      }
-      return
-    }
+    const rms = Math.sqrt(buf.reduce((s: number, v: number) => s + v * v, 0) / buf.length)
+    setVolumeLevel(Math.min(rms / SPEAK_THRESHOLD, 1))
 
     sampleCountRef.current++
     if (sampleCountRef.current % 10 === 0) {
-      console.log('Current RMS volume:', rms.toFixed(5), 'Threshold:', cal.threshold.toFixed(5))
+      console.log('Current RMS volume:', rms.toFixed(5), 'Threshold:', SPEAK_THRESHOLD.toFixed(5))
     }
 
-    const threshold = cal.threshold
-    const now = Date.now()
-    const s = speakState.current
-
-    if (rms > threshold) {
-      if (s.firstAbove === 0) s.firstAbove = now
-      s.lastAbove = now
-      if (!s.capturing && now - s.firstAbove >= SPEAK_DEBOUNCE_MS) {
-        s.capturing = true
-        console.log('SPEAKING DETECTED - starting recording')
-        setListenStatus('recording')
-        listenStatusRef.current = 'recording'
-        if (streamRef.current) startNewRecorder(streamRef.current)
+    if (listenStatusRef.current === 'listening') {
+      if (rms > SPEAK_THRESHOLD) {
+        consecutiveAboveRef.current++
+        if (consecutiveAboveRef.current >= 3) {
+          consecutiveAboveRef.current = 0
+          consecutiveSilentRef.current = 0
+          console.log('SPEAKING DETECTED - starting recording')
+          setListenStatus('recording')
+          listenStatusRef.current = 'recording'
+          if (streamRef.current) startNewRecorder(streamRef.current)
+        }
+      } else {
+        consecutiveAboveRef.current = 0
       }
-    } else {
-      if (s.capturing && now - s.lastAbove >= SILENCE_TIMEOUT_MS) {
-        stopAndSend()
+    } else if (listenStatusRef.current === 'recording') {
+      if (rms < SPEAK_THRESHOLD) {
+        consecutiveSilentRef.current++
+        if (consecutiveSilentRef.current >= 20) {
+          consecutiveSilentRef.current = 0
+          stopAndSend()
+        }
+      } else {
+        consecutiveSilentRef.current = 0
+        console.log('SPEAKING - RMS:', rms.toFixed(5), 'above threshold:', SPEAK_THRESHOLD.toFixed(5))
       }
-      if (!s.capturing) s.firstAbove = 0
     }
   }
 
@@ -207,13 +195,14 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
     const recorder = mediaRecorderRef.current
     if (!recorder || recorder.state === 'inactive') return
 
-    speakState.current = { firstAbove: 0, lastAbove: 0, capturing: false }
     setListenStatus('processing')
     listenStatusRef.current = 'processing'
 
     recorder.onstop = async () => {
       const sid = sessionIdRef.current
       if (!sid || audioChunksRef.current.length === 0) {
+        consecutiveAboveRef.current = 0
+        consecutiveSilentRef.current = 0
         setListenStatus('listening')
         listenStatusRef.current = 'listening'
         return
@@ -224,6 +213,8 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
 
       // Discard audio that's too short to be real speech
       if (blob.size < MIN_AUDIO_BYTES) {
+        consecutiveAboveRef.current = 0
+        consecutiveSilentRef.current = 0
         setListenStatus('listening')
         listenStatusRef.current = 'listening'
         return
@@ -265,6 +256,8 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
           return
         }
       } catch {
+        consecutiveAboveRef.current = 0
+        consecutiveSilentRef.current = 0
         setErrorMsg('Failed to process audio. Please try again.')
         setListenStatus('listening')
         listenStatusRef.current = 'listening'
@@ -317,7 +310,8 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
     setStage('starting')
     setErrorMsg('')
     setProctorEndMsg('')
-    calibrationRef.current = { samples: [], done: false, threshold: BASE_THRESHOLD }
+    consecutiveAboveRef.current = 0
+    consecutiveSilentRef.current = 0
     shouldAutoEndRef.current = false
 
     console.log('Requesting microphone...')
