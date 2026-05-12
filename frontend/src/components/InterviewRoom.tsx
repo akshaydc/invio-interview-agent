@@ -15,9 +15,10 @@ type Props = {
   onDone: () => void
 }
 
-const SILENCE_THRESHOLD = 0.01
-const SPEAK_DEBOUNCE_MS = 300
-const SILENCE_TIMEOUT_MS = 1500
+const BASE_THRESHOLD = 0.03
+const SPEAK_DEBOUNCE_MS = 800
+const SILENCE_TIMEOUT_MS = 2500
+const MIN_AUDIO_BYTES = 5000
 const END_LOCKOUT_MS = 5 * 60 * 1000
 
 export default function InterviewRoom({ token, candidateName, jobRole, onDone }: Props) {
@@ -25,6 +26,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
   const [listenStatus, setListenStatus] = useState<ListenStatus>('listening')
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [errorMsg, setErrorMsg] = useState('')
+  const [proctorEndMsg, setProctorEndMsg] = useState('')
   const [volumeLevel, setVolumeLevel] = useState(0)
   const [violations, setViolations] = useState<Violation[]>([])
   const [showWarningModal, setShowWarningModal] = useState(false)
@@ -52,6 +54,9 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
   const speakState = useRef({ firstAbove: 0, lastAbove: 0, capturing: false })
   const startTimeRef = useRef(0)
   const endingRef = useRef(false)
+  const shouldAutoEndRef = useRef(false)
+  // Calibration: sample background noise for 2s after interview starts, set dynamic threshold
+  const calibrationRef = useRef({ samples: [] as number[], done: false, threshold: BASE_THRESHOLD })
 
   useEffect(() => { stageRef.current = stage }, [stage])
   useEffect(() => { listenStatusRef.current = listenStatus }, [listenStatus])
@@ -84,8 +89,9 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
       const next = [...prev, v]
       violationsRef.current = next
       if (next.length === 3) setShowWarningModal(true)
+      // Defer auto-end to next pollAudio tick to avoid calling async from inside state updater
       if (next.length >= 5 && stageRef.current === 'active') {
-        endInterview()
+        shouldAutoEndRef.current = true
       }
       return next
     })
@@ -133,6 +139,14 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
   }
 
   function pollAudio() {
+    // Check deferred violation auto-end first
+    if (shouldAutoEndRef.current && stageRef.current === 'active' && !endingRef.current) {
+      shouldAutoEndRef.current = false
+      setProctorEndMsg('Interview ended due to proctoring violations.')
+      endInterview()
+      return
+    }
+
     const analyser = analyserRef.current
     if (!analyser) return
     if (isAISpeakingRef.current) { setVolumeLevel(0); return }
@@ -141,12 +155,28 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
     const buf = new Float32Array(analyser.fftSize)
     analyser.getFloatTimeDomainData(buf)
     const rms = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length)
-    setVolumeLevel(Math.min(rms / SILENCE_THRESHOLD, 1))
 
+    const cal = calibrationRef.current
+    setVolumeLevel(Math.min(rms / cal.threshold, 1))
+
+    // Calibrate background noise during the first 2 seconds
+    if (!cal.done) {
+      cal.samples.push(rms)
+      if (Date.now() - startTimeRef.current >= 2000) {
+        const avg = cal.samples.length > 0
+          ? cal.samples.reduce((a, b) => a + b, 0) / cal.samples.length
+          : 0
+        cal.threshold = Math.max(BASE_THRESHOLD, avg * 2)
+        cal.done = true
+      }
+      return
+    }
+
+    const threshold = cal.threshold
     const now = Date.now()
     const s = speakState.current
 
-    if (rms > SILENCE_THRESHOLD) {
+    if (rms > threshold) {
       if (s.firstAbove === 0) s.firstAbove = now
       s.lastAbove = now
       if (!s.capturing && now - s.firstAbove >= SPEAK_DEBOUNCE_MS) {
@@ -180,6 +210,13 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
       }
       const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
       audioChunksRef.current = []
+
+      // Discard audio that's too short to be real speech
+      if (blob.size < MIN_AUDIO_BYTES) {
+        setListenStatus('listening')
+        listenStatusRef.current = 'listening'
+        return
+      }
 
       try {
         const fd = new FormData()
@@ -268,6 +305,9 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
   async function startInterview() {
     setStage('starting')
     setErrorMsg('')
+    setProctorEndMsg('')
+    calibrationRef.current = { samples: [], done: false, threshold: BASE_THRESHOLD }
+    shouldAutoEndRef.current = false
 
     const stream = await (async () => {
       try { return await navigator.mediaDevices.getUserMedia({ audio: true, video: true }) } catch { /* fall through */ }
@@ -332,19 +372,36 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
     setStage('ending')
     stageRef.current = 'ending'
     cleanup()
-    try {
-      await axios.post(
-        `${API}/session/${sid}/end`,
-        { violations: violationsRef.current },
-        { headers: { 'X-Auth-Token': token } }
-      )
-      onDone()
-    } catch {
-      endingRef.current = false
-      setErrorMsg('Failed to end session. Please try again.')
-      setStage('active')
-      stageRef.current = 'active'
+
+    const doEnd = async (): Promise<boolean> => {
+      try {
+        await axios.post(
+          `${API}/session/${sid}/end`,
+          { violations: violationsRef.current },
+          { headers: { 'X-Auth-Token': token } }
+        )
+        return true
+      } catch {
+        return false
+      }
     }
+
+    if (await doEnd()) {
+      onDone()
+      return
+    }
+
+    // Retry once after 2 seconds
+    setTimeout(async () => {
+      if (await doEnd()) {
+        onDone()
+      } else {
+        endingRef.current = false
+        setErrorMsg('Failed to end session. Please try again.')
+        setStage('active')
+        stageRef.current = 'active'
+      }
+    }, 2000)
   }
 
   const lockoutMins = Math.floor(lockoutSecsLeft / 60)
@@ -470,6 +527,11 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
             )}
           </div>
 
+          {proctorEndMsg && (
+            <p style={{ color: 'var(--red)', fontSize: '0.9rem', textAlign: 'center', fontWeight: 500 }}>
+              {proctorEndMsg}
+            </p>
+          )}
           {errorMsg && <p className="interview-error">{errorMsg}</p>}
 
           <button

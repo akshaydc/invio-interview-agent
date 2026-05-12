@@ -434,13 +434,13 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>CT Number</th>
-                      <th>Job Role</th>
-                      <th>Match %</th>
-                      <th>Rec.</th>
-                      <th>Status</th>
-                      <th>Action</th>
+                      <th style={{ minWidth: 140 }}>Name</th>
+                      <th style={{ minWidth: 120 }}>CT Number</th>
+                      <th style={{ minWidth: 160 }}>Job Role</th>
+                      <th style={{ minWidth: 90 }}>Match %</th>
+                      <th style={{ minWidth: 120 }}>Rec.</th>
+                      <th style={{ minWidth: 140 }}>Status</th>
+                      <th style={{ minWidth: 200 }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -461,7 +461,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                               {STATUS_LABELS[c.status] ?? c.status}
                             </span>
                           </td>
-                          <td onClick={e => e.stopPropagation()}>
+                          <td onClick={e => e.stopPropagation()} style={{ whiteSpace: 'nowrap' }}>
                             {c.status === 'applied' && (
                               <div style={{ display: 'flex', gap: 6 }}>
                                 <button

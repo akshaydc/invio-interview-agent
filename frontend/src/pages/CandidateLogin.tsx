@@ -49,15 +49,13 @@ export default function CandidateLogin({ onLogin, onBack }: Props) {
 
   return (
     <div className="login-page">
-      <div className="login-card">
+      <div className="login-wrapper">
+        <button className="btn-back-login" onClick={onBack}>
+          &#8592; Back to Job Listings
+        </button>
+        <div className="login-card">
         <h1 className="login-title">Invio</h1>
         <p className="login-subtitle">Candidate Login</p>
-        <button
-          style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.85rem', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
-          onClick={onBack}
-        >
-          &#8592; Back to job listings
-        </button>
         <div className="login-fields">
           <input
             className="role-input"
@@ -72,6 +70,7 @@ export default function CandidateLogin({ onLogin, onBack }: Props) {
         <button className="btn btn-primary login-btn" onClick={handleSubmit} disabled={loading}>
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
+        </div>
       </div>
     </div>
   )

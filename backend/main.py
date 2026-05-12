@@ -821,9 +821,10 @@ async def start_session(
                 model="claude-sonnet-4-6",
                 max_tokens=512,
                 system=(
-                    f"You are a professional interviewer for the role of {job_role}.{jd_context} "
-                    "Keep all questions short and crisp - maximum 2 sentences. "
-                    "No long introductions. Ask one direct question only. "
+                    f"You are a professional interviewer conducting an interview for the role of {job_role}.{jd_context} "
+                    "Begin by warmly welcoming the candidate by name if known, introduce yourself briefly as the AI interviewer, "
+                    "and then ask your first interview question. "
+                    "Keep the entire opening under 4 sentences total. "
                     "Do not use markdown formatting."
                 ),
                 messages=[{"role": "user", "content": "Please begin the interview."}],

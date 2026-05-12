@@ -37,37 +37,36 @@ export default function RecruiterLogin({ onLogin, onBack }: Props) {
 
   return (
     <div className="login-page">
-      <div className="login-card">
-        <h1 className="login-title">Invio</h1>
-        <p className="login-subtitle">Recruiter Login</p>
-        <button
-          style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.85rem', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
-          onClick={onBack}
-        >
-          &#8592; Back to job listings
+      <div className="login-wrapper">
+        <button className="btn-back-login" onClick={onBack}>
+          &#8592; Back to Job Listings
         </button>
-        <div className="login-fields">
-          <input
-            className="role-input"
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            onKeyDown={onKey}
-          />
-          <input
-            className="role-input"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            onKeyDown={onKey}
-          />
+        <div className="login-card">
+          <h1 className="login-title">Invio</h1>
+          <p className="login-subtitle">Recruiter Login</p>
+          <div className="login-fields">
+            <input
+              className="role-input"
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              onKeyDown={onKey}
+            />
+            <input
+              className="role-input"
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={onKey}
+            />
+          </div>
+          {error && <p className="error-text">{error}</p>}
+          <button className="btn btn-primary login-btn" onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign In'}
+          </button>
         </div>
-        {error && <p className="error-text">{error}</p>}
-        <button className="btn btn-primary login-btn" onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign In'}
-        </button>
       </div>
     </div>
   )

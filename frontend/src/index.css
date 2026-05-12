@@ -302,6 +302,33 @@ body {
   padding: 24px;
 }
 
+.login-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.btn-back-login {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-family: var(--font);
+  transition: background 0.15s;
+  text-align: left;
+  width: fit-content;
+}
+
+.btn-back-login:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
 .login-card {
   width: 100%;
   max-width: 400px;

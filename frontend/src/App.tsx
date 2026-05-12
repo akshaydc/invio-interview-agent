@@ -30,6 +30,7 @@ type Page =
   | 'candidate-interview'
 
 const WIDE_PAGES: Page[] = ['job-listings', 'job-detail', 'application-form']
+const DASH_PAGES: Page[] = ['recruiter-dashboard', 'recruiter-scorecard']
 
 function App() {
   const [page, setPage] = useState<Page>('job-listings')
@@ -58,7 +59,10 @@ function App() {
   }
 
   return (
-    <div className="app" style={WIDE_PAGES.includes(page) ? { maxWidth: '1100px' } : {}}>
+    <div className="app" style={
+      DASH_PAGES.includes(page) ? { maxWidth: '1400px' } :
+      WIDE_PAGES.includes(page) ? { maxWidth: '1100px' } : {}
+    }>
       {page === 'job-listings' && (
         <JobListings
           onSelectJob={handleSelectJob}

@@ -59,6 +59,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
   const [touched, setTouched] = useState<Touched>({})
   const [loading, setLoading] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [duplicateError, setDuplicateError] = useState('')
   const [ctNumber, setCtNumber] = useState('')
 
   useEffect(() => {
@@ -105,7 +106,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
       setCtNumber(res.data.ct_number)
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
-        setSubmitError('You have already applied for this position. Please check your email for your CT number.')
+        setDuplicateError('You have already applied for this position. Please check your email for your CT number.')
       } else {
         const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Submission failed.' : 'Submission failed.'
         setSubmitError(String(msg))
@@ -152,6 +153,20 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
         <button className="btn btn-secondary" onClick={onBack}>Back</button>
       </div>
 
+      {duplicateError && (
+        <div style={{
+          background: 'rgba(248,113,113,0.1)',
+          border: '1px solid rgba(248,113,113,0.3)',
+          borderRadius: 8,
+          padding: '14px 18px',
+          color: 'var(--red)',
+          fontSize: '0.9rem',
+          lineHeight: 1.6,
+        }}>
+          {duplicateError}
+        </div>
+      )}
+
       <div className="card">
         <h3 style={{ marginBottom: 20, color: 'var(--text)' }}>Your Details</h3>
         <div className="form-grid">
@@ -177,7 +192,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
               type="email"
               placeholder="jane@example.com"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={e => { setEmail(e.target.value); setDuplicateError('') }}
               onBlur={() => touch('email')}
             />
             {err('email') && <span className="field-error">{err('email')}</span>}
@@ -292,7 +307,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
           className="btn btn-primary"
           style={{ marginTop: 20 }}
           onClick={handleSubmit}
-          disabled={loading || !isValid}
+          disabled={loading || !isValid || !!duplicateError}
           title={!isValid ? 'Please fill in all required fields correctly' : undefined}
         >
           {loading ? 'Submitting...' : 'Submit Application'}
