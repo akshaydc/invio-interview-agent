@@ -728,15 +728,26 @@ async def match_resume_to_jobs(
                             "You are a recruitment AI. Analyse this resume "
                             "and match it against these job openings. "
                             "For each job calculate a match percentage. "
-                            "Also extract from the resume top skills, "
+                            "Also extract from the resume: top skills, "
                             "years of experience, current role, education. "
+                            "Also extract contact information if present in the resume:\n"
+                            "- full_name: candidate's full name if found, else \"\"\n"
+                            "- email: email address if found, else \"\"\n"
+                            "- phone: phone number if found, else \"\"\n"
+                            "- linkedin: LinkedIn URL if found, else \"\"\n"
+                            "- location: city/location if found, else \"\"\n\n"
                             "Return ONLY valid JSON with no markdown:\n"
                             "{\n"
                             '  "candidate_profile": {\n'
                             '    "skills": ["skill1", "skill2"],\n'
                             '    "experience_years": 4,\n'
                             '    "current_role": "...",\n'
-                            '    "education": "..."\n'
+                            '    "education": "...",\n'
+                            '    "full_name": "...",\n'
+                            '    "email": "...",\n'
+                            '    "phone": "...",\n'
+                            '    "linkedin": "...",\n'
+                            '    "location": "..."\n'
                             "  },\n"
                             '  "matches": [\n'
                             "    {\n"

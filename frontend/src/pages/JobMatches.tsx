@@ -17,6 +17,20 @@ export type CandidateProfile = {
   experience_years: number
   current_role: string
   education: string
+  full_name?: string
+  email?: string
+  phone?: string
+  linkedin?: string
+  location?: string
+}
+
+export type PrefillInfo = {
+  name?: string
+  email?: string
+  phone?: string
+  linkedin_url?: string
+  current_role?: string
+  location?: string
 }
 
 export type CandidateInfo = {
@@ -38,7 +52,7 @@ export type ResumeMatchResult = {
 
 type Props = {
   matchResult: ResumeMatchResult
-  onApply: (jobId: string, jobTitle: string, matchData: JobMatch) => void
+  onApply: (jobId: string, jobTitle: string, matchData: JobMatch, prefill: PrefillInfo) => void
   onBrowseAll: () => void
   onCandidateLoginClick: () => void
   onRecruiterLoginClick: () => void
@@ -175,7 +189,20 @@ export default function JobMatches({ matchResult, onApply, onBrowseAll, onCandid
                 <button
                   className="btn btn-primary"
                   style={{ marginTop: 4, width: '100%' }}
-                  onClick={() => onApply(m.job_id, m.job_title, m)}
+                  onClick={() => {
+                    const cp = matchResult.candidate_profile
+                    const ci = matchResult.candidate_info
+                    const prefillData: PrefillInfo = {
+                      name: cp?.full_name || ci?.name || '',
+                      email: cp?.email || ci?.email || '',
+                      phone: cp?.phone || ci?.phone || '',
+                      linkedin_url: cp?.linkedin || ci?.linkedin_url || '',
+                      current_role: cp?.current_role || ci?.current_role || '',
+                      location: cp?.location || ci?.location || '',
+                    }
+                    console.log('Prefill data:', prefillData)
+                    onApply(m.job_id, m.job_title, m, prefillData)
+                  }}
                 >
                   Apply Now
                 </button>

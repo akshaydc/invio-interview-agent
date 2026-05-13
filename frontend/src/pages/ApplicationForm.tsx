@@ -89,6 +89,17 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
   const [ctNumber, setCtNumber] = useState('')
 
   useEffect(() => {
+    if (!prefill) return
+    console.log('Setting prefill:', prefill)
+    if (prefill.name) setName(prefill.name)
+    if (prefill.email) setEmail(prefill.email)
+    if (prefill.phone) setPhone(prefill.phone)
+    if (prefill.linkedinUrl) setLinkedinUrl(prefill.linkedinUrl)
+    if (prefill.currentRole) setCurrentRole(prefill.currentRole)
+    if (prefill.location) setLocation(prefill.location)
+  }, [prefill])
+
+  useEffect(() => {
     if (!ctNumber) return
     const timer = setTimeout(() => onApplied(), 4000)
     return () => clearTimeout(timer)

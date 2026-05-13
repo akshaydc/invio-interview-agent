@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import LandingPage from './pages/LandingPage'
 import JobListings, { type Job } from './pages/JobListings'
-import JobMatches, { type ResumeMatchResult, type JobMatch } from './pages/JobMatches'
+import JobMatches, { type ResumeMatchResult, type JobMatch, type PrefillInfo } from './pages/JobMatches'
 import JobDetail from './pages/JobDetail'
 import ApplicationForm from './pages/ApplicationForm'
 import CandidateLogin from './pages/CandidateLogin'
@@ -83,18 +83,17 @@ function App() {
     setPage('job-matches')
   }
 
-  function handleApplyFromMatch(jobId: string, jobTitle: string, matchData: JobMatch) {
-    const info = resumeMatch?.candidate_info
+  function handleApplyFromMatch(jobId: string, jobTitle: string, matchData: JobMatch, prefillData: PrefillInfo) {
     setApplicationPrefill({
       jobId,
       jobTitle,
       resumeFile: resumeMatch!.resume_file,
-      name: info?.name || undefined,
-      email: info?.email || undefined,
-      phone: info?.phone || undefined,
-      linkedinUrl: info?.linkedin_url || undefined,
-      currentRole: info?.current_role || resumeMatch?.candidate_profile.current_role || undefined,
-      location: info?.location || undefined,
+      name: prefillData.name || undefined,
+      email: prefillData.email || undefined,
+      phone: prefillData.phone || undefined,
+      linkedinUrl: prefillData.linkedin_url || undefined,
+      currentRole: prefillData.current_role || undefined,
+      location: prefillData.location || undefined,
       matchData,
     })
     setPage('application-form')
