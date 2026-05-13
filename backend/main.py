@@ -930,14 +930,14 @@ async def process_audio(session_id: str, audio: UploadFile = File(...)) -> Respo
 
                 client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
                 response = await client.messages.create(
-                    model="claude-sonnet-4-6",
-                    max_tokens=512,
+                    model="claude-haiku-4-5-20251001",
+                    max_tokens=150,
                     system=(
                         f"You are a professional interviewer for {job_role}. "
                         + (f"Job description: {job_description}. " if job_description else "")
                         + f"You have asked {n_questions} questions so far. Ask a relevant "
                         "follow-up question based on the candidate's answers. "
-                        "Keep all questions short and crisp - maximum 2 sentences. "
+                        "Keep your response to ONE short sentence only. Maximum 20 words. "
                         "No long introductions or preambles. Ask one direct question only. "
                         "Do not use markdown formatting."
                     ),

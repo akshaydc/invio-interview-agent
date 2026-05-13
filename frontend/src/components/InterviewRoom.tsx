@@ -148,8 +148,8 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
 
   async function startContinuousRecording(): Promise<() => void> {
     const THRESHOLD = 0.015
-    const SILENCE_DURATION = 2500
-    const MIN_SPEECH_DURATION = 800
+    const SILENCE_DURATION = 1200
+    const MIN_SPEECH_DURATION = 400
 
     console.log('Requesting microphone...')
     let stream: MediaStream
@@ -265,7 +265,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
     }
 
     console.log('Audio detection started automatically')
-    const intervalId = setInterval(tick, 100)
+    const intervalId = setInterval(tick, 50)
 
     return () => {
       clearInterval(intervalId)
