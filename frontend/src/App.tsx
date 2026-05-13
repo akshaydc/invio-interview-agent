@@ -26,7 +26,12 @@ type ApplicationPrefill = {
   jobId: string
   jobTitle: string
   resumeFile: File
+  name?: string
+  email?: string
+  phone?: string
+  linkedinUrl?: string
   currentRole?: string
+  location?: string
   matchData?: JobMatch
 }
 
@@ -79,11 +84,17 @@ function App() {
   }
 
   function handleApplyFromMatch(jobId: string, jobTitle: string, matchData: JobMatch) {
+    const info = resumeMatch?.candidate_info
     setApplicationPrefill({
       jobId,
       jobTitle,
       resumeFile: resumeMatch!.resume_file,
-      currentRole: resumeMatch?.candidate_profile.current_role,
+      name: info?.name || undefined,
+      email: info?.email || undefined,
+      phone: info?.phone || undefined,
+      linkedinUrl: info?.linkedin_url || undefined,
+      currentRole: info?.current_role || resumeMatch?.candidate_profile.current_role || undefined,
+      location: info?.location || undefined,
       matchData,
     })
     setPage('application-form')
@@ -147,7 +158,12 @@ function App() {
           }}
           prefill={applicationPrefill ? {
             resumeFile: applicationPrefill.resumeFile,
+            name: applicationPrefill.name,
+            email: applicationPrefill.email,
+            phone: applicationPrefill.phone,
+            linkedinUrl: applicationPrefill.linkedinUrl,
             currentRole: applicationPrefill.currentRole,
+            location: applicationPrefill.location,
             matchData: applicationPrefill.matchData,
           } : undefined}
         />
