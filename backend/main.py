@@ -554,6 +554,26 @@ async def get_candidate_scorecard(
     return {"candidate": candidate, "scorecard": scorecard}
 
 
+@app.get("/recruiter/candidates/{ct_number}/resume")
+async def get_candidate_resume(
+    ct_number: str,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    resume_text = candidate.get("resume_text", "")
+    if not resume_text:
+        raise HTTPException(status_code=404, detail="No resume found for this candidate")
+    return {
+        "ct_number": ct_number,
+        "name": candidate.get("name", ""),
+        "resume_text": resume_text,
+        "resume_filename": candidate.get("resume_filename", ""),
+    }
+
+
 @app.get("/recruiter/candidates/{ct_number}/match")
 async def get_candidate_match(
     ct_number: str,
@@ -621,6 +641,149 @@ async def cancel_schedule(
 # Public job endpoints
 # ---------------------------------------------------------------------------
 
+@app.post("/resume/match")
+async def match_resume_to_jobs(
+    resume: UploadFile = File(...),
+    name: str = Form(""),
+    email: str = Form(""),
+    phone: str = Form(""),
+    linkedin_url: str = Form(""),
+    current_role: str = Form(""),
+    location: str = Form(""),
+) -> dict:
+    """Match uploaded resume against all open jobs using Claude AI."""
+    try:
+        audio_bytes = await resume.read()
+
+        resume_text = ""
+        if resume.filename and resume.filename.endswith(".pdf"):
+            try:
+                reader = PyPDF2.PdfReader(io.BytesIO(audio_bytes))
+                for page in reader.pages:
+                    resume_text += page.extract_text() or ""
+            except Exception as e:
+                print(f"PDF extraction error: {e}")
+                resume_text = audio_bytes.decode("utf-8", errors="ignore")
+        else:
+            resume_text = audio_bytes.decode("utf-8", errors="ignore")
+
+        if not resume_text.strip():
+            raise HTTPException(status_code=400, detail="Could not extract text from resume")
+
+        jobs = await _read_jobs()
+        open_jobs = [j for j in jobs if j.get("status") == "open"]
+
+        if not open_jobs:
+            return {
+                "candidate_profile": {
+                    "skills": [], "experience_years": 0,
+                    "current_role": current_role, "education": "",
+                },
+                "matches": [],
+                "resume_text": resume_text,
+            }
+
+        jobs_summary = json.dumps([{
+            "id": j["id"], "title": j["title"],
+            "description": j.get("description", ""),
+            "requirements": j.get("requirements", []),
+            "role_budget": j.get("role_budget", ""),
+            "preferred_notice": j.get("preferred_notice", ""),
+        } for j in open_jobs])
+
+        if ANTHROPIC_API_KEY:
+            try:
+                client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+                response = await client.messages.create(
+                    model="claude-sonnet-4-6",
+                    max_tokens=2000,
+                    messages=[{
+                        "role": "user",
+                        "content": (
+                            "You are a recruitment AI. Analyse this resume "
+                            "and match it against these job openings. "
+                            "For each job calculate a match percentage. "
+                            "Also extract from the resume top skills, "
+                            "years of experience, current role, education. "
+                            "Return ONLY valid JSON with no markdown:\n"
+                            "{\n"
+                            '  "candidate_profile": {\n'
+                            '    "skills": ["skill1", "skill2"],\n'
+                            '    "experience_years": 4,\n'
+                            '    "current_role": "...",\n'
+                            '    "education": "..."\n'
+                            "  },\n"
+                            '  "matches": [\n'
+                            "    {\n"
+                            '      "job_id": "...",\n'
+                            '      "job_title": "...",\n'
+                            '      "match_percentage": 88,\n'
+                            '      "match_reason": "...",\n'
+                            '      "strengths": ["..."],\n'
+                            '      "gaps": ["..."]\n'
+                            "    }\n"
+                            "  ]\n"
+                            "}\n\n"
+                            f"Resume:\n{resume_text[:3000]}\n\n"
+                            f"Jobs:\n{jobs_summary}"
+                        ),
+                    }],
+                )
+                raw = response.content[0].text
+                result = json.loads(_strip_code_fence(raw))
+
+                # Enrich matches with full job metadata
+                job_map = {j["id"]: j for j in open_jobs}
+                enriched = []
+                for m in result.get("matches", []):
+                    job = job_map.get(m.get("job_id", ""))
+                    if job:
+                        enriched.append({
+                            **m,
+                            "job_title": job["title"],
+                            "job_department": job.get("department", ""),
+                            "job_location": job.get("location", ""),
+                            "job_type": job.get("job_type", ""),
+                        })
+                result["matches"] = enriched
+                result["resume_text"] = resume_text
+                result["candidate_info"] = {
+                    "name": name, "email": email, "phone": phone,
+                    "linkedin_url": linkedin_url,
+                    "current_role": current_role, "location": location,
+                }
+                return result
+            except Exception as e:
+                print(f"Claude error in resume match: {e}")
+                traceback.print_exc()
+                raise HTTPException(status_code=500, detail=f"AI matching error: {str(e)}")
+        else:
+            return {
+                "candidate_profile": {
+                    "skills": ["Salesforce", "Python"], "experience_years": 3,
+                    "current_role": current_role, "education": "B.Tech",
+                },
+                "matches": [{
+                    "job_id": open_jobs[0]["id"],
+                    "job_title": open_jobs[0]["title"],
+                    "job_department": open_jobs[0].get("department", ""),
+                    "job_location": open_jobs[0].get("location", ""),
+                    "job_type": open_jobs[0].get("job_type", ""),
+                    "match_percentage": 75,
+                    "match_reason": "Good overall fit",
+                    "strengths": ["Relevant experience"],
+                    "gaps": ["Some skills missing"],
+                }],
+                "resume_text": resume_text,
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"FATAL ERROR in resume match: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/jobs")
 async def list_jobs() -> list:
     jobs = await _read_jobs()
@@ -648,6 +811,7 @@ async def apply_for_job(
     current_ctc: str = Form(""),
     expected_ctc: str = Form(""),
     notice_period: str = Form(""),
+    match_data: str = Form(""),
     resume: UploadFile | None = File(None),
 ) -> dict:
     jobs = await _read_jobs()
@@ -682,15 +846,32 @@ async def apply_for_job(
         raise HTTPException(status_code=500, detail="Could not generate unique CT number")
 
     resume_text = ""
+    resume_filename = ""
     if resume and resume.filename:
         file_bytes = await resume.read()
         resume_text = _extract_resume_text(file_bytes, resume.filename)
+        resume_filename = resume.filename
 
-    match_result = await _analyze_resume_match(
-        resume_text, job,
-        expected_ctc=expected_ctc,
-        notice_period=notice_period,
-    )
+    if match_data.strip():
+        try:
+            parsed = json.loads(match_data)
+            match_result = {
+                "match_percentage": parsed.get("match_percentage"),
+                "match_summary": parsed.get("match_reason", parsed.get("match_summary", "")),
+                "strengths": parsed.get("strengths", []),
+                "gaps": parsed.get("gaps", []),
+                "compensation_fit": parsed.get("compensation_fit"),
+                "notice_fit": parsed.get("notice_fit"),
+                "recommendation": parsed.get("recommendation"),
+            }
+        except Exception:
+            match_result = await _analyze_resume_match(
+                resume_text, job, expected_ctc=expected_ctc, notice_period=notice_period,
+            )
+    else:
+        match_result = await _analyze_resume_match(
+            resume_text, job, expected_ctc=expected_ctc, notice_period=notice_period,
+        )
 
     candidate = {
         "name": name,
@@ -707,6 +888,7 @@ async def apply_for_job(
         "job_role": job["title"],
         "job_description": job["description"],
         "resume_text": resume_text,
+        "resume_filename": resume_filename,
         "match_percentage": match_result.get("match_percentage"),
         "match_summary": match_result.get("match_summary"),
         "match_strengths": match_result.get("strengths", []),
