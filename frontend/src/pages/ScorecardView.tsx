@@ -15,6 +15,9 @@ type Scorecard = {
   red_flags: string[]
   transcript: TranscriptEntry[]
   violations?: Violation[]
+  note?: string
+  match_percentage?: number
+  recommendation?: string
 }
 
 function violationLabel(type: string) {
@@ -85,6 +88,20 @@ export default function ScorecardView({ token, ctNumber, onBack }: Props) {
 
       {scorecard && (
         <>
+          {scorecard.note && (
+            <div style={{
+              background: 'rgba(59,130,246,0.1)',
+              border: '1px solid rgba(59,130,246,0.3)',
+              borderRadius: 8,
+              padding: '12px 16px',
+              color: '#93c5fd',
+              fontSize: '0.9rem',
+              marginBottom: 16,
+            }}>
+              ℹ {scorecard.note}
+            </div>
+          )}
+
           <div className="scores-grid">
             {metrics.map((m) => (
               <div key={m.label} className="card score-card">
@@ -118,9 +135,11 @@ export default function ScorecardView({ token, ctNumber, onBack }: Props) {
             </div>
           </div>
 
-          {scorecard.transcript && scorecard.transcript.length > 0 && (
-            <div className="card">
-              <h3>Transcript</h3>
+          <div className="card">
+            <h3>Transcript</h3>
+            {!scorecard.transcript || scorecard.transcript.length === 0 ? (
+              <p className="muted" style={{ marginTop: 12 }}>No interview transcript available for this candidate.</p>
+            ) : (
               <div className="transcript-list" style={{ marginTop: 16 }}>
                 {scorecard.transcript.filter((e) => e.q).map((entry, i) => (
                   <div key={i} className="transcript-entry">
@@ -129,12 +148,16 @@ export default function ScorecardView({ token, ctNumber, onBack }: Props) {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="card">
             <h3>Proctoring Report</h3>
-            {!scorecard.violations || scorecard.violations.length === 0 ? (
+            {scorecard.note ? (
+              <p className="muted" style={{ marginTop: 12, fontSize: '0.95rem' }}>
+                No proctoring data available.
+              </p>
+            ) : !scorecard.violations || scorecard.violations.length === 0 ? (
               <p style={{ color: 'var(--green)', marginTop: 12, fontSize: '0.95rem' }}>
                 No violations detected — clean interview.
               </p>
