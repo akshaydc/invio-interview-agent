@@ -43,8 +43,8 @@ export default function LandingPage({ onMatchResult, onBrowseAll, onCandidateLog
     <div className="jobs-page">
       <nav className="jobs-nav">
         <div>
-          <span className="jobs-nav-logo">Invio</span>
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: 2 }}>AI Interview Portal</div>
+          <span className="jobs-nav-logo">ASTRA</span>
+          <div className="jobs-nav-tagline">AI Screening, Talent &amp; Recruitment Assistant</div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn btn-outline" onClick={onCandidateLoginClick}>Candidate Login</button>
@@ -53,7 +53,7 @@ export default function LandingPage({ onMatchResult, onBrowseAll, onCandidateLog
       </nav>
 
       <div className="jobs-hero">
-        <h1 style={{ fontSize: '2.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', fontWeight: 400, color: 'var(--text-primary)' }}>
           Find your perfect role
         </h1>
         <p style={{ color: 'var(--text-secondary)', marginTop: 12, fontSize: '1rem', maxWidth: 520, margin: '12px auto 0' }}>

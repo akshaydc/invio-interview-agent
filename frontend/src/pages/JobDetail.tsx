@@ -4,13 +4,17 @@ type Props = {
   job: Job
   onApply: () => void
   onBack: () => void
+  onHome?: () => void
 }
 
-export default function JobDetail({ job, onApply, onBack }: Props) {
+export default function JobDetail({ job, onApply, onBack, onHome }: Props) {
   return (
     <div className="page">
       <div className="dash-header">
-        <span className="jobs-nav-logo">Invio</span>
+        <div onClick={onHome} style={{ cursor: onHome ? 'pointer' : 'default' }}>
+          <div className="jobs-nav-logo">ASTRA</div>
+          <div className="jobs-nav-tagline">AI Screening, Talent &amp; Recruitment Assistant</div>
+        </div>
         <button className="btn btn-secondary" onClick={onBack}>Back to Jobs</button>
       </div>
 

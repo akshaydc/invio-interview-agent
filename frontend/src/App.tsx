@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import AstraIntro from './components/AstraIntro'
 import LandingPage from './pages/LandingPage'
 import JobListings, { type Job } from './pages/JobListings'
 import JobMatches, { type ResumeMatchResult, type JobMatch, type PrefillInfo } from './pages/JobMatches'
@@ -51,6 +52,7 @@ const WIDE_PAGES: Page[] = ['landing', 'job-listings', 'job-detail', 'applicatio
 const DASH_PAGES: Page[] = ['recruiter-dashboard', 'recruiter-scorecard']
 
 function App() {
+  const [introSeen, setIntroSeen] = useState(() => !!localStorage.getItem('astra_intro_seen'))
   const [page, setPage] = useState<Page>('landing')
   const [auth, setAuth] = useState<AuthInfo | null>(null)
   const [scorecardCt, setScorecardCt] = useState<string>('')
@@ -104,10 +106,17 @@ function App() {
   const isDash = DASH_PAGES.includes(page)
 
   return (
-    <div className="app" style={
-      isDash ? { maxWidth: '1400px' } :
-      isWide ? { maxWidth: '1100px' } : {}
-    }>
+    <>
+      {!introSeen && (
+        <AstraIntro onComplete={() => {
+          localStorage.setItem('astra_intro_seen', '1')
+          setIntroSeen(true)
+        }} />
+      )}
+      <div className="app" style={
+        isDash ? { maxWidth: '1400px', margin: '0 auto' } :
+        isWide ? {} : { maxWidth: '900px', margin: '0 auto', padding: '40px 24px 80px' }
+      }>
       {page === 'landing' && (
         <LandingPage
           onMatchResult={handleMatchResult}
@@ -122,6 +131,7 @@ function App() {
           onSelectJob={handleSelectJob}
           onCandidateLoginClick={() => setPage('candidate-login')}
           onRecruiterLoginClick={() => setPage('recruiter-login')}
+          onHome={() => setPage('landing')}
         />
       )}
 
@@ -133,6 +143,7 @@ function App() {
           onBrowseAll={() => setPage('job-listings')}
           onCandidateLoginClick={() => setPage('candidate-login')}
           onRecruiterLoginClick={() => setPage('recruiter-login')}
+          onHome={() => setPage('landing')}
         />
       )}
 
@@ -141,6 +152,7 @@ function App() {
           job={selectedJob}
           onApply={() => setPage('application-form')}
           onBack={() => setPage('job-listings')}
+          onHome={() => setPage('landing')}
         />
       )}
 
@@ -221,6 +233,7 @@ function App() {
 
       <AvatarGuide page={page} auth={auth} selectedJobTitle={selectedJob?.title} />
     </div>
+    </>
   )
 }
 

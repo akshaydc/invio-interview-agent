@@ -42,7 +42,7 @@ export default function RecruiterLogin({ onLogin, onBack }: Props) {
           &#8592; Back to Job Listings
         </button>
         <div className="login-card">
-          <h1 className="login-title">Invio</h1>
+          <h1 className="login-title" style={{ fontFamily: 'var(--font-display)' }}>ASTRA</h1>
           <p className="login-subtitle">Recruiter Login</p>
           <div className="login-fields">
             <input
