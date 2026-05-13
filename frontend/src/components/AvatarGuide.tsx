@@ -22,7 +22,7 @@ type Props = {
 
 const GUIDE_COPY: Record<GuidePage, string[]> = {
   'landing': [
-    'Welcome to Invio. Upload your resume to find the best matching roles, or browse all open positions.',
+    'Welcome to ASTRA. Upload your resume to find the best matching roles, or browse all open positions.',
     'I am Toby, your guide. I will help you navigate the hiring process from start to finish.',
   ],
   'job-matches': [
@@ -30,7 +30,7 @@ const GUIDE_COPY: Record<GuidePage, string[]> = {
     'Click Apply to start your application with your resume details pre-filled.',
   ],
   'job-listings': [
-    'Hi, I am Toby. I will guide you through Invio. Pick a role to see the details, or sign in if you already have a CT number.',
+    'Hi, I am Toby. I will guide you through ASTRA. Pick a role to see the details, or sign in if you already have a CT number.',
     'Recruiters can jump into the dashboard from the top right.',
   ],
   'job-detail': [
@@ -38,7 +38,7 @@ const GUIDE_COPY: Record<GuidePage, string[]> = {
     'Your resume helps the recruiter compare your profile against this job.',
   ],
   'application-form': [
-    'Fill in the essentials and attach your resume. Invio will generate your candidate tracking number after you apply.',
+    'Fill in the essentials and attach your resume. ASTRA will generate your candidate tracking number after you apply.',
     'Use your current details here so the recruiter can judge role, compensation, and notice fit.',
   ],
   'candidate-login': [
@@ -124,7 +124,7 @@ export default function AvatarGuide({ page, auth, selectedJobTitle }: Props) {
       <button
         className="avatar-guide avatar-guide--collapsed"
         onClick={() => setCollapsed(false)}
-        aria-label="Open Invio guide"
+        aria-label="Open ASTRA guide"
       >
         <img className="avatar-guide__image avatar-guide__image--collapsed" src={tobyAvatar} alt="" />
       </button>
@@ -132,7 +132,7 @@ export default function AvatarGuide({ page, auth, selectedJobTitle }: Props) {
   }
 
   return (
-    <aside className={`avatar-guide${speaking ? ' avatar-guide--speaking' : ''}`} aria-label="Invio guide">
+    <aside className={`avatar-guide${speaking ? ' avatar-guide--speaking' : ''}`} aria-label="ASTRA guide">
       <div className="avatar-guide__character" aria-hidden="true">
         <img className="avatar-guide__image" src={tobyAvatar} alt="" />
       </div>

@@ -96,8 +96,8 @@ export default function CandidateInterview({
   return (
     <div className="page">
       <div className="header">
-        <h1 className="title">Invio</h1>
-        <p className="subtitle">AI Interview Portal</p>
+        <h1 className="title" style={{ fontFamily: 'var(--font-display)' }}>ASTRA</h1>
+        <p className="subtitle">AI Screening, Talent &amp; Recruitment Assistant</p>
       </div>
       <div className="card center-card">
         <div style={{ fontSize: '2.5rem', lineHeight: 1 }}>⏳</div>

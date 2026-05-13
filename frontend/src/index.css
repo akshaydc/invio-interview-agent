@@ -39,7 +39,9 @@
   --primary-hover: #185FA5;
 
   --radius: 12px;
-  --font: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Instrument Serif', serif;
+  --font-ui: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font: var(--font-ui);
 }
 
 body {
@@ -49,18 +51,16 @@ body {
   font-size: 16px;
   line-height: 1.6;
   min-height: 100vh;
+  width: 100%;
 }
 
 #root {
+  width: 100%;
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
 }
 
 .app {
   width: 100%;
-  max-width: 860px;
-  padding: 40px 24px 80px;
 }
 
 /* ── Page layout ── */
@@ -859,27 +859,42 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 0;
+  padding: 16px 40px;
   border-bottom: 0.5px solid var(--border);
   background: var(--white);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .jobs-nav-logo {
+  font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--primary);
-  letter-spacing: -0.5px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  line-height: 1.1;
+}
+
+.jobs-nav-tagline {
+  font-size: 10px;
+  color: var(--primary-lighter);
+  font-family: var(--font-ui);
+  letter-spacing: 0.02em;
+  font-weight: 400;
 }
 
 .jobs-hero {
   text-align: center;
-  padding: 48px 24px 40px;
+  padding: 48px 40px 40px;
   background: var(--primary-bg);
   margin-bottom: 36px;
 }
 
 .jobs-hero .title {
-  font-size: 1.75rem;
+  font-family: var(--font-display);
+  font-size: 2rem;
   color: var(--text-primary);
 }
 

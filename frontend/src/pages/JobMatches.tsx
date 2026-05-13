@@ -57,6 +57,7 @@ type Props = {
   onBrowseAll: () => void
   onCandidateLoginClick: () => void
   onRecruiterLoginClick: () => void
+  onHome?: () => void
 }
 
 function pillStyle(pct: number): React.CSSProperties {
@@ -65,16 +66,16 @@ function pillStyle(pct: number): React.CSSProperties {
   return { background: '#FCEBEB', color: '#A32D2D' }
 }
 
-export default function JobMatches({ matchResult, appliedJobIds, onApply, onBrowseAll, onCandidateLoginClick, onRecruiterLoginClick }: Props) {
+export default function JobMatches({ matchResult, appliedJobIds, onApply, onBrowseAll, onCandidateLoginClick, onRecruiterLoginClick, onHome }: Props) {
   const { candidate_profile, matches } = matchResult
   const sortedMatches = [...matches].sort((a, b) => b.match_percentage - a.match_percentage)
 
   return (
     <div className="jobs-page">
       <nav className="jobs-nav">
-        <div>
-          <span className="jobs-nav-logo">Invio</span>
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: 2 }}>AI Interview Portal</div>
+        <div onClick={onHome} style={{ cursor: onHome ? 'pointer' : 'default' }}>
+          <div className="jobs-nav-logo">ASTRA</div>
+          <div className="jobs-nav-tagline">AI Screening, Talent &amp; Recruitment Assistant</div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn btn-outline" onClick={onCandidateLoginClick}>Candidate Login</button>

@@ -434,7 +434,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
       <div className="dash-header">
         <div>
           <h1 className="title" style={{ fontSize: '1.6rem' }}>Recruiter Dashboard</h1>
-          <p className="muted" style={{ marginTop: 2 }}>Invio · AI Interview Portal</p>
+          <p className="muted" style={{ marginTop: 2 }}>ASTRA · AI Screening, Talent &amp; Recruitment Assistant</p>
         </div>
         <div className="dash-header-actions">
           {tab === 'candidates' && (

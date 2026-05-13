@@ -188,7 +188,8 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
     <div className="page">
       <div className="dash-header">
         <div>
-          <span className="jobs-nav-logo">Invio</span>
+          <div className="jobs-nav-logo">ASTRA</div>
+          <div className="jobs-nav-tagline">AI Screening, Talent &amp; Recruitment Assistant</div>
           <p className="muted" style={{ marginTop: 4 }}>
             Applying for: <strong style={{ color: 'var(--text)' }}>{jobTitle}</strong>
           </p>
