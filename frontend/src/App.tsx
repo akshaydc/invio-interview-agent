@@ -6,9 +6,7 @@ import JobDetail from './pages/JobDetail'
 import ApplicationForm from './pages/ApplicationForm'
 import CandidateLogin from './pages/CandidateLogin'
 import RecruiterLogin from './pages/RecruiterLogin'
-import RecruiterDashboard from './pages/RecruiterDashboard'
-import CandidateInterview from './pages/CandidateInterview'
-import ScorecardView from './pages/ScorecardView'
+import AvatarGuide from './components/AvatarGuide'
 import './index.css'
 
 export type AuthInfo = {
@@ -193,6 +191,8 @@ function App() {
           onLogout={handleLogout}
         />
       )}
+
+      <AvatarGuide page={page} auth={auth} selectedJobTitle={selectedJob?.title} />
     </div>
   )
 }
