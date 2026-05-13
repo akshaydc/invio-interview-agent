@@ -260,6 +260,13 @@ async def _find_candidate_by_session(session_id: str) -> dict | None:
     return next((c for c in candidates if c.get("session_id") == session_id), None)
 
 
+def find_candidate_by_session(session_id: str) -> dict | None:
+    if not CANDIDATES_FILE.exists():
+        return None
+    candidates = json.loads(CANDIDATES_FILE.read_text())
+    return next((c for c in candidates if c.get("session_id") == session_id), None)
+
+
 def _build_claude_messages(transcript: list[dict]) -> list[dict]:
     messages = []
     for entry in transcript:
@@ -1021,25 +1028,31 @@ async def proctor_frame(session_id: str, body: ProctorRequest) -> dict:
 async def end_session(
     session_id: str,
     background_tasks: BackgroundTasks,
-    body: EndSessionRequest | None = None,
+    x_auth_token: str = Header(None),
 ) -> dict:
-    session = await _read_session(session_id)
-    job_role = session.get("job_role", "Software Engineer")
-    ct_number = session.get("ct_number")
+    try:
+        session = await _read_session(session_id)
+        job_role = session.get("job_role", "Software Engineer")
+        job_description = session.get("job_description", "")
 
-    if ANTHROPIC_API_KEY:
-        try:
-            transcript_text = "\n".join(
-                f"Q: {e['q']}\nA: {e['a']}"
-                for e in session["transcript"]
-                if e.get("q") and e.get("a")
-            )
-            client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-            response = await client.messages.create(
-                model="claude-sonnet-4-6",
-                max_tokens=1024,
-                messages=[
-                    {
+        print(f"END SESSION called for {session_id}")
+        print(f"Session keys: {list(session.keys())}")
+        print(f"Transcript length: {len(session.get('transcript', []))}")
+
+        if ANTHROPIC_API_KEY:
+            try:
+                transcript_text = "\n".join(
+                    f"Q: {e['q']}\nA: {e['a']}"
+                    for e in session["transcript"]
+                    if e.get("q") and e.get("a")
+                )
+                print(f"Transcript text length: {len(transcript_text)}")
+
+                client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+                response = await client.messages.create(
+                    model="claude-sonnet-4-6",
+                    max_tokens=1024,
+                    messages=[{
                         "role": "user",
                         "content": (
                             f"Based on this interview transcript for the role of {job_role}, "
@@ -1047,50 +1060,54 @@ async def end_session(
                             "communication (1-10), technical_depth (1-10), problem_solving (1-10), "
                             "cultural_fit (1-10), summary (string), strengths (array of strings), "
                             "red_flags (array of strings). "
-                            "Do not use markdown formatting. "
+                            "Return ONLY valid JSON, no markdown, no explanation. "
                             f"\n\nTranscript:\n{transcript_text}"
                         ),
-                    }
-                ],
-            )
-            raw = response.content[0].text
-            scorecard = json.loads(_strip_code_fence(raw))
-        except json.JSONDecodeError as e:
-            raise HTTPException(status_code=500, detail=f"Failed to parse Claude scorecard JSON: {e}")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Claude API error: {e}")
-    else:
-        scorecard = MOCK_SCORECARD.copy()
-
-    scorecard["transcript"] = session["transcript"]
-
-    client_violations = body.violations if body else []
-    server_violations = session.get("violations", [])
-    scorecard["violations"] = client_violations + server_violations
-
-    session["status"] = "complete"
-    session["scorecard"] = scorecard
-    await _write_session(session_id, session)
-
-    candidate_name = ""
-    try:
-        candidates = await _read_candidates()
-        updated = False
-        for c in candidates:
-            if c.get("session_id") == session_id:
-                c["status"] = "interview_complete"
-                candidate_name = c.get("name", "")
-                updated = True
-                break
-        if updated:
-            await _write_candidates(candidates)
+                    }],
+                )
+                raw = response.content[0].text
+                print(f"Claude response: {raw[:200]}")
+                scorecard = json.loads(_strip_code_fence(raw))
+            except Exception as e:
+                print(f"CLAUDE ERROR in end_session: {type(e).__name__}: {e}")
+                traceback.print_exc()
+                scorecard = MOCK_SCORECARD.copy()
         else:
-            print(f"Warning: no candidate linked to session {session_id}")
-    except Exception as e:
-        print(f"Warning: failed to update candidate status: {e}")
+            scorecard = MOCK_SCORECARD.copy()
 
-    background_tasks.add_task(send_scorecard_email, scorecard, job_role, session_id, candidate_name)
-    return scorecard
+        scorecard["transcript"] = session.get("transcript", [])
+        scorecard["violations"] = session.get("violations", [])
+        session["status"] = "complete"
+        session["scorecard"] = scorecard
+        await _write_session(session_id, session)
+        print(f"Session saved successfully")
+
+        candidate_name = ""
+        try:
+            candidate = find_candidate_by_session(session_id)
+            if candidate:
+                print(f"Found candidate: {candidate.get('ct_number')}")
+                candidates = await _read_candidates()
+                for c in candidates:
+                    if c.get("ct_number") == candidate.get("ct_number"):
+                        c["status"] = "interview_complete"
+                        candidate_name = c.get("name", "")
+                        break
+                await _write_candidates(candidates)
+                print("Candidate status updated to interview_complete")
+            else:
+                print(f"WARNING: No candidate found for session {session_id}")
+        except Exception as e:
+            print(f"WARNING: Could not update candidate status: {e}")
+            traceback.print_exc()
+
+        background_tasks.add_task(send_scorecard_email, scorecard, job_role, session_id, candidate_name)
+        return scorecard
+
+    except Exception as e:
+        print(f"FATAL ERROR in end_session: {type(e).__name__}: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"End session error: {str(e)}")
 
 
 @app.get("/session/{session_id}/scorecard")
