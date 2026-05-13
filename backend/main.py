@@ -287,6 +287,27 @@ def _strip_code_fence(text: str) -> str:
     return inner.strip()
 
 
+def _safe_parse_json(text: str) -> dict:
+    text = _strip_code_fence(text)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    try:
+        import re as _re
+        fixed = _re.sub(r"'([^']*)'", r'"\1"', text)
+        return json.loads(fixed)
+    except json.JSONDecodeError:
+        pass
+    try:
+        start = text.index('{')
+        end = text.rindex('}') + 1
+        return json.loads(text[start:end])
+    except (ValueError, json.JSONDecodeError):
+        pass
+    raise ValueError("Could not parse JSON from Claude response")
+
+
 def _extract_resume_text(file_bytes: bytes, filename: str) -> str:
     if filename.lower().endswith(".pdf"):
         if not _PYPDF2_AVAILABLE:
@@ -700,6 +721,10 @@ async def match_resume_to_jobs(
                     messages=[{
                         "role": "user",
                         "content": (
+                            "You must respond with ONLY a valid JSON object. "
+                            "Use double quotes for all keys and string values. "
+                            "No single quotes. No markdown. No explanation. "
+                            "Start your response with { and end with }.\n\n"
                             "You are a recruitment AI. Analyse this resume "
                             "and match it against these job openings. "
                             "For each job calculate a match percentage. "
@@ -730,7 +755,7 @@ async def match_resume_to_jobs(
                     }],
                 )
                 raw = response.content[0].text
-                result = json.loads(_strip_code_fence(raw))
+                result = _safe_parse_json(raw)
 
                 # Enrich matches with full job metadata
                 job_map = {j["id"]: j for j in open_jobs}
