@@ -6,11 +6,28 @@ const NOTICE_OPTIONS = ['Immediate', '15 days', '30 days', '60 days', '90 days']
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const LINKEDIN_RE = /^https:\/\/(www\.)?linkedin\.com\/in\/.+/
 
+type PrefillData = {
+  name?: string
+  email?: string
+  phone?: string
+  linkedinUrl?: string
+  currentRole?: string
+  location?: string
+  resumeFile?: File
+  matchData?: {
+    match_percentage?: number
+    match_reason?: string
+    strengths?: string[]
+    gaps?: string[]
+  }
+}
+
 type Props = {
   jobId: string
   jobTitle: string
   onBack: () => void
   onApplied: () => void
+  prefill?: PrefillData
 }
 
 type FieldErrors = Record<string, string>
@@ -26,6 +43,7 @@ function validate(
   currentCtc: string,
   expectedCtc: string,
   resumeFile: File | null,
+  resumePreloaded = false,
 ): FieldErrors {
   const e: FieldErrors = {}
   if (!name.trim() || name.trim().length < 2) e.name = 'Name must be at least 2 characters.'
@@ -39,7 +57,7 @@ function validate(
   if (!currentCtc.trim() || isNaN(ctcVal) || ctcVal <= 0) e.currentCtc = 'Enter a valid positive number.'
   const ectcVal = parseFloat(expectedCtc.replace(/[,\s]/g, ''))
   if (!expectedCtc.trim() || isNaN(ectcVal) || ectcVal <= 0) e.expectedCtc = 'Enter a valid positive number.'
-  if (!resumeFile) e.resumeFile = 'Please upload your resume (PDF or TXT).'
+  if (!resumeFile && !resumePreloaded) e.resumeFile = 'Please upload your resume (PDF or TXT).'
   return e
 }
 
@@ -50,17 +68,18 @@ function ctcWarning(currentCtc: string, expectedCtc: string): string {
   return ''
 }
 
-export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: Props) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [linkedinUrl, setLinkedinUrl] = useState('')
-  const [location, setLocation] = useState('')
-  const [currentRole, setCurrentRole] = useState('')
+export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, prefill }: Props) {
+  const [name, setName] = useState(prefill?.name ?? '')
+  const [email, setEmail] = useState(prefill?.email ?? '')
+  const [phone, setPhone] = useState(prefill?.phone ?? '')
+  const [linkedinUrl, setLinkedinUrl] = useState(prefill?.linkedinUrl ?? '')
+  const [location, setLocation] = useState(prefill?.location ?? '')
+  const [currentRole, setCurrentRole] = useState(prefill?.currentRole ?? '')
   const [currentCtc, setCurrentCtc] = useState('')
   const [expectedCtc, setExpectedCtc] = useState('')
   const [noticePeriod, setNoticePeriod] = useState('30 days')
-  const [resumeFile, setResumeFile] = useState<File | null>(null)
+  const [resumeFile, setResumeFile] = useState<File | null>(prefill?.resumeFile ?? null)
+  const resumePreloaded = !!prefill?.resumeFile
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [touched, setTouched] = useState<Touched>({})
@@ -75,7 +94,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
     return () => clearTimeout(timer)
   }, [ctNumber])
 
-  const errors = validate(name, email, phone, linkedinUrl, location, currentRole, currentCtc, expectedCtc, resumeFile)
+  const errors = validate(name, email, phone, linkedinUrl, location, currentRole, currentCtc, expectedCtc, resumeFile, resumePreloaded)
   const isValid = Object.keys(errors).length === 0
   const warning = ctcWarning(currentCtc, expectedCtc)
 
@@ -106,6 +125,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
       fd.append('expected_ctc', expectedCtc.trim())
       fd.append('notice_period', noticePeriod)
       if (resumeFile) fd.append('resume', resumeFile)
+      if (prefill?.matchData) fd.append('match_data', JSON.stringify(prefill.matchData))
 
       const res = await axios.post<{ ct_number: string; message: string }>(
         `${API}/jobs/${jobId}/apply`,
@@ -293,33 +313,41 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
 
           <div className="role-select-group">
             <label className="role-label">Upload Resume (PDF or TXT) *</label>
-            <div
-              className={`resume-upload-area${err('resumeFile') ? ' resume-upload-area--error' : ''}`}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.txt"
-                style={{ display: 'none' }}
-                onChange={e => {
-                  setResumeFile(e.target.files?.[0] ?? null)
-                  touch('resumeFile')
-                }}
-              />
-              {resumeFile ? (
-                <span style={{ color: 'var(--text)' }}>{resumeFile.name}</span>
-              ) : (
-                <span style={{ color: 'var(--muted)' }}>Click to choose a file&hellip;</span>
-              )}
-            </div>
+            {resumePreloaded && !resumeFile ? (
+              <div className="resume-upload-area" style={{ borderStyle: 'solid', borderColor: 'var(--primary-border)', background: 'var(--primary-bg)' }}>
+                <span style={{ color: 'var(--primary-light)', fontWeight: 500 }}>
+                  ✓ Resume already uploaded
+                </span>
+              </div>
+            ) : (
+              <div
+                className={`resume-upload-area${err('resumeFile') ? ' resume-upload-area--error' : ''}`}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.txt"
+                  style={{ display: 'none' }}
+                  onChange={e => {
+                    setResumeFile(e.target.files?.[0] ?? null)
+                    touch('resumeFile')
+                  }}
+                />
+                {resumeFile ? (
+                  <span style={{ color: 'var(--text)' }}>{resumeFile.name}</span>
+                ) : (
+                  <span style={{ color: 'var(--muted)' }}>Click to choose a file&hellip;</span>
+                )}
+              </div>
+            )}
             {err('resumeFile') && <span className="field-error">{err('resumeFile')}</span>}
             {resumeFile && (
               <button
                 style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer', padding: 0, marginTop: 4, textAlign: 'left' }}
                 onClick={() => { setResumeFile(null); touch('resumeFile'); if (fileInputRef.current) fileInputRef.current.value = '' }}
               >
-                Remove file
+                {resumePreloaded ? 'Replace with different file' : 'Remove file'}
               </button>
             )}
           </div>

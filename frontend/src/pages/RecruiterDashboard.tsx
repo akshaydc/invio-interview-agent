@@ -139,6 +139,8 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [editFormError, setEditFormError] = useState('')
   const [editSuccessMsg, setEditSuccessMsg] = useState('')
 
+  const [resumeModal, setResumeModal] = useState<{ name: string; text: string; filename: string } | null>(null)
+
   const [filterRole, setFilterRole] = useState('')
   const [filterSkill, setFilterSkill] = useState('')
   const [filterLocation, setFilterLocation] = useState('')
@@ -394,8 +396,41 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     }
   }
 
+  function handleViewResume(c: Candidate) {
+    if (c.resume_text) {
+      setResumeModal({ name: c.name, text: c.resume_text, filename: '' })
+    }
+  }
+
   return (
     <div className="page">
+      {resumeModal && (
+        <div className="modal-overlay" onClick={() => setResumeModal(null)}>
+          <div
+            className="card"
+            style={{ maxWidth: 680, width: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: 'var(--primary)', borderRadius: '12px 12px 0 0' }}>
+              <div>
+                <div style={{ color: '#fff', fontWeight: 600, fontSize: '1rem' }}>{resumeModal.name}</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>Resume</div>
+              </div>
+              <button
+                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontWeight: 600 }}
+                onClick={() => setResumeModal(null)}
+              >
+                Close
+              </button>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
+              <pre style={{ fontFamily: 'monospace', fontSize: '0.82rem', lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0 }}>
+                {resumeModal.text}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="dash-header">
         <div>
           <h1 className="title" style={{ fontSize: '1.6rem' }}>Recruiter Dashboard</h1>
@@ -754,6 +789,15 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                           onClick={e => { e.stopPropagation(); onViewScorecard(c.ct_number) }}
                                         >
                                           View Scorecard
+                                        </button>
+                                      )}
+                                      {c.resume_text && (
+                                        <button
+                                          className="btn btn-secondary"
+                                          style={{ fontSize: '0.875rem', padding: '8px 20px' }}
+                                          onClick={e => { e.stopPropagation(); handleViewResume(c) }}
+                                        >
+                                          View Resume
                                         </button>
                                       )}
                                     </div>
