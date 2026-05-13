@@ -57,6 +57,7 @@ function App() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [resumeMatch, setResumeMatch] = useState<ResumeMatchResult | null>(null)
   const [applicationPrefill, setApplicationPrefill] = useState<ApplicationPrefill | null>(null)
+  const [appliedJobIds, setAppliedJobIds] = useState<string[]>([])
 
   function handleLogin(info: AuthInfo) {
     setAuth(info)
@@ -127,6 +128,7 @@ function App() {
       {page === 'job-matches' && resumeMatch && (
         <JobMatches
           matchResult={resumeMatch}
+          appliedJobIds={appliedJobIds}
           onApply={handleApplyFromMatch}
           onBrowseAll={() => setPage('job-listings')}
           onCandidateLoginClick={() => setPage('candidate-login')}
@@ -151,9 +153,16 @@ function App() {
             else { setPage('job-detail') }
           }}
           onApplied={() => {
+            const fromMatch = !!applicationPrefill?.matchData
+            const appliedId = applicationPrefill?.jobId
             setApplicationPrefill(null)
-            setResumeMatch(null)
-            setPage('job-listings')
+            if (fromMatch && appliedId) {
+              setAppliedJobIds(prev => [...prev, appliedId])
+              setPage('job-matches')
+            } else {
+              setResumeMatch(null)
+              setPage('job-listings')
+            }
           }}
           prefill={applicationPrefill ? {
             resumeFile: applicationPrefill.resumeFile,
