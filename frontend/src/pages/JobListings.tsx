@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
+import PageLayout from '../components/PageLayout'
 
 export type Job = {
   id: string
@@ -34,21 +35,17 @@ export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecr
   }, [])
 
   return (
-    <div className="jobs-page">
-      <nav className="jobs-nav">
-        <div onClick={onHome} style={{ cursor: onHome ? 'pointer' : 'default' }}>
-          <div className="jobs-nav-logo">ASTRA</div>
-          <div className="jobs-nav-tagline">AI Screening, Talent &amp; Recruitment Assistant</div>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn btn-outline" onClick={onCandidateLoginClick}>Candidate Login</button>
-          <button className="btn btn-primary" onClick={onRecruiterLoginClick}>Recruiter Login</button>
-        </div>
-      </nav>
-
-      <div className="jobs-hero">
-        <h1 className="title">Open Positions</h1>
-        <p className="subtitle" style={{ marginTop: 8 }}>
+    <PageLayout
+      navbar={{
+        onHome,
+        showLoginButtons: true,
+        onCandidateLogin: onCandidateLoginClick,
+        onRecruiterLogin: onRecruiterLoginClick,
+      }}
+    >
+      <div>
+        <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--text)' }}>Open Positions</h1>
+        <p className="muted" style={{ marginTop: 6 }}>
           Join our team — find a role that fits your skills and ambitions.
         </p>
       </div>
@@ -82,6 +79,6 @@ export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecr
           ))}
         </div>
       )}
-    </div>
+    </PageLayout>
   )
 }

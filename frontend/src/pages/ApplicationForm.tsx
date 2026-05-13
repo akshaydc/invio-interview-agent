@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
+import PageLayout from '../components/PageLayout'
 
 const NOTICE_OPTIONS = ['Immediate', '15 days', '30 days', '60 days', '90 days']
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -185,16 +186,17 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
   }
 
   return (
-    <div className="page">
-      <div className="dash-header">
-        <div>
-          <div className="jobs-nav-logo">ASTRA</div>
-          <div className="jobs-nav-tagline">AI Screening, Talent &amp; Recruitment Assistant</div>
-          <p className="muted" style={{ marginTop: 4 }}>
-            Applying for: <strong style={{ color: 'var(--text)' }}>{jobTitle}</strong>
-          </p>
-        </div>
-        <button className="btn btn-secondary" onClick={onBack}>Back</button>
+    <PageLayout
+      navbar={{
+        rightContent: (
+          <button className="btn btn-secondary" onClick={onBack}>Back</button>
+        ),
+      }}
+    >
+      <div>
+        <p className="muted">
+          Applying for: <strong style={{ color: 'var(--text)' }}>{jobTitle}</strong>
+        </p>
       </div>
 
       {hasPrefill && (
@@ -395,6 +397,6 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
           {loading ? 'Submitting...' : 'Submit Application'}
         </button>
       </div>
-    </div>
+    </PageLayout>
   )
 }

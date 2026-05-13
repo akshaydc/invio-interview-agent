@@ -847,6 +847,87 @@ body {
   gap: 4px;
 }
 
+/* ── Shared Navbar ── */
+.navbar {
+  background: var(--white);
+  border-bottom: 0.5px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+}
+
+.navbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.navbar-logo {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.navbar-tagline {
+  font-size: 10px;
+  color: var(--primary-lighter);
+  font-family: var(--font-ui);
+  letter-spacing: 0.02em;
+  font-weight: 400;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Dashboard sub-header ── */
+.dash-subheader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ── Horizontal filter bar ── */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.filter-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 130px;
+  flex: 1;
+}
+
+.filter-bar-item--range {
+  min-width: 160px;
+}
+
 /* ── Job listings page ── */
 .jobs-page {
   display: flex;

@@ -48,8 +48,6 @@ type Page =
   | 'recruiter-scorecard'
   | 'candidate-interview'
 
-const WIDE_PAGES: Page[] = ['landing', 'job-listings', 'job-detail', 'application-form', 'job-matches']
-const DASH_PAGES: Page[] = ['recruiter-dashboard', 'recruiter-scorecard']
 
 function App() {
   const [introSeen, setIntroSeen] = useState(() => !!localStorage.getItem('astra_intro_seen'))
@@ -102,9 +100,6 @@ function App() {
     setPage('application-form')
   }
 
-  const isWide = WIDE_PAGES.includes(page)
-  const isDash = DASH_PAGES.includes(page)
-
   return (
     <>
       {!introSeen && (
@@ -113,10 +108,7 @@ function App() {
           setIntroSeen(true)
         }} />
       )}
-      <div className="app" style={
-        isDash ? { maxWidth: '1400px', margin: '0 auto' } :
-        isWide ? {} : { maxWidth: '900px', margin: '0 auto', padding: '40px 24px 80px' }
-      }>
+      <div className="app">
       {page === 'landing' && (
         <LandingPage
           onMatchResult={handleMatchResult}
