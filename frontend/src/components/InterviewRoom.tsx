@@ -4,7 +4,7 @@ import { API_BASE_URL as API } from '../config'
 
 type TranscriptEntry = { q: string; a: string; score: number | null }
 type Stage = 'ready' | 'starting' | 'active' | 'ending' | 'error'
-type ListenStatus = 'listening' | 'recording' | 'processing' | 'ai_speaking'
+type RecordingState = 'listening' | 'speaking' | 'processing' | 'ai_speaking'
 type Violation = { type: string; timestamp: string; reason?: string }
 
 type Props = {
@@ -15,13 +15,11 @@ type Props = {
   onDone: () => void
 }
 
-const SPEAK_THRESHOLD = 0.015
-const MIN_AUDIO_BYTES = 2000
 const END_LOCKOUT_MS = 5 * 60 * 1000
 
 export default function InterviewRoom({ token, candidateName, jobRole, onDone }: Props) {
   const [stage, setStage] = useState<Stage>('ready')
-  const [listenStatus, setListenStatus] = useState<ListenStatus>('listening')
+  const [recordingState, setRecordingState] = useState<RecordingState>('listening')
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [errorMsg, setErrorMsg] = useState('')
   const [proctorEndMsg, setProctorEndMsg] = useState('')
@@ -33,31 +31,23 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
   const [lockoutSecsLeft, setLockoutSecsLeft] = useState(END_LOCKOUT_MS / 1000)
 
   const sessionIdRef = useRef<string | null>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const audioContextRef = useRef<AudioContext | null>(null)
-  const analyserRef = useRef<AnalyserNode | null>(null)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const audioChunksRef = useRef<Blob[]>([])
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const audioCleanupRef = useRef<(() => void) | null>(null)
   const proctorIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const lockoutTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const isAISpeakingRef = useRef(false)
   const stageRef = useRef<Stage>('ready')
-  const listenStatusRef = useRef<ListenStatus>('listening')
+  const recordingStateRef = useRef<RecordingState>('listening')
   const violationsRef = useRef<Violation[]>([])
   const transcriptListRef = useRef<HTMLDivElement | null>(null)
   const currentQuestionRef = useRef<HTMLDivElement | null>(null)
   const startTimeRef = useRef(0)
   const endingRef = useRef(false)
   const shouldAutoEndRef = useRef(false)
-  const sampleCountRef = useRef(0)
-  const consecutiveAboveRef = useRef(0)
-  const consecutiveSilentRef = useRef(0)
 
   useEffect(() => { stageRef.current = stage }, [stage])
-  useEffect(() => { listenStatusRef.current = listenStatus }, [listenStatus])
+  useEffect(() => { recordingStateRef.current = recordingState }, [recordingState])
   useEffect(() => { violationsRef.current = violations }, [violations])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: addViolation is stable within the session
@@ -87,7 +77,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
       const next = [...prev, v]
       violationsRef.current = next
       if (next.length === 3) setShowWarningModal(true)
-      // Defer auto-end to next pollAudio tick to avoid calling async from inside state updater
       if (next.length >= 5 && stageRef.current === 'active') {
         shouldAutoEndRef.current = true
       }
@@ -98,177 +87,191 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
   function speakQuestion(text: string) {
     window.speechSynthesis.cancel()
     isAISpeakingRef.current = true
-    setListenStatus('ai_speaking')
-    listenStatusRef.current = 'ai_speaking'
+    setRecordingState('ai_speaking')
+    recordingStateRef.current = 'ai_speaking'
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = 0.85
     utterance.pitch = 1
     utterance.volume = 1
     utterance.onend = () => {
       isAISpeakingRef.current = false
-      consecutiveAboveRef.current = 0
-      consecutiveSilentRef.current = 0
-      setListenStatus('listening')
-      listenStatusRef.current = 'listening'
+      setRecordingState('listening')
+      recordingStateRef.current = 'listening'
     }
     window.speechSynthesis.speak(utterance)
   }
 
-  function setupAudio(stream: MediaStream) {
-    const ctx = new AudioContext()
-    console.log('AudioContext created, state:', ctx.state)
-    const analyser = ctx.createAnalyser()
-    analyser.fftSize = 256
-    const source = ctx.createMediaStreamSource(stream)
-    source.connect(analyser)
-    console.log('Analyser connected, fftSize:', analyser.fftSize)
-    audioContextRef.current = ctx
-    analyserRef.current = analyser
-  }
+  async function sendAudio(blob: Blob) {
+    const sid = sessionIdRef.current
+    if (!sid) return
+    setRecordingState('processing')
+    recordingStateRef.current = 'processing'
+    try {
+      const fd = new FormData()
+      fd.append('audio', blob, 'recording.webm')
+      const res = await axios.post<{ response: string; candidate_answer: string; auto_end?: boolean }>(
+        `${API}/session/${sid}/audio`,
+        fd,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      )
+      const nextQuestion = res.data.response
+      const candidateAnswer = res.data.candidate_answer
 
-  function startNewRecorder(stream: MediaStream) {
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : 'audio/webm'
-    const recorder = new MediaRecorder(stream, { mimeType })
-    audioChunksRef.current = []
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) audioChunksRef.current.push(e.data)
-    }
-    recorder.start(100)
-    mediaRecorderRef.current = recorder
-  }
+      setTranscript(prev => [
+        ...prev.slice(0, -1),
+        { ...prev[prev.length - 1], a: candidateAnswer },
+        { q: nextQuestion, a: '', score: null },
+      ])
 
-  function pollAudio() {
-    // Check deferred violation auto-end first
-    if (shouldAutoEndRef.current && stageRef.current === 'active' && !endingRef.current) {
-      shouldAutoEndRef.current = false
-      setProctorEndMsg('Interview ended due to proctoring violations.')
-      endInterview()
-      return
-    }
-
-    const analyser = analyserRef.current
-    if (!analyser) return
-    if (isAISpeakingRef.current) { setVolumeLevel(0); return }
-    if (listenStatusRef.current === 'processing') return
-
-    const dataArray = new Uint8Array(analyser.frequencyBinCount)
-    analyser.getByteTimeDomainData(dataArray)
-    let sum = 0
-    for (let i = 0; i < dataArray.length; i++) {
-      const val = (dataArray[i] - 128) / 128
-      sum += val * val
-    }
-    const rms = Math.sqrt(sum / dataArray.length)
-    setVolumeLevel(Math.min(rms / SPEAK_THRESHOLD, 1))
-
-    sampleCountRef.current++
-    if (sampleCountRef.current % 10 === 0) {
-      console.log('Current RMS volume:', rms.toFixed(5), 'Threshold:', SPEAK_THRESHOLD.toFixed(5))
-    }
-
-    if (listenStatusRef.current === 'listening') {
-      if (rms > SPEAK_THRESHOLD) {
-        consecutiveAboveRef.current++
-        if (consecutiveAboveRef.current >= 3) {
-          consecutiveAboveRef.current = 0
-          consecutiveSilentRef.current = 0
-          console.log('SPEAKING DETECTED - starting recording')
-          setListenStatus('recording')
-          listenStatusRef.current = 'recording'
-          if (streamRef.current) startNewRecorder(streamRef.current)
+      setTimeout(() => {
+        if (transcriptListRef.current) {
+          transcriptListRef.current.scrollTop = transcriptListRef.current.scrollHeight
         }
-      } else {
-        consecutiveAboveRef.current = 0
-      }
-    } else if (listenStatusRef.current === 'recording') {
-      if (rms < SPEAK_THRESHOLD) {
-        consecutiveSilentRef.current++
-        if (consecutiveSilentRef.current >= 20) {
-          consecutiveSilentRef.current = 0
-          stopAndSend()
+        const el = currentQuestionRef.current
+        if (el) {
+          el.classList.add('question-flash')
+          setTimeout(() => el.classList.remove('question-flash'), 1000)
         }
-      } else {
-        consecutiveSilentRef.current = 0
-        console.log('SPEAKING - RMS:', rms.toFixed(5), 'above threshold:', SPEAK_THRESHOLD.toFixed(5))
+      }, 0)
+
+      speakQuestion(nextQuestion)
+
+      if (res.data.auto_end) {
+        setTimeout(() => endInterview(), 4000)
       }
+    } catch {
+      setErrorMsg('Failed to process audio. Please try again.')
+      setRecordingState('listening')
+      recordingStateRef.current = 'listening'
     }
   }
 
-  function stopAndSend() {
-    const recorder = mediaRecorderRef.current
-    if (!recorder || recorder.state === 'inactive') return
+  async function startContinuousRecording(): Promise<() => void> {
+    const THRESHOLD = 0.015
+    const SILENCE_DURATION = 2500
+    const MIN_SPEECH_DURATION = 800
 
-    setListenStatus('processing')
-    listenStatusRef.current = 'processing'
-
-    recorder.onstop = async () => {
-      const sid = sessionIdRef.current
-      if (!sid || audioChunksRef.current.length === 0) {
-        consecutiveAboveRef.current = 0
-        consecutiveSilentRef.current = 0
-        setListenStatus('listening')
-        listenStatusRef.current = 'listening'
-        return
-      }
-      const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
-      audioChunksRef.current = []
-      console.log('SILENCE DETECTED - sending audio, size:', blob.size)
-
-      // Discard audio that's too short to be real speech
-      if (blob.size < MIN_AUDIO_BYTES) {
-        consecutiveAboveRef.current = 0
-        consecutiveSilentRef.current = 0
-        setListenStatus('listening')
-        listenStatusRef.current = 'listening'
-        return
-      }
-
+    console.log('Requesting microphone...')
+    let stream: MediaStream
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+      console.log('Microphone access granted (audio + video)')
+    } catch {
       try {
-        const fd = new FormData()
-        fd.append('audio', blob, 'recording.webm')
-        const res = await axios.post<{ response: string; candidate_answer: string; auto_end?: boolean }>(
-          `${API}/session/${sid}/audio`,
-          fd,
-          { headers: { 'Content-Type': 'multipart/form-data' } }
-        )
-
-        const nextQuestion = res.data.response
-        const candidateAnswer = res.data.candidate_answer
-
-        setTranscript(prev => [
-          ...prev.slice(0, -1),
-          { ...prev[prev.length - 1], a: candidateAnswer },
-          { q: nextQuestion, a: '', score: null },
-        ])
-
-        setTimeout(() => {
-          if (transcriptListRef.current) {
-            transcriptListRef.current.scrollTop = transcriptListRef.current.scrollHeight
-          }
-          const el = currentQuestionRef.current
-          if (el) {
-            el.classList.add('question-flash')
-            setTimeout(() => el.classList.remove('question-flash'), 1000)
-          }
-        }, 0)
-
-        speakQuestion(nextQuestion)
-
-        if (res.data.auto_end) {
-          setTimeout(() => endInterview(), 4000)
-          return
-        }
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        console.log('Microphone access granted (audio only)')
       } catch {
-        consecutiveAboveRef.current = 0
-        consecutiveSilentRef.current = 0
-        setErrorMsg('Failed to process audio. Please try again.')
-        setListenStatus('listening')
-        listenStatusRef.current = 'listening'
+        throw new Error('Microphone access is required to start the interview.')
       }
     }
-    recorder.stop()
+
+    if (stream.getVideoTracks().length > 0 && videoRef.current) {
+      videoRef.current.srcObject = stream
+      setCameraActive(true)
+    }
+
+    const audioCtx = new AudioContext()
+    const analyser = audioCtx.createAnalyser()
+    analyser.fftSize = 256
+    const source = audioCtx.createMediaStreamSource(stream)
+    source.connect(analyser)
+    const dataArray = new Uint8Array(analyser.frequencyBinCount)
+
+    console.log('AudioContext created, state:', audioCtx.state)
+    console.log('Analyser connected, fftSize:', analyser.fftSize)
+
+    let isRecording = false
+    let silenceStart: number | null = null
+    let speechStart: number | null = null
+    let mediaRecorder: MediaRecorder | null = null
+    let chunks: Blob[] = []
+
+    const tick = () => {
+      // Check deferred violation auto-end
+      if (shouldAutoEndRef.current && stageRef.current === 'active' && !endingRef.current) {
+        shouldAutoEndRef.current = false
+        setProctorEndMsg('Interview ended due to proctoring violations.')
+        endInterview()
+        return
+      }
+
+      if (isAISpeakingRef.current) {
+        setVolumeLevel(0)
+        return
+      }
+      if (recordingStateRef.current === 'processing') return
+
+      analyser.getByteTimeDomainData(dataArray)
+      let sum = 0
+      for (let i = 0; i < dataArray.length; i++) {
+        const val = (dataArray[i] - 128) / 128
+        sum += val * val
+      }
+      const rms = Math.sqrt(sum / dataArray.length)
+      setVolumeLevel(Math.min(rms / THRESHOLD, 1))
+
+      const now = Date.now()
+      const isSpeaking = rms > THRESHOLD
+
+      if (isSpeaking) {
+        silenceStart = null
+        if (!speechStart) speechStart = now
+
+        if (!isRecording && (now - speechStart) > MIN_SPEECH_DURATION) {
+          isRecording = true
+          chunks = []
+          mediaRecorder = new MediaRecorder(stream)
+          mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data) }
+          mediaRecorder.start(100)
+          setRecordingState('speaking')
+          recordingStateRef.current = 'speaking'
+          console.log('Recording started, RMS:', rms.toFixed(5))
+        } else if (isRecording) {
+          console.log('SPEAKING - RMS:', rms.toFixed(5), 'above threshold:', THRESHOLD.toFixed(5))
+        }
+      } else {
+        speechStart = null
+        if (isRecording) {
+          if (!silenceStart) silenceStart = now
+          if ((now - silenceStart) > SILENCE_DURATION) {
+            isRecording = false
+            silenceStart = null
+            const mr = mediaRecorder
+            if (mr && mr.state !== 'inactive') {
+              mr.onstop = async () => {
+                const blob = new Blob(chunks, { type: 'audio/webm' })
+                console.log('Sending audio, size:', blob.size)
+                if (blob.size > 2000) {
+                  await sendAudio(blob)
+                } else {
+                  console.log('Audio too small, discarding')
+                  setRecordingState('listening')
+                  recordingStateRef.current = 'listening'
+                }
+              }
+              mr.stop()
+            }
+          }
+        } else {
+          if (
+            recordingStateRef.current !== 'ai_speaking' &&
+            recordingStateRef.current !== 'listening'
+          ) {
+            setRecordingState('listening')
+            recordingStateRef.current = 'listening'
+          }
+        }
+      }
+    }
+
+    console.log('Audio detection started automatically')
+    const intervalId = setInterval(tick, 100)
+
+    return () => {
+      clearInterval(intervalId)
+      stream.getTracks().forEach(t => t.stop())
+      if (audioCtx.state !== 'closed') audioCtx.close()
+    }
   }
 
   function captureProctorFrame() {
@@ -315,37 +318,17 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
     setStage('starting')
     setErrorMsg('')
     setProctorEndMsg('')
-    consecutiveAboveRef.current = 0
-    consecutiveSilentRef.current = 0
     shouldAutoEndRef.current = false
 
-    console.log('Requesting microphone...')
-    const stream = await (async () => {
-      try {
-        const s = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-        console.log('Microphone access granted (audio + video)')
-        return s
-      } catch { /* fall through to audio-only */ }
-      try {
-        const s = await navigator.mediaDevices.getUserMedia({ audio: true })
-        console.log('Microphone access granted (audio only)')
-        return s
-      } catch { return null }
-    })()
-
-    if (!stream) {
-      setErrorMsg('Microphone access is required to start the interview.')
+    let audioCleanup: () => void
+    try {
+      audioCleanup = await startContinuousRecording()
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Microphone access is required to start the interview.')
       setStage('error')
       return
     }
-
-    streamRef.current = stream
-
-    if (stream.getVideoTracks().length > 0 && videoRef.current) {
-      videoRef.current.srcObject = stream
-      setCameraActive(true)
-    }
-    setupAudio(stream)
+    audioCleanupRef.current = audioCleanup
 
     try {
       const res = await axios.post<{ session_id: string; first_question: string }>(
@@ -357,9 +340,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
       setTranscript([{ q: res.data.first_question, a: '', score: null }])
       setStage('active')
       stageRef.current = 'active'
-      sampleCountRef.current = 0
-      console.log('Audio detection started automatically (session:', res.data.session_id, ')')
-      pollIntervalRef.current = setInterval(pollAudio, 100)
+      console.log('Session started:', res.data.session_id)
       proctorIntervalRef.current = setInterval(captureProctorFrame, 3000)
       startLockoutCountdown()
       speakQuestion(res.data.first_question)
@@ -371,16 +352,9 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
   }
 
   function cleanup() {
-    if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null }
+    if (audioCleanupRef.current) { audioCleanupRef.current(); audioCleanupRef.current = null }
     if (proctorIntervalRef.current) { clearInterval(proctorIntervalRef.current); proctorIntervalRef.current = null }
     if (lockoutTimerRef.current) { clearInterval(lockoutTimerRef.current); lockoutTimerRef.current = null }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()
-    }
-    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null }
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      audioContextRef.current.close()
-    }
     window.speechSynthesis.cancel()
     setCameraActive(false)
   }
@@ -412,7 +386,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
       return
     }
 
-    // Retry once after 2 seconds
     setTimeout(async () => {
       if (await doEnd()) {
         onDone()
@@ -511,23 +484,23 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
             {[0.35, 0.65, 1.0, 0.65, 0.35].map((scale, i) => (
               <div
                 key={i}
-                className={`audio-bar${listenStatus === 'recording' ? ' audio-bar--active' : ''}`}
+                className={`audio-bar${recordingState === 'speaking' ? ' audio-bar--active' : ''}`}
                 style={{ height: `${Math.max(4, volumeLevel * scale * 52)}px` }}
               />
             ))}
           </div>
 
           <div className="listen-status">
-            {listenStatus === 'listening' && <span className="listen-text">Listening…</span>}
-            {listenStatus === 'recording' && (
+            {recordingState === 'listening' && <span className="listen-text">Listening…</span>}
+            {recordingState === 'speaking' && (
               <span className="listen-text listen-text--recording">
                 <span className="rec-dot" /> Recording…
               </span>
             )}
-            {listenStatus === 'processing' && (
+            {recordingState === 'processing' && (
               <span className="listen-text listen-text--muted">Processing…</span>
             )}
-            {listenStatus === 'ai_speaking' && (
+            {recordingState === 'ai_speaking' && (
               <span className="listen-text listen-text--muted">AI is speaking…</span>
             )}
           </div>
@@ -558,7 +531,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
           <button
             className="btn btn-danger"
             onClick={() => endInterview()}
-            disabled={stage === 'ending' || listenStatus === 'processing' || endLockout}
+            disabled={stage === 'ending' || recordingState === 'processing' || endLockout}
           >
             {stage === 'ending'
               ? 'Ending…'
