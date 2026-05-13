@@ -145,6 +145,8 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
     }
   }
 
+  const hasPrefill = !!(prefill?.name || prefill?.email || prefill?.phone || prefill?.linkedinUrl || prefill?.currentRole || prefill?.location || prefill?.resumeFile)
+
   if (ctNumber) {
     return (
       <div className="login-page">
@@ -181,6 +183,20 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
         </div>
         <button className="btn btn-secondary" onClick={onBack}>Back</button>
       </div>
+
+      {hasPrefill && (
+        <div style={{
+          background: 'var(--primary-bg)',
+          border: '1px solid var(--primary-border)',
+          borderRadius: 8,
+          padding: '12px 16px',
+          color: 'var(--primary-light)',
+          fontSize: '0.875rem',
+          lineHeight: 1.6,
+        }}>
+          Your details have been pre-filled from your resume. Please review and complete any missing information.
+        </div>
+      )}
 
       {duplicateError && (
         <div style={{

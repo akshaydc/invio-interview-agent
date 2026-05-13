@@ -1,3 +1,5 @@
+import type React from 'react'
+
 export type JobMatch = {
   job_id: string
   job_title: string
@@ -17,8 +19,18 @@ export type CandidateProfile = {
   education: string
 }
 
+export type CandidateInfo = {
+  name: string
+  email: string
+  phone: string
+  linkedin_url: string
+  current_role: string
+  location: string
+}
+
 export type ResumeMatchResult = {
   candidate_profile: CandidateProfile
+  candidate_info?: CandidateInfo
   matches: JobMatch[]
   resume_text: string
   resume_file: File
@@ -32,20 +44,15 @@ type Props = {
   onRecruiterLoginClick: () => void
 }
 
-function matchColor(pct: number) {
-  if (pct >= 70) return 'var(--green)'
-  if (pct >= 50) return 'var(--amber)'
-  return 'var(--red)'
-}
-
-function matchBg(pct: number) {
-  if (pct >= 70) return 'var(--green-bg)'
-  if (pct >= 50) return 'var(--amber-bg)'
-  return 'var(--red-bg)'
+function pillStyle(pct: number): React.CSSProperties {
+  if (pct >= 70) return { background: '#E1F5EE', color: '#0F6E56' }
+  if (pct >= 50) return { background: '#FAEEDA', color: '#854F0B' }
+  return { background: '#FCEBEB', color: '#A32D2D' }
 }
 
 export default function JobMatches({ matchResult, onApply, onBrowseAll, onCandidateLoginClick, onRecruiterLoginClick }: Props) {
   const { candidate_profile, matches } = matchResult
+  const sortedMatches = [...matches].sort((a, b) => b.match_percentage - a.match_percentage)
 
   return (
     <div className="jobs-page">
@@ -123,22 +130,17 @@ export default function JobMatches({ matchResult, onApply, onBrowseAll, onCandid
           </div>
         ) : (
           <div className="jobs-grid">
-            {matches.map(m => (
+            {sortedMatches.map(m => (
               <div key={m.job_id} className="job-card" style={{ position: 'relative' }}>
-                {/* Match % badge */}
+                {/* Match % pill badge */}
                 <div style={{
                   position: 'absolute', top: 16, right: 16,
-                  width: 52, height: 52,
-                  borderRadius: '50%',
-                  background: matchBg(m.match_percentage),
-                  border: `2px solid ${matchColor(m.match_percentage)}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexDirection: 'column',
+                  ...pillStyle(m.match_percentage),
+                  fontSize: 15, fontWeight: 700,
+                  padding: '4px 12px', borderRadius: 20,
+                  lineHeight: 1.4,
                 }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 800, color: matchColor(m.match_percentage), lineHeight: 1 }}>
-                    {m.match_percentage}
-                  </span>
-                  <span style={{ fontSize: '0.55rem', color: matchColor(m.match_percentage), fontWeight: 600 }}>%</span>
+                  {m.match_percentage}%
                 </div>
 
                 <div>
