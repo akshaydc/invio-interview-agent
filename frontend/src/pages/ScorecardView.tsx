@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
+import PageLayout from '../components/PageLayout'
 
 type TranscriptEntry = { q: string; a: string; score: number | null }
 type Violation = { type: string; timestamp: string; reason?: string }
@@ -67,19 +68,20 @@ export default function ScorecardView({ token, ctNumber, onBack }: Props) {
     : []
 
   return (
-    <div className="page">
-      <div className="dash-header">
-        <div>
-          <button className="btn btn-secondary" onClick={onBack} style={{ marginBottom: 12 }}>
-            ← Back to Dashboard
-          </button>
-          <h1 className="title" style={{ fontSize: '1.6rem' }}>Scorecard</h1>
-          {candidate && (
-            <p className="muted">
-              {candidate.name} · <span style={{ fontFamily: 'monospace' }}>{candidate.ct_number}</span> · {candidate.job_role}
-            </p>
-          )}
-        </div>
+    <PageLayout
+      navbar={{
+        rightContent: (
+          <button className="btn btn-secondary" onClick={onBack}>← Back to Dashboard</button>
+        ),
+      }}
+    >
+      <div>
+        <h1 className="title" style={{ fontSize: '1.6rem' }}>Scorecard</h1>
+        {candidate && (
+          <p className="muted" style={{ marginTop: 4 }}>
+            {candidate.name} · <span style={{ fontFamily: 'monospace' }}>{candidate.ct_number}</span> · {candidate.job_role}
+          </p>
+        )}
       </div>
 
       {error && <div className="card center-card"><p className="error-text">{error}</p></div>}
@@ -96,7 +98,6 @@ export default function ScorecardView({ token, ctNumber, onBack }: Props) {
               padding: '12px 16px',
               color: 'var(--primary-light)',
               fontSize: '0.9rem',
-              marginBottom: 16,
             }}>
               ℹ {scorecard.note}
             </div>
@@ -184,6 +185,6 @@ export default function ScorecardView({ token, ctNumber, onBack }: Props) {
           </div>
         </>
       )}
-    </div>
+    </PageLayout>
   )
 }

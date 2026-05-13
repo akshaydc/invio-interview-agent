@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
+import Navbar from '../components/Navbar'
 
 const JOB_ROLES = [
   'Software Engineer',
@@ -403,7 +404,11 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   }
 
   return (
-    <div className="page">
+    <div>
+      <Navbar
+        rightContent={<button className="btn btn-secondary" onClick={onLogout}>Logout</button>}
+      />
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
       {resumeModal && (
         <div className="modal-overlay" onClick={() => setResumeModal(null)}>
           <div
@@ -431,11 +436,8 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
           </div>
         </div>
       )}
-      <div className="dash-header">
-        <div>
-          <h1 className="title" style={{ fontSize: '1.6rem' }}>Recruiter Dashboard</h1>
-          <p className="muted" style={{ marginTop: 2 }}>ASTRA · AI Screening, Talent &amp; Recruitment Assistant</p>
-        </div>
+      <div className="dash-subheader">
+        <h1 className="title" style={{ fontSize: '1.6rem' }}>Recruiter Dashboard</h1>
         <div className="dash-header-actions">
           {tab === 'candidates' && (
             <>
@@ -453,7 +455,6 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
               </button>
             </>
           )}
-          <button className="btn btn-secondary" onClick={onLogout}>Logout</button>
         </div>
       </div>
 
@@ -500,58 +501,55 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-            <div className="filter-sidebar">
-              <h4 style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, marginBottom: 20, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Filter Candidates
-              </h4>
-
-              <div className="filter-group">
-                <label className="role-label">Role</label>
-                <input className="role-input" placeholder="e.g. Salesforce" value={filterRole} onChange={e => setFilterRole(e.target.value)} />
-              </div>
-              <div className="filter-group">
-                <label className="role-label">Skill</label>
-                <input className="role-input" placeholder="e.g. Apex, React" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} />
-              </div>
-              <div className="filter-group">
-                <label className="role-label">Location</label>
-                <input className="role-input" placeholder="e.g. Bangalore" value={filterLocation} onChange={e => setFilterLocation(e.target.value)} />
-              </div>
-              <div className="filter-group">
-                <label className="role-label">Min Match %: {filterMinMatch}%</label>
-                <input type="range" min={0} max={100} value={filterMinMatch} onChange={e => setFilterMinMatch(Number(e.target.value))} style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary)' }} />
-              </div>
-              <div className="filter-group">
-                <label className="role-label">Recommendation</label>
-                <select className="role-select" value={filterRecommendation} onChange={e => setFilterRecommendation(e.target.value)}>
-                  <option>All</option>
-                  <option>Strong Hire</option>
-                  <option>Hire</option>
-                  <option>Consider</option>
-                  <option>Reject</option>
-                </select>
-              </div>
-              <div className="filter-group">
-                <label className="role-label">Status</label>
-                <select className="role-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-                  <option>All</option>
-                  <option>Applied</option>
-                  <option>Interview Scheduled</option>
-                  <option>Interview Complete</option>
-                  <option>Rejected</option>
-                </select>
-              </div>
+          <div className="filter-bar">
+            <div className="filter-bar-item">
+              <label className="role-label">Role</label>
+              <input className="role-input" placeholder="e.g. Salesforce" value={filterRole} onChange={e => setFilterRole(e.target.value)} />
+            </div>
+            <div className="filter-bar-item">
+              <label className="role-label">Skill</label>
+              <input className="role-input" placeholder="e.g. Apex, React" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} />
+            </div>
+            <div className="filter-bar-item">
+              <label className="role-label">Location</label>
+              <input className="role-input" placeholder="e.g. Bangalore" value={filterLocation} onChange={e => setFilterLocation(e.target.value)} />
+            </div>
+            <div className="filter-bar-item filter-bar-item--range">
+              <label className="role-label">Min Match: {filterMinMatch}%</label>
+              <input type="range" min={0} max={100} value={filterMinMatch} onChange={e => setFilterMinMatch(Number(e.target.value))} style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary)', marginTop: 4 }} />
+            </div>
+            <div className="filter-bar-item">
+              <label className="role-label">Recommendation</label>
+              <select className="role-select" value={filterRecommendation} onChange={e => setFilterRecommendation(e.target.value)}>
+                <option>All</option>
+                <option>Strong Hire</option>
+                <option>Hire</option>
+                <option>Consider</option>
+                <option>Reject</option>
+              </select>
+            </div>
+            <div className="filter-bar-item">
+              <label className="role-label">Status</label>
+              <select className="role-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                <option>All</option>
+                <option>Applied</option>
+                <option>Interview Scheduled</option>
+                <option>Interview Complete</option>
+                <option>Rejected</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
               <button
                 className="btn btn-secondary"
-                style={{ width: '100%', marginTop: 8, fontSize: '0.85rem', padding: '8px 0' }}
+                style={{ fontSize: '0.85rem', padding: '8px 16px', whiteSpace: 'nowrap' }}
                 onClick={() => { setFilterRole(''); setFilterSkill(''); setFilterLocation(''); setFilterMinMatch(0); setFilterRecommendation('All'); setFilterStatus('All') }}
               >
-                Clear Filters
+                Clear
               </button>
             </div>
+          </div>
 
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3 style={{ color: 'var(--text)' }}>
@@ -814,7 +812,6 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                 )}
               </div>
             </div>
-          </div>
         </>
       )}
 
@@ -1046,6 +1043,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
           </div>
         </>
       )}
+      </div>
     </div>
   )
 }

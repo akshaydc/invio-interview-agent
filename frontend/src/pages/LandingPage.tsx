@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
 import type { ResumeMatchResult } from './JobMatches'
+import PageLayout from '../components/PageLayout'
 
 type Props = {
   onMatchResult: (result: ResumeMatchResult) => void
@@ -40,19 +41,14 @@ export default function LandingPage({ onMatchResult, onBrowseAll, onCandidateLog
   }
 
   return (
-    <div className="jobs-page">
-      <nav className="jobs-nav">
-        <div>
-          <span className="jobs-nav-logo">ASTRA</span>
-          <div className="jobs-nav-tagline">AI Screening, Talent &amp; Recruitment Assistant</div>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn btn-outline" onClick={onCandidateLoginClick}>Candidate Login</button>
-          <button className="btn btn-primary" onClick={onRecruiterLoginClick}>Recruiter Login</button>
-        </div>
-      </nav>
-
-      <div className="jobs-hero">
+    <PageLayout
+      navbar={{
+        showLoginButtons: true,
+        onCandidateLogin: onCandidateLoginClick,
+        onRecruiterLogin: onRecruiterLoginClick,
+      }}
+    >
+      <div style={{ textAlign: 'center', padding: '24px 0 40px' }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', fontWeight: 400, color: 'var(--text-primary)' }}>
           Find your perfect role
         </h1>
@@ -67,7 +63,8 @@ export default function LandingPage({ onMatchResult, onBrowseAll, onCandidateLog
         gap: 24,
         maxWidth: 760,
         margin: '0 auto',
-        padding: '0 0 60px',
+        paddingBottom: 60,
+        width: '100%',
       }}>
         {/* Smart Match card */}
         <div className="card" style={{
@@ -153,6 +150,6 @@ export default function LandingPage({ onMatchResult, onBrowseAll, onCandidateLog
           </button>
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }

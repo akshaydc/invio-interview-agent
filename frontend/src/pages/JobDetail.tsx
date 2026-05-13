@@ -1,4 +1,5 @@
 import type { Job } from './JobListings'
+import PageLayout from '../components/PageLayout'
 
 type Props = {
   job: Job
@@ -9,15 +10,14 @@ type Props = {
 
 export default function JobDetail({ job, onApply, onBack, onHome }: Props) {
   return (
-    <div className="page">
-      <div className="dash-header">
-        <div onClick={onHome} style={{ cursor: onHome ? 'pointer' : 'default' }}>
-          <div className="jobs-nav-logo">ASTRA</div>
-          <div className="jobs-nav-tagline">AI Screening, Talent &amp; Recruitment Assistant</div>
-        </div>
-        <button className="btn btn-secondary" onClick={onBack}>Back to Jobs</button>
-      </div>
-
+    <PageLayout
+      navbar={{
+        onHome,
+        rightContent: (
+          <button className="btn btn-secondary" onClick={onBack}>Back to Jobs</button>
+        ),
+      }}
+    >
       <div className="card">
         <div style={{ marginBottom: 10 }}>
           <span className="job-dept-badge">{job.department}</span>
@@ -55,6 +55,6 @@ export default function JobDetail({ job, onApply, onBack, onHome }: Props) {
           Apply Now
         </button>
       </div>
-    </div>
+    </PageLayout>
   )
 }
