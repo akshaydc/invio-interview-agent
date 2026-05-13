@@ -3,9 +3,11 @@ import type { AuthInfo } from '../App'
 import tobyAvatar from '../assets/toby-avatar.svg'
 
 type GuidePage =
+  | 'landing'
   | 'job-listings'
   | 'job-detail'
   | 'application-form'
+  | 'job-matches'
   | 'candidate-login'
   | 'recruiter-login'
   | 'recruiter-dashboard'
@@ -19,6 +21,14 @@ type Props = {
 }
 
 const GUIDE_COPY: Record<GuidePage, string[]> = {
+  'landing': [
+    'Welcome to Invio. Upload your resume to find the best matching roles, or browse all open positions.',
+    'I am Toby, your guide. I will help you navigate the hiring process from start to finish.',
+  ],
+  'job-matches': [
+    'Here are the roles that match your profile. The higher the match percentage, the better the fit.',
+    'Click Apply to start your application with your resume details pre-filled.',
+  ],
   'job-listings': [
     'Hi, I am Toby. I will guide you through Invio. Pick a role to see the details, or sign in if you already have a CT number.',
     'Recruiters can jump into the dashboard from the top right.',
