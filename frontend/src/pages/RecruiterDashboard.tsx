@@ -654,7 +654,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                               color: c.match_percentage >= 70
                                                 ? 'var(--green)'
                                                 : c.match_percentage >= 50
-                                                ? '#f59e0b'
+                                                ? 'var(--amber)'
                                                 : 'var(--red)',
                                             }}
                                           >

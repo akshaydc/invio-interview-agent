@@ -90,11 +90,11 @@ export default function ScorecardView({ token, ctNumber, onBack }: Props) {
         <>
           {scorecard.note && (
             <div style={{
-              background: 'rgba(59,130,246,0.1)',
-              border: '1px solid rgba(59,130,246,0.3)',
+              background: 'var(--primary-bg)',
+              border: '1px solid var(--primary-border)',
               borderRadius: 8,
               padding: '12px 16px',
-              color: '#93c5fd',
+              color: 'var(--primary-light)',
               fontSize: '0.9rem',
               marginBottom: 16,
             }}>

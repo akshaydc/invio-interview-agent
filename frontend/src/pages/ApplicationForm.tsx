@@ -164,8 +164,8 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
 
       {duplicateError && (
         <div style={{
-          background: 'rgba(248,113,113,0.1)',
-          border: '1px solid rgba(248,113,113,0.3)',
+          background: 'var(--red-bg)',
+          border: '1px solid rgba(163,45,45,0.3)',
           borderRadius: 8,
           padding: '14px 18px',
           color: 'var(--red)',

@@ -498,10 +498,10 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
               </span>
             )}
             {recordingState === 'processing' && (
-              <span className="listen-text listen-text--muted">Processing…</span>
+              <span className="listen-text listen-text--processing">Processing…</span>
             )}
             {recordingState === 'ai_speaking' && (
-              <span className="listen-text listen-text--muted">AI is speaking…</span>
+              <span className="listen-text listen-text--ai">AI is speaking…</span>
             )}
           </div>
 
