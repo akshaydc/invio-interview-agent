@@ -15,7 +15,7 @@ type Props = {
   onDone: () => void
 }
 
-const SPEAK_THRESHOLD = 0.010
+const SPEAK_THRESHOLD = 0.015
 const MIN_AUDIO_BYTES = 2000
 const END_LOCKOUT_MS = 5 * 60 * 1000
 
@@ -118,7 +118,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
     const ctx = new AudioContext()
     console.log('AudioContext created, state:', ctx.state)
     const analyser = ctx.createAnalyser()
-    analyser.fftSize = 2048
+    analyser.fftSize = 256
     const source = ctx.createMediaStreamSource(stream)
     source.connect(analyser)
     console.log('Analyser connected, fftSize:', analyser.fftSize)
@@ -153,9 +153,14 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
     if (isAISpeakingRef.current) { setVolumeLevel(0); return }
     if (listenStatusRef.current === 'processing') return
 
-    const buf = new Float32Array(analyser.fftSize)
-    analyser.getFloatTimeDomainData(buf)
-    const rms = Math.sqrt(buf.reduce((s: number, v: number) => s + v * v, 0) / buf.length)
+    const dataArray = new Uint8Array(analyser.frequencyBinCount)
+    analyser.getByteTimeDomainData(dataArray)
+    let sum = 0
+    for (let i = 0; i < dataArray.length; i++) {
+      const val = (dataArray[i] - 128) / 128
+      sum += val * val
+    }
+    const rms = Math.sqrt(sum / dataArray.length)
     setVolumeLevel(Math.min(rms / SPEAK_THRESHOLD, 1))
 
     sampleCountRef.current++
