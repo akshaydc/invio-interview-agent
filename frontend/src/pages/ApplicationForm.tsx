@@ -33,6 +33,8 @@ type Props = {
 type FieldErrors = Record<string, string>
 type Touched = Record<string, boolean>
 
+const PHONE_RE = /^[+\d\s\-()]{7,20}$/
+
 function validate(
   name: string,
   email: string,
@@ -48,9 +50,8 @@ function validate(
   const e: FieldErrors = {}
   if (!name.trim() || name.trim().length < 2) e.name = 'Name must be at least 2 characters.'
   if (!email.trim() || !EMAIL_RE.test(email.trim())) e.email = 'Please enter a valid email address.'
-  const phoneDigits = phone.replace(/[\s\-]/g, '')
-  if (!phoneDigits || !/^\d{10}$/.test(phoneDigits)) e.phone = 'Phone must be exactly 10 digits.'
-  if (!linkedinUrl.trim() || !LINKEDIN_RE.test(linkedinUrl.trim())) e.linkedinUrl = 'Must start with https://linkedin.com/in/ or https://www.linkedin.com/in/'
+  if (!phone.trim() || !PHONE_RE.test(phone.trim())) e.phone = 'Please enter a valid phone number.'
+  if (linkedinUrl.trim() && !LINKEDIN_RE.test(linkedinUrl.trim())) e.linkedinUrl = 'Must start with https://linkedin.com/in/ or https://www.linkedin.com/in/'
   if (!location.trim()) e.location = 'Current location is required.'
   if (!currentRole.trim()) e.currentRole = 'Current role is required.'
   const ctcVal = parseFloat(currentCtc.replace(/[,\s]/g, ''))
@@ -118,7 +119,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
   }
 
   async function handleSubmit() {
-    const allTouched: Touched = { name: true, email: true, phone: true, linkedinUrl: true, location: true, currentRole: true, currentCtc: true, expectedCtc: true, resumeFile: true }
+    const allTouched: Touched = { name: true, email: true, phone: true, location: true, currentRole: true, currentCtc: true, expectedCtc: true, resumeFile: true }
     setTouched(allTouched)
     if (!isValid) return
 
@@ -253,7 +254,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
           </div>
 
           <div className="role-select-group">
-            <label className="role-label">LinkedIn Profile URL *</label>
+            <label className="role-label">LinkedIn Profile URL</label>
             <input
               className={`role-input${err('linkedinUrl') ? ' input--error' : ''}`}
               placeholder="https://linkedin.com/in/yourprofile"

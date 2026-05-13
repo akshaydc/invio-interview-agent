@@ -32,6 +32,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GMAIL_USER = os.getenv("GMAIL_USER")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 RECRUITER_EMAIL = os.getenv("RECRUITER_EMAIL")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://your-frontend.railway.app")
 
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
@@ -385,6 +386,32 @@ async def _analyze_resume_match(
 # Email
 # ---------------------------------------------------------------------------
 
+def send_email(to_email: str, subject: str, html_body: str) -> bool:
+    gmail_user = os.getenv("GMAIL_USER")
+    gmail_password = os.getenv("GMAIL_APP_PASSWORD")
+    if not gmail_user or not gmail_password:
+        print("Email not configured")
+        return False
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = gmail_user
+        msg["To"] = to_email
+        msg.attach(MIMEText(html_body, "html"))
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(gmail_user, gmail_password)
+            server.sendmail(gmail_user, to_email, msg.as_string())
+        print(f"Email sent to {to_email}")
+        return True
+    except Exception as e:
+        print(f"Email error: {type(e).__name__}: {e}")
+        traceback.print_exc()
+        return False
+
+
 def send_scorecard_email(scorecard: dict, job_role: str, session_id: str, candidate_name: str = "") -> None:
     print(f"GMAIL_USER: {GMAIL_USER}")
     print(f"GMAIL_APP_PASSWORD set: {bool(GMAIL_APP_PASSWORD)}")
@@ -629,25 +656,82 @@ async def _set_candidate_status(ct_number: str, status: str, ts_key: str) -> dic
 @app.post("/recruiter/candidates/{ct_number}/schedule")
 async def schedule_candidate(
     ct_number: str,
+    background_tasks: BackgroundTasks,
     _auth: dict = Depends(verify_recruiter_token),
 ) -> dict:
-    return await _set_candidate_status(ct_number, "interview_scheduled", "scheduled_at")
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    result = await _set_candidate_status(ct_number, "interview_scheduled", "scheduled_at")
+    cand_email = candidate.get("email", "")
+    cand_name = candidate.get("name", "Candidate")
+    job_title = candidate.get("job_role", "the role")
+    if cand_email:
+        schedule_html = (
+            f"<h2>You have been invited for an AI Interview</h2>"
+            f"<p>Dear {cand_name},</p>"
+            f"<p>Congratulations! You have been shortlisted for an AI-powered interview for <b>{job_title}</b>.</p>"
+            f"<p>Login with your CT Number <b>{ct_number}</b> at "
+            f'<a href="{FRONTEND_URL}">{FRONTEND_URL}</a> to start your interview.</p>'
+            f"<p>Best regards,<br>Invio Recruitment Team</p>"
+        )
+        background_tasks.add_task(send_email, cand_email, f"Interview Invitation — {job_title}", schedule_html)
+    return result
 
 
 @app.post("/recruiter/candidates/{ct_number}/invite")
 async def invite_candidate_alias(
     ct_number: str,
+    background_tasks: BackgroundTasks,
     _auth: dict = Depends(verify_recruiter_token),
 ) -> dict:
-    return await _set_candidate_status(ct_number, "interview_scheduled", "scheduled_at")
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    result = await _set_candidate_status(ct_number, "interview_scheduled", "scheduled_at")
+    cand_email = candidate.get("email", "")
+    cand_name = candidate.get("name", "Candidate")
+    job_title = candidate.get("job_role", "the role")
+    if cand_email:
+        schedule_html = (
+            f"<h2>You have been invited for an AI Interview</h2>"
+            f"<p>Dear {cand_name},</p>"
+            f"<p>Congratulations! You have been shortlisted for an AI-powered interview for <b>{job_title}</b>.</p>"
+            f"<p>Login with your CT Number <b>{ct_number}</b> at "
+            f'<a href="{FRONTEND_URL}">{FRONTEND_URL}</a> to start your interview.</p>'
+            f"<p>Best regards,<br>Invio Recruitment Team</p>"
+        )
+        background_tasks.add_task(send_email, cand_email, f"Interview Invitation — {job_title}", schedule_html)
+    return result
 
 
 @app.post("/recruiter/candidates/{ct_number}/reject")
 async def reject_candidate(
     ct_number: str,
+    background_tasks: BackgroundTasks,
     _auth: dict = Depends(verify_recruiter_token),
 ) -> dict:
-    return await _set_candidate_status(ct_number, "rejected", "rejected_at")
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    result = await _set_candidate_status(ct_number, "rejected", "rejected_at")
+    cand_email = candidate.get("email", "")
+    cand_name = candidate.get("name", "Candidate")
+    job_title = candidate.get("job_role", "the role")
+    if cand_email:
+        reject_html = (
+            f"<h2>Application Status Update</h2>"
+            f"<p>Dear {cand_name},</p>"
+            f"<p>Thank you for your interest in {job_title}.</p>"
+            f"<p>After careful review, we will not be moving forward with your application at this time.</p>"
+            f"<p>We encourage you to apply for future openings.</p>"
+            f"<p>Best regards,<br>Invio Recruitment Team</p>"
+        )
+        background_tasks.add_task(send_email, cand_email, f"Application Update — {job_title}", reject_html)
+    return result
 
 
 @app.post("/recruiter/candidates/{ct_number}/cancel-schedule")
@@ -835,8 +919,21 @@ async def get_job(job_id: str) -> dict:
     return job
 
 
+def _recommendation_from_pct(pct: int | float | None) -> str | None:
+    if pct is None:
+        return None
+    if pct >= 80:
+        return "Strong Hire"
+    if pct >= 65:
+        return "Hire"
+    if pct >= 50:
+        return "Consider"
+    return "Reject"
+
+
 @app.post("/jobs/{job_id}/apply")
 async def apply_for_job(
+    background_tasks: BackgroundTasks,
     job_id: str,
     name: str = Form(...),
     email: str = Form(...),
@@ -891,14 +988,15 @@ async def apply_for_job(
     if match_data.strip():
         try:
             parsed = json.loads(match_data)
+            pct = parsed.get("match_percentage")
             match_result = {
-                "match_percentage": parsed.get("match_percentage"),
+                "match_percentage": pct,
                 "match_summary": parsed.get("match_reason", parsed.get("match_summary", "")),
                 "strengths": parsed.get("strengths", []),
                 "gaps": parsed.get("gaps", []),
                 "compensation_fit": parsed.get("compensation_fit"),
                 "notice_fit": parsed.get("notice_fit"),
-                "recommendation": parsed.get("recommendation"),
+                "recommendation": parsed.get("recommendation") or _recommendation_from_pct(pct),
             }
         except Exception:
             match_result = await _analyze_resume_match(
@@ -938,6 +1036,22 @@ async def apply_for_job(
     }
     candidates.append(candidate)
     await _write_candidates(candidates)
+
+    apply_html = (
+        f"<h2>Application Received</h2>"
+        f"<p>Dear {name},</p>"
+        f"<p>Thank you for applying for <b>{job['title']}</b>.</p>"
+        f"<p>Your CT Number is: <b style=\"color:#0C447C\">{ct_number}</b></p>"
+        f"<p>Use this CT number to login and track your application.</p>"
+        f"<p>We will be in touch if your profile matches our requirements.</p>"
+        f"<p>Best regards,<br>Invio Recruitment Team</p>"
+    )
+    background_tasks.add_task(
+        send_email,
+        email,
+        f"Your application to {job['title']} — CT Number: {ct_number}",
+        apply_html,
+    )
 
     response: dict = {"ct_number": ct_number, "message": "Application submitted"}
     if match_result.get("match_percentage") is not None:
