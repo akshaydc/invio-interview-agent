@@ -4,6 +4,7 @@ import { API_BASE_URL as API } from '../config'
 
 const NOTICE_OPTIONS = ['Immediate', '15 days', '30 days', '60 days', '90 days']
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const LINKEDIN_RE = /^https:\/\/(www\.)?linkedin\.com\/in\/.+/
 
 type Props = {
   jobId: string
@@ -19,6 +20,8 @@ function validate(
   name: string,
   email: string,
   phone: string,
+  linkedinUrl: string,
+  location: string,
   currentRole: string,
   currentCtc: string,
   expectedCtc: string,
@@ -29,6 +32,8 @@ function validate(
   if (!email.trim() || !EMAIL_RE.test(email.trim())) e.email = 'Please enter a valid email address.'
   const phoneDigits = phone.replace(/[\s\-]/g, '')
   if (!phoneDigits || !/^\d{10}$/.test(phoneDigits)) e.phone = 'Phone must be exactly 10 digits.'
+  if (!linkedinUrl.trim() || !LINKEDIN_RE.test(linkedinUrl.trim())) e.linkedinUrl = 'Must start with https://linkedin.com/in/ or https://www.linkedin.com/in/'
+  if (!location.trim()) e.location = 'Current location is required.'
   if (!currentRole.trim()) e.currentRole = 'Current role is required.'
   const ctcVal = parseFloat(currentCtc.replace(/[,\s]/g, ''))
   if (!currentCtc.trim() || isNaN(ctcVal) || ctcVal <= 0) e.currentCtc = 'Enter a valid positive number.'
@@ -49,6 +54,8 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [linkedinUrl, setLinkedinUrl] = useState('')
+  const [location, setLocation] = useState('')
   const [currentRole, setCurrentRole] = useState('')
   const [currentCtc, setCurrentCtc] = useState('')
   const [expectedCtc, setExpectedCtc] = useState('')
@@ -68,7 +75,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
     return () => clearTimeout(timer)
   }, [ctNumber])
 
-  const errors = validate(name, email, phone, currentRole, currentCtc, expectedCtc, resumeFile)
+  const errors = validate(name, email, phone, linkedinUrl, location, currentRole, currentCtc, expectedCtc, resumeFile)
   const isValid = Object.keys(errors).length === 0
   const warning = ctcWarning(currentCtc, expectedCtc)
 
@@ -81,7 +88,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
   }
 
   async function handleSubmit() {
-    const allTouched: Touched = { name: true, email: true, phone: true, currentRole: true, currentCtc: true, expectedCtc: true, resumeFile: true }
+    const allTouched: Touched = { name: true, email: true, phone: true, linkedinUrl: true, location: true, currentRole: true, currentCtc: true, expectedCtc: true, resumeFile: true }
     setTouched(allTouched)
     if (!isValid) return
 
@@ -92,6 +99,8 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
       fd.append('name', name.trim())
       fd.append('email', email.trim())
       fd.append('phone', phone.replace(/[\s\-]/g, ''))
+      fd.append('linkedin_url', linkedinUrl.trim())
+      fd.append('location', location.trim())
       fd.append('current_role', currentRole.trim())
       fd.append('current_ctc', currentCtc.trim())
       fd.append('expected_ctc', expectedCtc.trim())
@@ -171,7 +180,6 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
         <h3 style={{ marginBottom: 20, color: 'var(--text)' }}>Your Details</h3>
         <div className="form-grid">
 
-          {/* Name */}
           <div className="role-select-group">
             <label className="role-label">Full Name *</label>
             <input
@@ -184,7 +192,6 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
             {err('name') && <span className="field-error">{err('name')}</span>}
           </div>
 
-          {/* Email */}
           <div className="role-select-group">
             <label className="role-label">Email *</label>
             <input
@@ -198,7 +205,18 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
             {err('email') && <span className="field-error">{err('email')}</span>}
           </div>
 
-          {/* Phone */}
+          <div className="role-select-group">
+            <label className="role-label">LinkedIn Profile URL *</label>
+            <input
+              className={`role-input${err('linkedinUrl') ? ' input--error' : ''}`}
+              placeholder="https://linkedin.com/in/yourprofile"
+              value={linkedinUrl}
+              onChange={e => setLinkedinUrl(e.target.value)}
+              onBlur={() => touch('linkedinUrl')}
+            />
+            {err('linkedinUrl') && <span className="field-error">{err('linkedinUrl')}</span>}
+          </div>
+
           <div className="role-select-group">
             <label className="role-label">Phone * (10 digits)</label>
             <input
@@ -211,7 +229,18 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
             {err('phone') && <span className="field-error">{err('phone')}</span>}
           </div>
 
-          {/* Current Role */}
+          <div className="role-select-group">
+            <label className="role-label">Current Location *</label>
+            <input
+              className={`role-input${err('location') ? ' input--error' : ''}`}
+              placeholder="City, State"
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              onBlur={() => touch('location')}
+            />
+            {err('location') && <span className="field-error">{err('location')}</span>}
+          </div>
+
           <div className="role-select-group">
             <label className="role-label">Current Role *</label>
             <input
@@ -224,7 +253,6 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
             {err('currentRole') && <span className="field-error">{err('currentRole')}</span>}
           </div>
 
-          {/* Current CTC */}
           <div className="role-select-group">
             <label className="role-label">Current CTC (INR) *</label>
             <input
@@ -237,7 +265,6 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
             {err('currentCtc') && <span className="field-error">{err('currentCtc')}</span>}
           </div>
 
-          {/* Expected CTC */}
           <div className="role-select-group">
             <label className="role-label">Expected CTC (INR) *</label>
             <input
@@ -253,7 +280,6 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
             )}
           </div>
 
-          {/* Notice Period */}
           <div className="role-select-group">
             <label className="role-label">Notice Period *</label>
             <select
@@ -265,7 +291,6 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied }: 
             </select>
           </div>
 
-          {/* Resume upload */}
           <div className="role-select-group">
             <label className="role-label">Upload Resume (PDF or TXT) *</label>
             <div

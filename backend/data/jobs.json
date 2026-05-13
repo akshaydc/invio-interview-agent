@@ -55,5 +55,99 @@
     ],
     "status": "open",
     "created_at": "2026-02-15T00:00:00+00:00"
+  },
+  {
+    "id": "d1e2f3a4-0001-0000-0000-000000000001",
+    "title": "Salesforce Administrator",
+    "department": "Sales Operations",
+    "location": "Hybrid - Bangalore",
+    "job_type": "Full-time",
+    "experience": "2-4 years",
+    "description": "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform. You will be responsible for user management, configuration, and customization of Salesforce to meet business needs. You will work closely with sales and service teams to optimize workflows and reporting.",
+    "requirements": [
+      "Salesforce Admin",
+      "Sales Cloud",
+      "Service Cloud",
+      "Flow Builder",
+      "Reports & Dashboards",
+      "User Management",
+      "Data Management"
+    ],
+    "role_budget": "8-15 LPA",
+    "preferred_notice": "Up to 30 days",
+    "status": "open",
+    "created_at": "2026-01-15T00:00:00+00:00"
+  },
+  {
+    "id": "d1e2f3a4-0002-0000-0000-000000000002",
+    "title": "Salesforce Developer",
+    "department": "Engineering",
+    "location": "Remote",
+    "job_type": "Full-time",
+    "experience": "3-5 years",
+    "description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform. You will develop Apex classes, Lightning Web Components, and integrations with third-party systems. Experience with DevOps and CI/CD pipelines is a plus.",
+    "requirements": [
+      "Apex",
+      "LWC",
+      "SOQL",
+      "REST APIs",
+      "Integration",
+      "Sales Cloud",
+      "Experience Cloud",
+      "Git",
+      "Agile"
+    ],
+    "role_budget": "15-25 LPA",
+    "preferred_notice": "Up to 30 days",
+    "status": "open",
+    "created_at": "2026-01-20T00:00:00+00:00"
+  },
+  {
+    "id": "d1e2f3a4-0003-0000-0000-000000000003",
+    "title": "QA Engineer",
+    "department": "Quality Assurance",
+    "location": "Hybrid - Mumbai",
+    "job_type": "Full-time",
+    "experience": "2-4 years",
+    "description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products. You will design test plans, execute test cases, and report bugs. You will work closely with developers to ensure timely resolution of issues and maintain high product quality standards.",
+    "requirements": [
+      "Manual Testing",
+      "Selenium",
+      "JIRA",
+      "Test Cases",
+      "API Testing",
+      "Postman",
+      "Regression Testing",
+      "Agile",
+      "SQL"
+    ],
+    "role_budget": "8-14 LPA",
+    "preferred_notice": "Immediate to 30 days",
+    "status": "open",
+    "created_at": "2026-02-01T00:00:00+00:00"
+  },
+  {
+    "id": "d1e2f3a4-0004-0000-0000-000000000004",
+    "title": "Business Analyst",
+    "department": "Product",
+    "location": "Hybrid - Pune",
+    "job_type": "Full-time",
+    "experience": "3-6 years",
+    "description": "We are looking for a Business Analyst to bridge the gap between business needs and technical solutions. You will gather requirements, create user stories, and work with development teams to deliver solutions. Experience with Salesforce or CRM systems is a plus.",
+    "requirements": [
+      "Requirements Gathering",
+      "Process Mapping",
+      "User Stories",
+      "JIRA",
+      "Stakeholder Management",
+      "SQL",
+      "Agile",
+      "Wireframing",
+      "Data Analysis"
+    ],
+    "role_budget": "12-20 LPA",
+    "preferred_notice": "Up to 45 days",
+    "status": "open",
+    "created_at": "2026-02-10T00:00:00+00:00"
   }
 ]

@@ -1246,3 +1246,17 @@ body {
   color: var(--red);
   border: 1px solid rgba(248, 113, 113, 0.25);
 }
+
+/* ── Filter sidebar ─────────────────────────────────────────── */
+.filter-sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.filter-group {
+  margin-bottom: 16px;
+}

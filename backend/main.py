@@ -623,6 +623,8 @@ async def apply_for_job(
     name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(...),
+    linkedin_url: str = Form(""),
+    location: str = Form(""),
     current_role: str = Form(""),
     current_ctc: str = Form(""),
     expected_ctc: str = Form(""),
@@ -676,6 +678,8 @@ async def apply_for_job(
         "ct_number": ct_number,
         "email": email,
         "phone": phone,
+        "linkedin_url": linkedin_url,
+        "location": location,
         "current_role": current_role,
         "current_ctc": current_ctc,
         "expected_ctc": expected_ctc,
@@ -793,6 +797,365 @@ async def update_job(
         await _write_candidates(candidates)
 
     return {"success": True, "recalculated": recalculated, "job": job}
+
+
+def _seed_demo_data() -> None:
+    """Seed 4 demo jobs and 12 demo candidates if not already present."""
+    DEMO_JOB_IDS = {
+        "sf_admin": "d1e2f3a4-0001-0000-0000-000000000001",
+        "sf_dev":   "d1e2f3a4-0002-0000-0000-000000000002",
+        "qa_eng":   "d1e2f3a4-0003-0000-0000-000000000003",
+        "ba":       "d1e2f3a4-0004-0000-0000-000000000004",
+    }
+
+    existing_jobs = json.loads(JOBS_FILE.read_text()) if JOBS_FILE.exists() else []
+    if len(existing_jobs) < 4:
+        demo_jobs = [
+            {
+                "id": DEMO_JOB_IDS["sf_admin"],
+                "title": "Salesforce Administrator",
+                "department": "Sales Operations",
+                "location": "Hybrid - Bangalore",
+                "job_type": "Full-time",
+                "experience": "2-4 years",
+                "description": (
+                    "We are hiring an experienced Salesforce Administrator to manage and enhance "
+                    "our CRM platform. You will be responsible for user management, configuration, "
+                    "and customization of Salesforce to meet business needs. You will work closely "
+                    "with sales and service teams to optimize workflows and reporting."
+                ),
+                "requirements": [
+                    "Salesforce Admin", "Sales Cloud", "Service Cloud", "Flow Builder",
+                    "Reports & Dashboards", "User Management", "Data Management",
+                ],
+                "role_budget": "8-15 LPA",
+                "preferred_notice": "Up to 30 days",
+                "status": "open",
+                "created_at": "2026-01-15T00:00:00+00:00",
+            },
+            {
+                "id": DEMO_JOB_IDS["sf_dev"],
+                "title": "Salesforce Developer",
+                "department": "Engineering",
+                "location": "Remote",
+                "job_type": "Full-time",
+                "experience": "3-5 years",
+                "description": (
+                    "We are looking for a skilled Salesforce Developer to design and build custom "
+                    "solutions on the Salesforce platform. You will develop Apex classes, Lightning "
+                    "Web Components, and integrations with third-party systems. Experience with "
+                    "DevOps and CI/CD pipelines is a plus."
+                ),
+                "requirements": [
+                    "Apex", "LWC", "SOQL", "REST APIs", "Integration",
+                    "Sales Cloud", "Experience Cloud", "Git", "Agile",
+                ],
+                "role_budget": "15-25 LPA",
+                "preferred_notice": "Up to 30 days",
+                "status": "open",
+                "created_at": "2026-01-20T00:00:00+00:00",
+            },
+            {
+                "id": DEMO_JOB_IDS["qa_eng"],
+                "title": "QA Engineer",
+                "department": "Quality Assurance",
+                "location": "Hybrid - Mumbai",
+                "job_type": "Full-time",
+                "experience": "2-4 years",
+                "description": (
+                    "We are seeking a detail-oriented QA Engineer to ensure the quality of our "
+                    "software products. You will design test plans, execute test cases, and report "
+                    "bugs. You will work closely with developers to ensure timely resolution of "
+                    "issues and maintain high product quality standards."
+                ),
+                "requirements": [
+                    "Manual Testing", "Selenium", "JIRA", "Test Cases", "API Testing",
+                    "Postman", "Regression Testing", "Agile", "SQL",
+                ],
+                "role_budget": "8-14 LPA",
+                "preferred_notice": "Immediate to 30 days",
+                "status": "open",
+                "created_at": "2026-02-01T00:00:00+00:00",
+            },
+            {
+                "id": DEMO_JOB_IDS["ba"],
+                "title": "Business Analyst",
+                "department": "Product",
+                "location": "Hybrid - Pune",
+                "job_type": "Full-time",
+                "experience": "3-6 years",
+                "description": (
+                    "We are looking for a Business Analyst to bridge the gap between business needs "
+                    "and technical solutions. You will gather requirements, create user stories, and "
+                    "work with development teams to deliver solutions. Experience with Salesforce or "
+                    "CRM systems is a plus."
+                ),
+                "requirements": [
+                    "Requirements Gathering", "Process Mapping", "User Stories", "JIRA",
+                    "Stakeholder Management", "SQL", "Agile", "Wireframing", "Data Analysis",
+                ],
+                "role_budget": "12-20 LPA",
+                "preferred_notice": "Up to 45 days",
+                "status": "open",
+                "created_at": "2026-02-10T00:00:00+00:00",
+            },
+        ]
+        existing_ids = {j["id"] for j in existing_jobs}
+        new_jobs = [j for j in demo_jobs if j["id"] not in existing_ids]
+        if new_jobs:
+            JOBS_FILE.write_text(json.dumps(existing_jobs + new_jobs, indent=2))
+            print(f"Seeded {len(new_jobs)} demo job(s).")
+
+    existing_candidates = json.loads(CANDIDATES_FILE.read_text()) if CANDIDATES_FILE.exists() else []
+    existing_cts = {c["ct_number"] for c in existing_candidates}
+    if "CT20260001" in existing_cts:
+        return
+
+    sf_admin_jd = "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform."
+    sf_dev_jd = "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform."
+    qa_jd = "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products."
+    ba_jd = "We are looking for a Business Analyst to bridge the gap between business needs and technical solutions."
+
+    demo_candidates = [
+        {
+            "name": "Priya Sharma", "ct_number": "CT20260001",
+            "email": "priya.sharma@gmail.com", "phone": "9876543210",
+            "location": "Bangalore, Karnataka",
+            "linkedin_url": "https://linkedin.com/in/priyasharma",
+            "current_role": "Junior Salesforce Admin",
+            "current_ctc": "600000", "expected_ctc": "900000",
+            "notice_period": "30 days",
+            "job_id": DEMO_JOB_IDS["sf_admin"],
+            "job_role": "Salesforce Administrator", "job_description": sf_admin_jd,
+            "resume_text": "",
+            "match_percentage": 88, "recommendation": "Strong Hire",
+            "match_summary": "Priya has 3 years of hands-on Salesforce Admin experience with Sales Cloud and Service Cloud. Holds Salesforce Admin certification. Strong fit for the role.",
+            "match_strengths": ["Certified Salesforce Admin", "Sales Cloud expertise", "Flow Builder experience"],
+            "match_gaps": ["Limited Service Cloud exposure"],
+            "compensation_fit": "good", "notice_fit": "good",
+            "session_id": None, "status": "interview_complete",
+            "applied_at": "2026-04-10T09:00:00+00:00",
+        },
+        {
+            "name": "Rahul Mehta", "ct_number": "CT20260002",
+            "email": "rahul.mehta@outlook.com", "phone": "9823456710",
+            "location": "Bangalore, Karnataka",
+            "linkedin_url": "https://linkedin.com/in/rahulmehta",
+            "current_role": "Salesforce Support Analyst",
+            "current_ctc": "750000", "expected_ctc": "1100000",
+            "notice_period": "30 days",
+            "job_id": DEMO_JOB_IDS["sf_admin"],
+            "job_role": "Salesforce Administrator", "job_description": sf_admin_jd,
+            "resume_text": "",
+            "match_percentage": 72, "recommendation": "Hire",
+            "match_summary": "Rahul has solid Salesforce support experience with good reporting skills. Lacks deep Flow Builder exposure but has the fundamentals.",
+            "match_strengths": ["Salesforce configuration experience", "Reports & Dashboards", "User management"],
+            "match_gaps": ["No Flow Builder experience", "Limited Sales Cloud depth"],
+            "compensation_fit": "good", "notice_fit": "good",
+            "session_id": None, "status": "interview_scheduled",
+            "applied_at": "2026-04-11T10:30:00+00:00",
+        },
+        {
+            "name": "Sneha Patel", "ct_number": "CT20260003",
+            "email": "sneha.patel@yahoo.com", "phone": "9765432180",
+            "location": "Pune, Maharashtra",
+            "linkedin_url": "https://linkedin.com/in/snehapatel",
+            "current_role": "CRM Executive",
+            "current_ctc": "400000", "expected_ctc": "700000",
+            "notice_period": "15 days",
+            "job_id": DEMO_JOB_IDS["sf_admin"],
+            "job_role": "Salesforce Administrator", "job_description": sf_admin_jd,
+            "resume_text": "",
+            "match_percentage": 55, "recommendation": "Consider",
+            "match_summary": "Sneha has basic CRM experience but limited Salesforce-specific skills. Would need significant onboarding for the Admin role.",
+            "match_strengths": ["CRM familiarity", "Quick learner", "Good communication"],
+            "match_gaps": ["No Salesforce certification", "No Apex/Flow experience", "Limited technical depth"],
+            "compensation_fit": "good", "notice_fit": "good",
+            "session_id": None, "status": "applied",
+            "applied_at": "2026-04-12T14:00:00+00:00",
+        },
+        {
+            "name": "Arjun Kumar", "ct_number": "CT20260004",
+            "email": "arjun.kumar@gmail.com", "phone": "9988776655",
+            "location": "Hyderabad, Telangana",
+            "linkedin_url": "https://linkedin.com/in/arjunkumar",
+            "current_role": "Salesforce Developer",
+            "current_ctc": "1200000", "expected_ctc": "1800000",
+            "notice_period": "30 days",
+            "job_id": DEMO_JOB_IDS["sf_dev"],
+            "job_role": "Salesforce Developer", "job_description": sf_dev_jd,
+            "resume_text": "",
+            "match_percentage": 91, "recommendation": "Strong Hire",
+            "match_summary": "Arjun brings 4 years of strong Salesforce development experience including Apex, LWC, and third-party integrations. Excellent technical fit.",
+            "match_strengths": ["Apex & LWC expertise", "REST API integrations", "CI/CD with Salesforce DX"],
+            "match_gaps": ["Limited Experience Cloud exposure"],
+            "compensation_fit": "partial", "notice_fit": "good",
+            "session_id": None, "status": "interview_complete",
+            "applied_at": "2026-04-08T11:00:00+00:00",
+        },
+        {
+            "name": "Kavya Nair", "ct_number": "CT20260005",
+            "email": "kavya.nair@gmail.com", "phone": "9876012345",
+            "location": "Chennai, Tamil Nadu",
+            "linkedin_url": "https://linkedin.com/in/kavyanair",
+            "current_role": "Salesforce Developer",
+            "current_ctc": "1000000", "expected_ctc": "1500000",
+            "notice_period": "30 days",
+            "job_id": DEMO_JOB_IDS["sf_dev"],
+            "job_role": "Salesforce Developer", "job_description": sf_dev_jd,
+            "resume_text": "",
+            "match_percentage": 76, "recommendation": "Hire",
+            "match_summary": "Kavya has strong Apex skills and good LWC experience. Integration experience is limited but she demonstrates solid fundamentals.",
+            "match_strengths": ["Strong Apex development", "LWC proficiency", "SOQL optimization"],
+            "match_gaps": ["Limited REST API integration work", "No Experience Cloud exposure"],
+            "compensation_fit": "good", "notice_fit": "good",
+            "session_id": None, "status": "interview_scheduled",
+            "applied_at": "2026-04-09T09:45:00+00:00",
+        },
+        {
+            "name": "Vikram Singh", "ct_number": "CT20260006",
+            "email": "vikram.singh@hotmail.com", "phone": "9812345670",
+            "location": "Noida, Uttar Pradesh",
+            "linkedin_url": "https://linkedin.com/in/vikramsingh",
+            "current_role": "Junior Apex Developer",
+            "current_ctc": "800000", "expected_ctc": "1400000",
+            "notice_period": "60 days",
+            "job_id": DEMO_JOB_IDS["sf_dev"],
+            "job_role": "Salesforce Developer", "job_description": sf_dev_jd,
+            "resume_text": "",
+            "match_percentage": 62, "recommendation": "Consider",
+            "match_summary": "Vikram has basic Apex knowledge but lacks LWC and integration experience. Long notice period may be a constraint.",
+            "match_strengths": ["Apex fundamentals", "SOQL basics", "Agile familiarity"],
+            "match_gaps": ["No LWC experience", "No REST API integrations", "60-day notice exceeds preference"],
+            "compensation_fit": "partial", "notice_fit": "mismatch",
+            "session_id": None, "status": "applied",
+            "applied_at": "2026-04-13T16:00:00+00:00",
+        },
+        {
+            "name": "Anita Desai", "ct_number": "CT20260007",
+            "email": "anita.desai@gmail.com", "phone": "9765098765",
+            "location": "Mumbai, Maharashtra",
+            "linkedin_url": "https://linkedin.com/in/anitadesai",
+            "current_role": "Senior QA Engineer",
+            "current_ctc": "900000", "expected_ctc": "1300000",
+            "notice_period": "30 days",
+            "job_id": DEMO_JOB_IDS["qa_eng"],
+            "job_role": "QA Engineer", "job_description": qa_jd,
+            "resume_text": "",
+            "match_percentage": 85, "recommendation": "Strong Hire",
+            "match_summary": "Anita has 4 years of QA experience with strong automation and API testing skills. Excellent match for the Mumbai hybrid role.",
+            "match_strengths": ["Selenium automation", "API testing with Postman", "JIRA expertise"],
+            "match_gaps": ["Limited SQL proficiency"],
+            "compensation_fit": "partial", "notice_fit": "good",
+            "session_id": None, "status": "interview_complete",
+            "applied_at": "2026-04-07T10:00:00+00:00",
+        },
+        {
+            "name": "Rohan Sharma", "ct_number": "CT20260008",
+            "email": "rohan.sharma@gmail.com", "phone": "9823109876",
+            "location": "Mumbai, Maharashtra",
+            "linkedin_url": "https://linkedin.com/in/rohansharma",
+            "current_role": "QA Analyst",
+            "current_ctc": "650000", "expected_ctc": "950000",
+            "notice_period": "15 days",
+            "job_id": DEMO_JOB_IDS["qa_eng"],
+            "job_role": "QA Engineer", "job_description": qa_jd,
+            "resume_text": "",
+            "match_percentage": 68, "recommendation": "Hire",
+            "match_summary": "Rohan has solid manual testing background and is learning automation. Good cultural fit for a growing QA team.",
+            "match_strengths": ["Manual testing expertise", "Test case writing", "Agile experience"],
+            "match_gaps": ["Selenium still learning", "Limited API testing exposure"],
+            "compensation_fit": "good", "notice_fit": "good",
+            "session_id": None, "status": "applied",
+            "applied_at": "2026-04-14T11:00:00+00:00",
+        },
+        {
+            "name": "Pooja Gupta", "ct_number": "CT20260009",
+            "email": "pooja.gupta@rediffmail.com", "phone": "9901234560",
+            "location": "Navi Mumbai, Maharashtra",
+            "linkedin_url": "https://linkedin.com/in/poojavgupta",
+            "current_role": "Manual Tester",
+            "current_ctc": "450000", "expected_ctc": "750000",
+            "notice_period": "Immediate",
+            "job_id": DEMO_JOB_IDS["qa_eng"],
+            "job_role": "QA Engineer", "job_description": qa_jd,
+            "resume_text": "",
+            "match_percentage": 52, "recommendation": "Consider",
+            "match_summary": "Pooja has basic manual testing skills but lacks automation and API testing experience required for this role.",
+            "match_strengths": ["Manual testing", "Bug reporting", "Immediate availability"],
+            "match_gaps": ["No Selenium experience", "No API testing", "No SQL knowledge"],
+            "compensation_fit": "good", "notice_fit": "good",
+            "session_id": None, "status": "applied",
+            "applied_at": "2026-04-15T09:30:00+00:00",
+        },
+        {
+            "name": "Deepak Verma", "ct_number": "CT20260010",
+            "email": "deepak.verma@gmail.com", "phone": "9876123450",
+            "location": "Pune, Maharashtra",
+            "linkedin_url": "https://linkedin.com/in/deepakverma",
+            "current_role": "Senior Business Analyst",
+            "current_ctc": "1100000", "expected_ctc": "1600000",
+            "notice_period": "45 days",
+            "job_id": DEMO_JOB_IDS["ba"],
+            "job_role": "Business Analyst", "job_description": ba_jd,
+            "resume_text": "",
+            "match_percentage": 87, "recommendation": "Strong Hire",
+            "match_summary": "Deepak has 5 years of BA experience with strong stakeholder management and process mapping skills. Salesforce CRM background is a bonus.",
+            "match_strengths": ["Stakeholder management", "User story writing", "Salesforce CRM experience"],
+            "match_gaps": ["Notice period slightly above preference"],
+            "compensation_fit": "partial", "notice_fit": "partial",
+            "session_id": None, "status": "interview_complete",
+            "applied_at": "2026-04-06T14:00:00+00:00",
+        },
+        {
+            "name": "Meera Joshi", "ct_number": "CT20260011",
+            "email": "meera.joshi@gmail.com", "phone": "9823456780",
+            "location": "Pune, Maharashtra",
+            "linkedin_url": "https://linkedin.com/in/meerajoshi",
+            "current_role": "Business Analyst",
+            "current_ctc": "850000", "expected_ctc": "1300000",
+            "notice_period": "30 days",
+            "job_id": DEMO_JOB_IDS["ba"],
+            "job_role": "Business Analyst", "job_description": ba_jd,
+            "resume_text": "",
+            "match_percentage": 74, "recommendation": "Hire",
+            "match_summary": "Meera has good BA fundamentals with experience in Agile environments. Solid JIRA and user story skills.",
+            "match_strengths": ["Agile/Scrum experience", "JIRA proficiency", "Requirements gathering"],
+            "match_gaps": ["Limited data analysis skills", "No Salesforce experience"],
+            "compensation_fit": "good", "notice_fit": "good",
+            "session_id": None, "status": "interview_scheduled",
+            "applied_at": "2026-04-11T15:00:00+00:00",
+        },
+        {
+            "name": "Sanjay Rao", "ct_number": "CT20260012",
+            "email": "sanjay.rao@gmail.com", "phone": "9901287650",
+            "location": "Pune, Maharashtra",
+            "linkedin_url": "https://linkedin.com/in/sanjayrao",
+            "current_role": "Jr. Business Analyst",
+            "current_ctc": "550000", "expected_ctc": "900000",
+            "notice_period": "30 days",
+            "job_id": DEMO_JOB_IDS["ba"],
+            "job_role": "Business Analyst", "job_description": ba_jd,
+            "resume_text": "",
+            "match_percentage": 58, "recommendation": "Consider",
+            "match_summary": "Sanjay is a junior BA with limited hands-on experience. Shows promise but needs mentoring to meet the 3-6 year experience requirement.",
+            "match_strengths": ["Eager learner", "Good communication", "Basic JIRA knowledge"],
+            "match_gaps": ["Only 1 year of experience", "No process mapping exposure", "Limited stakeholder management"],
+            "compensation_fit": "good", "notice_fit": "good",
+            "session_id": None, "status": "applied",
+            "applied_at": "2026-04-16T10:00:00+00:00",
+        },
+    ]
+
+    new_candidates = [c for c in demo_candidates if c["ct_number"] not in existing_cts]
+    if new_candidates:
+        CANDIDATES_FILE.write_text(json.dumps(existing_candidates + new_candidates, indent=2))
+        print(f"Seeded {len(new_candidates)} demo candidate(s).")
+
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    _seed_demo_data()
 
 
 # ---------------------------------------------------------------------------
