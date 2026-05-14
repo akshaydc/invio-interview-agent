@@ -326,16 +326,6 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     } catch { /* silent */ } finally { setActionCt(null) }
   }
 
-  async function handleCancelSchedule(ct: string) {
-    setActionCt(ct)
-    try {
-      await axios.post(`${API}/recruiter/candidates/${ct}/cancel-schedule`, {}, { headers })
-      setCandidates(prev =>
-        prev.map(c => c.ct_number === ct ? { ...c, status: 'applied' as CandidateStatus } : c)
-      )
-    } catch { /* silent */ } finally { setActionCt(null) }
-  }
-
   async function handleCreateCandidate() {
     setCandidateFormError('')
     if (!name.trim() || !ctNumber.trim()) {
