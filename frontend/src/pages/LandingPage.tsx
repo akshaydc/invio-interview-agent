@@ -13,6 +13,12 @@ const STATS = [
   { number: '0',     label: 'Recruiter hours for initial screening',  color: '#1d1d1f' },
 ]
 
+const FLOW_TILES = [
+  { step: '01', title: 'Upload resume', copy: 'Rina reads your PDF or TXT profile.' },
+  { step: '02', title: 'Review matches', copy: 'Roles are ranked with reasons and gaps.' },
+  { step: '03', title: 'Apply faster', copy: 'Resume details carry into the form.' },
+]
+
 export default function LandingPage({ onCandidateLoginClick, onRecruiterLoginClick }: Props) {
   return (
     <PageLayout
@@ -31,6 +37,15 @@ export default function LandingPage({ onCandidateLoginClick, onRecruiterLoginCli
               Rina is ready in the lower-right corner. Start with a resume match for ranked job recommendations,
               or browse every open role from her panel.
             </p>
+            <div className="landing-flow-tiles" aria-label="Resume matching steps">
+              {FLOW_TILES.map(({ step, title, copy }) => (
+                <div className="landing-flow-tile" key={step}>
+                  <span className="landing-flow-tile__step">{step}</span>
+                  <strong>{title}</strong>
+                  <small>{copy}</small>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="landing-hero__right">

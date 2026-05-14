@@ -41,31 +41,62 @@ export default function RecruiterLogin({ onLogin, onBack }: Props) {
         <button className="btn-back-login" onClick={onBack}>
           &#8592; Back to Job Listings
         </button>
-        <div className="login-card">
-          <h1 className="login-title" style={{ fontFamily: 'var(--font-display)' }}>ASTRA</h1>
-          <p className="login-subtitle">Recruiter Login</p>
-          <div className="login-fields">
-            <input
-              className="role-input"
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              onKeyDown={onKey}
-            />
-            <input
-              className="role-input"
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={onKey}
-            />
+
+        <div className="login-split">
+          <section className="login-context" aria-label="Recruiter access">
+            <div>
+              <p className="login-eyebrow">Recruiter Workspace</p>
+              <h2>Manage the hiring flow with clear signals.</h2>
+              <p>
+                Sign in to review candidates, shortlist matches, schedule interviews, and inspect scorecards.
+              </p>
+            </div>
+
+            <div className="login-tile-grid">
+              <div className="login-info-tile">
+                <span>AI</span>
+                <strong>Match signals</strong>
+                <small>Ranked fit, strengths, and gaps.</small>
+              </div>
+              <div className="login-info-tile">
+                <span>CT</span>
+                <strong>Pipeline</strong>
+                <small>Track each candidate by status.</small>
+              </div>
+              <div className="login-info-tile login-info-tile--wide">
+                <span>SC</span>
+                <strong>Scorecards</strong>
+                <small>Interview summaries ready for recruiter review.</small>
+              </div>
+            </div>
+          </section>
+
+          <div className="login-card">
+            <h1 className="login-title" style={{ fontFamily: 'var(--font-display)' }}>ASTRA</h1>
+            <p className="login-subtitle">Recruiter Login</p>
+            <div className="login-fields">
+              <input
+                className="role-input"
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                onKeyDown={onKey}
+              />
+              <input
+                className="role-input"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onKeyDown={onKey}
+              />
+            </div>
+            {error && <p className="error-text">{error}</p>}
+            <button className="btn btn-primary login-btn" onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
           </div>
-          {error && <p className="error-text">{error}</p>}
-          <button className="btn btn-primary login-btn" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
         </div>
       </div>
     </div>
