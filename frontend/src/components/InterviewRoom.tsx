@@ -29,6 +29,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
   const [cameraActive, setCameraActive] = useState(false)
   const [endLockout, setEndLockout] = useState(true)
   const [lockoutSecsLeft, setLockoutSecsLeft] = useState(END_LOCKOUT_MS / 1000)
+  const [autoEndMsg, setAutoEndMsg] = useState('')
 
   const sessionIdRef = useRef<string | null>(null)
   const audioCleanupRef = useRef<(() => void) | null>(null)
@@ -137,7 +138,8 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
       speakQuestion(nextQuestion)
 
       if (res.data.auto_end) {
-        setTimeout(() => endInterview(), 4000)
+        setAutoEndMsg('Interview complete. Thank you for your time.')
+        setTimeout(() => endInterview(), 3000)
       }
     } catch {
       setErrorMsg('Failed to process audio. Please try again.')
@@ -524,6 +526,11 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
           {proctorEndMsg && (
             <p style={{ color: 'var(--red)', fontSize: '0.9rem', textAlign: 'center', fontWeight: 500 }}>
               {proctorEndMsg}
+            </p>
+          )}
+          {autoEndMsg && (
+            <p style={{ color: 'var(--green)', fontSize: '1rem', textAlign: 'center', fontWeight: 600, padding: '12px 0' }}>
+              {autoEndMsg}
             </p>
           )}
           {errorMsg && <p className="interview-error">{errorMsg}</p>}

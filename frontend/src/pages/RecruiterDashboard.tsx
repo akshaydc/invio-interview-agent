@@ -14,7 +14,7 @@ const JOB_ROLES = [
   'QA Engineer',
 ]
 
-type CandidateStatus = 'not_started' | 'applied' | 'interview_scheduled' | 'interview_complete' | 'rejected'
+type CandidateStatus = 'not_started' | 'applied' | 'shortlisted' | 'interview_scheduled' | 'interview_complete' | 'rejected'
 
 type Candidate = {
   name: string
@@ -69,14 +69,16 @@ type Props = {
 const STATUS_LABELS: Record<string, string> = {
   not_started: 'Not Started',
   applied: 'Applied',
-  interview_scheduled: 'Scheduled',
-  interview_complete: 'Completed',
+  shortlisted: 'Shortlisted',
+  interview_scheduled: 'Interview Scheduled',
+  interview_complete: 'Interview Completed',
   rejected: 'Rejected',
 }
 
 const STATUS_CLASSES: Record<string, string> = {
   not_started: 'badge badge--muted',
   applied: 'badge badge--muted',
+  shortlisted: 'badge badge--purple',
   interview_scheduled: 'badge badge--blue',
   interview_complete: 'badge badge--green',
   rejected: 'badge badge--red',
@@ -170,14 +172,14 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleModalCt, setScheduleModalCt] = useState('')
-  const [scheduleOption, setScheduleOption] = useState<'pick' | 'call' | null>(null)
-  const [callSuccess, setCallSuccess] = useState(false)
-  const [callLoading, setCallLoading] = useState(false)
   const [slots, setSlots] = useState<SlotInfo[]>([])
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState('')
   const [bookingLoading, setBookingLoading] = useState(false)
   const [bookSlotError, setBookSlotError] = useState('')
+  const [availableDates, setAvailableDates] = useState<{ date: string; display: string }[]>([])
+  const [scheduleDateSelected, setScheduleDateSelected] = useState('')
+  const [shortlistingCt, setShortlistingCt] = useState<string | null>(null)
 
   const filteredCandidates = useMemo(() => {
     let result = [...candidates].sort((a, b) => {
@@ -209,6 +211,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     if (filterStatus !== 'All') {
       const statusMap: Record<string, string> = {
         'Applied': 'applied',
+        'Shortlisted': 'shortlisted',
         'Interview Scheduled': 'interview_scheduled',
         'Interview Complete': 'interview_complete',
         'Rejected': 'rejected',
@@ -254,25 +257,27 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   function openScheduleModal(ct: string) {
     setScheduleModalCt(ct)
     setShowScheduleModal(true)
-    setScheduleOption(null)
-    setCallSuccess(false)
-    setCallLoading(false)
     setSlots([])
     setSelectedSlot('')
     setBookSlotError('')
+    setAvailableDates([])
+    const today = new Date().toISOString().split('T')[0]
+    setScheduleDateSelected(today)
+    fetchSlots(today)
   }
 
   function closeScheduleModal() {
     setShowScheduleModal(false)
     setScheduleModalCt('')
-    setScheduleOption(null)
   }
 
-  async function fetchSlots() {
+  async function fetchSlots(date?: string) {
     setSlotsLoading(true)
     try {
-      const res = await axios.get<SlotInfo[]>(`${API}/recruiter/slots`, { headers })
-      setSlots(res.data)
+      const url = date ? `${API}/recruiter/slots?date=${date}` : `${API}/recruiter/slots`
+      const res = await axios.get<{ slots: SlotInfo[]; available_dates: { date: string; display: string }[] }>(url, { headers })
+      setSlots(res.data.slots ?? [])
+      if (res.data.available_dates?.length) setAvailableDates(res.data.available_dates)
     } catch {
       // silent
     } finally {
@@ -280,19 +285,14 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     }
   }
 
-  async function handleMakeCall() {
-    setCallLoading(true)
+  async function handleShortlist(ct: string) {
+    setShortlistingCt(ct)
     try {
-      await axios.post(`${API}/recruiter/candidates/${scheduleModalCt}/make-call`, {}, { headers })
+      await axios.post(`${API}/recruiter/candidates/${ct}/shortlist`, {}, { headers })
       setCandidates(prev =>
-        prev.map(c => c.ct_number === scheduleModalCt ? { ...c, status: 'interview_scheduled' as CandidateStatus } : c)
+        prev.map(c => c.ct_number === ct ? { ...c, status: 'shortlisted' as CandidateStatus } : c)
       )
-      setCallSuccess(true)
-    } catch {
-      // silent
-    } finally {
-      setCallLoading(false)
-    }
+    } catch { /* silent */ } finally { setShortlistingCt(null) }
   }
 
   async function handleBookSlot() {
@@ -521,44 +521,47 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
           </div>
         </div>
       )}
-      {showScheduleModal && (
-        <div className="modal-overlay" onClick={closeScheduleModal}>
-          <div className="card schedule-modal" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h3 style={{ margin: 0 }}>Schedule Interview</h3>
-              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.5rem', lineHeight: 1 }} onClick={closeScheduleModal}>×</button>
-            </div>
-            {!scheduleOption && (
-              <div className="schedule-options">
-                <div className="schedule-option-card" onClick={() => { setScheduleOption('call'); handleMakeCall() }}>
-                  <div style={{ fontSize: '2rem' }}>📞</div>
-                  <h4 style={{ margin: '8px 0 4px' }}>Make a Call</h4>
-                  <p className="muted" style={{ fontSize: '0.85rem' }}>Invite the candidate to join immediately.</p>
-                </div>
-                <div className="schedule-option-card" onClick={() => { setScheduleOption('pick'); fetchSlots() }}>
-                  <div style={{ fontSize: '2rem' }}>📅</div>
-                  <h4 style={{ margin: '8px 0 4px' }}>Pick a Slot</h4>
-                  <p className="muted" style={{ fontSize: '0.85rem' }}>Choose a time. Candidate gets an email.</p>
-                </div>
+      {showScheduleModal && (() => {
+        const schedCand = candidates.find(c => c.ct_number === scheduleModalCt)
+        return (
+          <div className="modal-overlay" onClick={closeScheduleModal}>
+            <div className="card schedule-modal" onClick={e => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h3 style={{ margin: 0 }}>Schedule Interview{schedCand ? ` — ${schedCand.name}` : ''}</h3>
+                <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.5rem', lineHeight: 1 }} onClick={closeScheduleModal}>×</button>
               </div>
-            )}
-            {scheduleOption === 'call' && (
-              <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                {callLoading && <p className="muted">Initiating call...</p>}
-                {callSuccess && (
-                  <>
-                    <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>✅</div>
-                    <p style={{ color: 'var(--green)', fontWeight: 600, marginBottom: 8 }}>Call initiated successfully</p>
-                    <p className="muted" style={{ fontSize: '0.875rem' }}>The candidate can log in and start their interview immediately.</p>
-                    <button className="btn btn-secondary" style={{ marginTop: 16 }} onClick={closeScheduleModal}>Done</button>
-                  </>
-                )}
-              </div>
-            )}
-            {scheduleOption === 'pick' && (
+
+              {availableDates.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <p className="role-label" style={{ marginBottom: 8 }}>Select a date</p>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {availableDates.map(d => (
+                      <button
+                        key={d.date}
+                        onClick={() => { setScheduleDateSelected(d.date); setSelectedSlot(''); fetchSlots(d.date) }}
+                        style={{
+                          padding: '7px 14px',
+                          borderRadius: 20,
+                          border: '1.5px solid',
+                          borderColor: scheduleDateSelected === d.date ? 'var(--primary)' : 'var(--border)',
+                          background: scheduleDateSelected === d.date ? 'var(--primary)' : 'transparent',
+                          color: scheduleDateSelected === d.date ? '#fff' : 'var(--text)',
+                          cursor: 'pointer',
+                          fontSize: '0.82rem',
+                          fontWeight: scheduleDateSelected === d.date ? 600 : 400,
+                        }}
+                      >
+                        {d.display}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {slotsLoading && <p className="muted">Loading available slots...</p>}
-                {!slotsLoading && (
+                {!slotsLoading && slots.length === 0 && <p className="muted">No available slots for this date.</p>}
+                {!slotsLoading && slots.length > 0 && (
                   <div className="slot-grid">
                     {slots.map(s => (
                       <button
@@ -577,13 +580,13 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                   <button className="btn btn-primary" onClick={handleBookSlot} disabled={!selectedSlot || bookingLoading}>
                     {bookingLoading ? 'Booking...' : 'Confirm Slot'}
                   </button>
-                  <button className="btn btn-secondary" onClick={() => setScheduleOption(null)}>Back</button>
+                  <button className="btn btn-secondary" onClick={closeScheduleModal}>Cancel</button>
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
       <div className="dash-subheader">
         <h1 className="title" style={{ fontSize: '1.6rem' }}>Recruiter Dashboard</h1>
         <div className="dash-header-actions">
@@ -681,6 +684,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
               <select className="role-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
                 <option>All</option>
                 <option>Applied</option>
+                <option>Shortlisted</option>
                 <option>Interview Scheduled</option>
                 <option>Interview Complete</option>
                 <option>Rejected</option>
@@ -747,40 +751,27 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                 {c.status === 'applied' && (
                                   <div style={{ display: 'flex', gap: 6 }}>
                                     <button
-                                      className="btn btn-primary"
-                                      style={{ padding: '6px 12px', fontSize: '0.82rem' }}
-                                      onClick={() => openScheduleModal(c.ct_number)}
+                                      className="btn"
+                                      style={{ background: '#5B21B6', color: '#fff', padding: '6px 12px', fontSize: '0.82rem', borderRadius: 8, border: 'none', cursor: 'pointer' }}
+                                      disabled={shortlistingCt === c.ct_number}
+                                      onClick={() => handleShortlist(c.ct_number)}
                                     >
-                                      Schedule
+                                      {shortlistingCt === c.ct_number ? '...' : 'Shortlist'}
                                     </button>
-                                    <button
-                                      className="btn btn-danger"
-                                      style={{ padding: '6px 12px', fontSize: '0.82rem', alignSelf: 'unset' }}
-                                      disabled={actionCt === c.ct_number}
-                                      onClick={() => handleReject(c.ct_number)}
-                                    >
-                                      Reject
-                                    </button>
+                                    <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.82rem', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={() => handleReject(c.ct_number)}>Reject</button>
+                                  </div>
+                                )}
+                                {c.status === 'shortlisted' && (
+                                  <div style={{ display: 'flex', gap: 6 }}>
+                                    <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.82rem' }} onClick={() => openScheduleModal(c.ct_number)}>Schedule</button>
+                                    <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.82rem', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={() => handleReject(c.ct_number)}>Reject</button>
                                   </div>
                                 )}
                                 {c.status === 'interview_scheduled' && (
-                                  <button
-                                    className="btn btn-secondary"
-                                    style={{ padding: '6px 14px', fontSize: '0.82rem' }}
-                                    disabled={actionCt === c.ct_number}
-                                    onClick={() => handleCancelSchedule(c.ct_number)}
-                                  >
-                                    Cancel
-                                  </button>
+                                  <button className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.82rem' }} onClick={() => openScheduleModal(c.ct_number)}>Reschedule</button>
                                 )}
                                 {c.status === 'interview_complete' && (
-                                  <button
-                                    className="btn btn-secondary"
-                                    style={{ padding: '6px 14px', fontSize: '0.82rem' }}
-                                    onClick={() => onViewScorecard(c.ct_number)}
-                                  >
-                                    View Feedback
-                                  </button>
+                                  <button className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.82rem' }} onClick={() => onViewScorecard(c.ct_number)}>View Feedback</button>
                                 )}
                               </td>
                             </tr>
@@ -909,49 +900,30 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                       {c.status === 'applied' && (
                                         <>
                                           <button
-                                            className="btn btn-primary"
-                                            style={{ fontSize: '0.875rem', padding: '8px 20px' }}
-                                            onClick={e => { e.stopPropagation(); openScheduleModal(c.ct_number) }}
+                                            className="btn"
+                                            style={{ background: '#5B21B6', color: '#fff', fontSize: '0.875rem', padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer' }}
+                                            disabled={shortlistingCt === c.ct_number}
+                                            onClick={e => { e.stopPropagation(); handleShortlist(c.ct_number) }}
                                           >
-                                            Schedule Interview
+                                            {shortlistingCt === c.ct_number ? 'Shortlisting…' : 'Shortlist'}
                                           </button>
-                                          <button
-                                            className="btn btn-danger"
-                                            style={{ fontSize: '0.875rem', padding: '8px 20px', alignSelf: 'unset' }}
-                                            disabled={actionCt === c.ct_number}
-                                            onClick={e => { e.stopPropagation(); handleReject(c.ct_number) }}
-                                          >
-                                            Reject
-                                          </button>
+                                          <button className="btn btn-danger" style={{ fontSize: '0.875rem', padding: '8px 20px', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={e => { e.stopPropagation(); handleReject(c.ct_number) }}>Reject</button>
+                                        </>
+                                      )}
+                                      {c.status === 'shortlisted' && (
+                                        <>
+                                          <button className="btn btn-primary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); openScheduleModal(c.ct_number) }}>Schedule Interview</button>
+                                          <button className="btn btn-danger" style={{ fontSize: '0.875rem', padding: '8px 20px', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={e => { e.stopPropagation(); handleReject(c.ct_number) }}>Reject</button>
                                         </>
                                       )}
                                       {c.status === 'interview_scheduled' && (
-                                        <button
-                                          className="btn btn-secondary"
-                                          style={{ fontSize: '0.875rem', padding: '8px 20px' }}
-                                          disabled={actionCt === c.ct_number}
-                                          onClick={e => { e.stopPropagation(); handleCancelSchedule(c.ct_number) }}
-                                        >
-                                          {actionCt === c.ct_number ? 'Cancelling…' : 'Cancel Schedule'}
-                                        </button>
+                                        <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); openScheduleModal(c.ct_number) }}>Reschedule</button>
                                       )}
                                       {c.status === 'interview_complete' && (
-                                        <button
-                                          className="btn btn-secondary"
-                                          style={{ fontSize: '0.875rem', padding: '8px 20px' }}
-                                          onClick={e => { e.stopPropagation(); onViewScorecard(c.ct_number) }}
-                                        >
-                                          View Feedback
-                                        </button>
+                                        <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); onViewScorecard(c.ct_number) }}>View Feedback</button>
                                       )}
                                       {c.resume_text && (
-                                        <button
-                                          className="btn btn-secondary"
-                                          style={{ fontSize: '0.875rem', padding: '8px 20px' }}
-                                          onClick={e => { e.stopPropagation(); handleViewResume(c) }}
-                                        >
-                                          View Resume
-                                        </button>
+                                        <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); handleViewResume(c) }}>View Resume</button>
                                       )}
                                     </div>
 

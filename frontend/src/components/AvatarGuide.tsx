@@ -16,6 +16,7 @@ type GuidePage =
   | 'recruiter-dashboard'
   | 'recruiter-scorecard'
   | 'candidate-interview'
+  | 'book-slot'
 
 type Props = {
   page: GuidePage
@@ -65,6 +66,10 @@ const GUIDE_COPY: Record<GuidePage, string[]> = {
   'candidate-interview': [
     'I will stay nearby while the interview runs. Answer naturally and keep your microphone and camera available.',
     'The interviewer asks questions by voice. Take a breath, then answer clearly when prompted.',
+  ],
+  'book-slot': [
+    'Select a date and time that works best for you. All slots are between 9 AM and 6 PM.',
+    'Once you confirm, you will receive a confirmation email with your login details.',
   ],
 }
 

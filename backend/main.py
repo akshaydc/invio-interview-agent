@@ -5,7 +5,7 @@ import random
 import smtplib
 import traceback
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
@@ -214,6 +214,12 @@ class RescheduleRequest(BaseModel):
     new_slot: str  # "YYYY-MM-DD HH:MM"
 
 
+class BookSlotConfirmRequest(BaseModel):
+    token: str
+    ct_number: str
+    slot: str  # "YYYY-MM-DD HH:MM"
+
+
 # ---------------------------------------------------------------------------
 # Auth helpers
 # ---------------------------------------------------------------------------
@@ -286,13 +292,43 @@ async def _write_slots(slots: dict) -> None:
         await f.write(json.dumps(slots, indent=2))
 
 
-def _generate_slots() -> list[str]:
-    today = datetime.now().strftime("%Y-%m-%d")
+def _generate_slots(date_str: str | None = None) -> list[dict]:
+    if date_str:
+        try:
+            base = datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            base = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    else:
+        base = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    now = datetime.now()
+    current = base.replace(hour=9, minute=0, second=0, microsecond=0)
+    end = base.replace(hour=18, minute=0, second=0, microsecond=0)
     slots = []
-    for hour in range(9, 18):
-        for minute in (0, 15, 30, 45):
-            slots.append(f"{today} {hour:02d}:{minute:02d}")
+    while current < end:
+        if current > now + timedelta(minutes=15):
+            slots.append({
+                "slot": current.strftime("%Y-%m-%d %H:%M"),
+                "display": _format_slot_display(current.strftime("%Y-%m-%d %H:%M")),
+                "date_display": current.strftime("%A, %d %B %Y"),
+            })
+        current += timedelta(minutes=15)
     return slots
+
+
+def _get_available_dates() -> list[dict]:
+    today = datetime.now().date()
+    dates = []
+    for i in range(7):
+        d = today + timedelta(days=i)
+        if i == 0:
+            display = "Today"
+        elif i == 1:
+            display = "Tomorrow"
+        else:
+            display = d.strftime("%a %d")
+        dates.append({"date": d.strftime("%Y-%m-%d"), "display": display})
+    return dates
 
 
 def _format_slot_display(slot: str) -> str:
@@ -757,6 +793,44 @@ async def invite_candidate_alias(
     return result
 
 
+@app.post("/recruiter/candidates/{ct_number}/shortlist")
+async def shortlist_candidate(
+    ct_number: str,
+    background_tasks: BackgroundTasks,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    slot_booking_token = str(uuid.uuid4())
+    candidate["status"] = "shortlisted"
+    candidate["slot_booking_token"] = slot_booking_token
+    candidate["shortlisted_at"] = datetime.now(timezone.utc).isoformat()
+    await _write_candidates(candidates)
+    cand_email = candidate.get("email", "")
+    cand_name = candidate.get("name", "Candidate")
+    job_title = candidate.get("job_role", "the role")
+    slot_booking_url = f"{FRONTEND_URL}/book-slot?token={slot_booking_token}&ct={ct_number}"
+    if cand_email:
+        shortlist_html = (
+            f"<h2>Congratulations! You have been shortlisted.</h2>"
+            f"<p>Dear {cand_name},</p>"
+            f"<p>We are pleased to inform you that your profile has been shortlisted for <b>{job_title}</b>.</p>"
+            f"<p>Please click the link below to choose your preferred interview slot:</p>"
+            f'<p><a href="{slot_booking_url}" style="background:#0C447C;color:white;padding:12px 24px;'
+            f'border-radius:6px;text-decoration:none;display:inline-block">Book Your Interview Slot →</a></p>'
+            f"<p>Slots are available between 9 AM and 6 PM. Please book at the earliest.</p>"
+            f"<p>Best regards,<br>ASTRA Recruitment Team</p>"
+        )
+        background_tasks.add_task(
+            send_email, cand_email,
+            f"You've been shortlisted! Book your interview slot — {job_title}",
+            shortlist_html,
+        )
+    return {"success": True, "message": "Shortlisted. Email sent with slot booking link."}
+
+
 @app.post("/recruiter/candidates/{ct_number}/reject")
 async def reject_candidate(
     ct_number: str,
@@ -807,18 +881,22 @@ async def cancel_schedule(
 
 
 @app.get("/recruiter/slots")
-async def get_recruiter_slots(_auth: dict = Depends(verify_recruiter_token)) -> list:
+async def get_recruiter_slots(
+    date: str | None = None,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
     slots_data = await _read_slots()
-    all_slots = _generate_slots()
-    return [
+    all_slots = _generate_slots(date)
+    slot_list = [
         {
-            "slot": slot,
-            "display": _format_slot_display(slot),
-            "available": slots_data.get(slot) is None,
-            "booked_by": slots_data.get(slot),
+            "slot": s["slot"],
+            "display": s["display"],
+            "available": slots_data.get(s["slot"]) is None,
+            "booked_by": slots_data.get(s["slot"]),
         }
-        for slot in all_slots
+        for s in all_slots
     ]
+    return {"slots": slot_list, "available_dates": _get_available_dates()}
 
 
 @app.post("/recruiter/candidates/{ct_number}/book-slot")
@@ -882,23 +960,101 @@ async def make_call(
 # ---------------------------------------------------------------------------
 
 @app.get("/candidate/slots")
-async def get_candidate_slots(_auth: dict = Depends(verify_candidate_token)) -> dict:
+async def get_candidate_slots(
+    date: str | None = None,
+    _auth: dict = Depends(verify_candidate_token),
+) -> dict:
     ct_number = _auth["ct_number"]
     candidates = await _read_candidates()
     candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
     slots_data = await _read_slots()
-    all_slots = _generate_slots()
+    all_slots = _generate_slots(date)
     available_slots = [
-        {"slot": slot, "display": _format_slot_display(slot)}
-        for slot in all_slots
-        if slots_data.get(slot) is None or slots_data[slot] == ct_number
+        {"slot": s["slot"], "display": s["display"]}
+        for s in all_slots
+        if slots_data.get(s["slot"]) is None or slots_data[s["slot"]] == ct_number
     ]
     return {
         "available_slots": available_slots,
+        "available_dates": _get_available_dates(),
         "current_slot": candidate.get("interview_slot"),
     }
+
+
+# ---------------------------------------------------------------------------
+# Public slot-booking endpoints (for shortlisted candidates via email link)
+# ---------------------------------------------------------------------------
+
+@app.get("/book-slot/available")
+async def book_slot_available(token: str, ct: str) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct), None)
+    if not candidate or candidate.get("slot_booking_token") != token:
+        raise HTTPException(status_code=403, detail="Invalid or expired link")
+    slots_data = await _read_slots()
+    dates_with_slots = []
+    for d in _get_available_dates():
+        date_slots = _generate_slots(d["date"])
+        available = [
+            {"slot": s["slot"], "display": s["display"]}
+            for s in date_slots
+            if slots_data.get(s["slot"]) is None
+        ]
+        if available:
+            dates_with_slots.append({**d, "slot_count": len(available), "slots": available})
+    return {
+        "name": candidate.get("name", ""),
+        "job_title": candidate.get("job_role", ""),
+        "available_dates": dates_with_slots,
+    }
+
+
+@app.post("/book-slot/confirm")
+async def book_slot_confirm(
+    body: BookSlotConfirmRequest,
+    background_tasks: BackgroundTasks,
+) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == body.ct_number), None)
+    if not candidate or candidate.get("slot_booking_token") != body.token:
+        raise HTTPException(status_code=403, detail="Invalid or expired link")
+    slots_data = await _read_slots()
+    existing = slots_data.get(body.slot)
+    if existing and existing != body.ct_number:
+        raise HTTPException(status_code=409, detail="This slot has already been booked. Please choose another.")
+    old_slot = candidate.get("interview_slot")
+    if old_slot and slots_data.get(old_slot) == body.ct_number:
+        del slots_data[old_slot]
+    slots_data[body.slot] = body.ct_number
+    await _write_slots(slots_data)
+    candidate["interview_slot"] = body.slot
+    candidate["status"] = "interview_scheduled"
+    candidate["scheduled_at"] = datetime.now(timezone.utc).isoformat()
+    candidate["slot_booking_token"] = None
+    await _write_candidates(candidates)
+    cand_email = candidate.get("email", "")
+    cand_name = candidate.get("name", "Candidate")
+    job_title = candidate.get("job_role", "the role")
+    ct_number = body.ct_number
+    slot_display = _format_slot_display(body.slot)
+    if cand_email:
+        confirm_html = (
+            f"<h2>Interview Slot Confirmed!</h2>"
+            f"<p>Dear {cand_name},</p>"
+            f"<p>Your interview for <b>{job_title}</b> has been confirmed for <b>{slot_display}</b>.</p>"
+            f"<p>To join your interview, login with your CT Number: <b style=\"color:#0C447C\">{ct_number}</b></p>"
+            f'<p><a href="{FRONTEND_URL}" style="background:#0C447C;color:white;padding:12px 24px;'
+            f'border-radius:6px;text-decoration:none;display:inline-block">Login to ASTRA →</a></p>'
+            f"<p>Best regards,<br>ASTRA Recruitment Team</p>"
+        )
+        background_tasks.add_task(
+            send_email, cand_email,
+            f"Interview slot confirmed — {slot_display}",
+            confirm_html,
+        )
+    return {"success": True, "slot": body.slot, "slot_display": slot_display}
 
 
 @app.post("/candidate/reschedule")
@@ -1723,8 +1879,17 @@ async def start_session(
         if _cand and _cand.get("interview_slot"):
             try:
                 _slot_dt = datetime.strptime(_cand["interview_slot"], "%Y-%m-%d %H:%M")
-                if (_slot_dt - datetime.now()).total_seconds() > 120:
-                    raise HTTPException(status_code=403, detail="too_early")
+                _secs_remaining = (_slot_dt - datetime.now()).total_seconds()
+                if _secs_remaining > 120:
+                    _mins_remaining = int(_secs_remaining / 60)
+                    raise HTTPException(
+                        status_code=403,
+                        detail={
+                            "message": "too_early",
+                            "slot": _cand["interview_slot"],
+                            "minutes_remaining": _mins_remaining,
+                        },
+                    )
             except HTTPException:
                 raise
             except Exception:
@@ -1762,6 +1927,7 @@ async def start_session(
         "ct_number": ct_number,
         "status": "active",
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "interview_start_time": datetime.now(timezone.utc).isoformat(),
         "transcript": [{"q": first_question, "a": "", "score": None}],
         "scorecard": None,
     }
@@ -1816,13 +1982,54 @@ async def process_audio(session_id: str, audio: UploadFile = File(...)) -> Respo
         else:
             transcript.append({"q": "", "a": candidate_answer, "score": None})
 
-        answered_count = sum(1 for e in transcript if e.get("q") and e.get("a"))
-        if answered_count >= 7:
+        # Check interview duration
+        elapsed_minutes = 0.0
+        interview_start_time = session.get("interview_start_time")
+        if interview_start_time:
+            try:
+                start_dt = datetime.fromisoformat(interview_start_time)
+                if start_dt.tzinfo is None:
+                    start_dt = start_dt.replace(tzinfo=timezone.utc)
+                elapsed_minutes = (datetime.now(timezone.utc) - start_dt).total_seconds() / 60
+            except Exception:
+                pass
+
+        closing_asked = session.get("closing_asked", False)
+
+        # If closing question was already asked, this is the final answer → auto end
+        if closing_asked:
             session["transcript"] = transcript
             await _write_session(session_id, session)
             return Response(
                 content=json.dumps({
-                    "response": "Thank you for completing all questions. Your interview is now complete.",
+                    "response": "Thank you so much for your time today. It was a pleasure speaking with you and we will be in touch soon.",
+                    "candidate_answer": candidate_answer,
+                    "auto_end": True,
+                }),
+                media_type="application/json",
+            )
+
+        # Backup: max 8 answered questions
+        answered_count = sum(1 for e in transcript if e.get("q") and e.get("a"))
+        if answered_count >= 8:
+            session["transcript"] = transcript
+            await _write_session(session_id, session)
+            return Response(
+                content=json.dumps({
+                    "response": "Thank you for completing all the questions. Your interview is now complete.",
+                    "candidate_answer": candidate_answer,
+                    "auto_end": True,
+                }),
+                media_type="application/json",
+            )
+
+        # Hard 10-minute time limit
+        if elapsed_minutes >= 10:
+            session["transcript"] = transcript
+            await _write_session(session_id, session)
+            return Response(
+                content=json.dumps({
+                    "response": "We have reached the end of our allotted interview time. Thank you very much for your time today.",
                     "candidate_answer": candidate_answer,
                     "auto_end": True,
                 }),
@@ -1832,17 +2039,25 @@ async def process_audio(session_id: str, audio: UploadFile = File(...)) -> Respo
         n_questions = sum(1 for e in transcript if e.get("q"))
         next_question = "That's a great point. Can you walk me through a specific example from your previous work?"
 
+        # At 9-minute mark, ask the closing question
+        use_closing_prompt = elapsed_minutes >= 9 and not closing_asked
+        if use_closing_prompt:
+            session["closing_asked"] = True
+
         if ANTHROPIC_API_KEY:
             try:
                 messages = _build_claude_messages(transcript)
                 if messages and messages[0]["role"] == "assistant":
                     messages = [{"role": "user", "content": "Please begin the interview."}] + messages
 
-                client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-                response = await client.messages.create(
-                    model="claude-haiku-4-5-20251001",
-                    max_tokens=150,
-                    system=(
+                if use_closing_prompt:
+                    system = (
+                        "This is your FINAL question. Ask the candidate: "
+                        "'Do you have any questions for us about the role or the company?' "
+                        "Keep it brief and professional. One sentence only."
+                    )
+                else:
+                    system = (
                         f"You are a professional interviewer for {job_role}. "
                         + (f"Job description: {job_description}. " if job_description else "")
                         + f"You have asked {n_questions} questions so far. Ask a relevant "
@@ -1850,7 +2065,13 @@ async def process_audio(session_id: str, audio: UploadFile = File(...)) -> Respo
                         "Keep your response to ONE short sentence only. Maximum 20 words. "
                         "No long introductions or preambles. Ask one direct question only. "
                         "Do not use markdown formatting."
-                    ),
+                    )
+
+                client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+                response = await client.messages.create(
+                    model="claude-haiku-4-5-20251001",
+                    max_tokens=150,
+                    system=system,
                     messages=messages,
                 )
                 next_question = response.content[0].text
