@@ -1922,6 +1922,59 @@ async def on_startup() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Confidence analysis helpers
+# ---------------------------------------------------------------------------
+
+def analyze_audio_confidence(audio_bytes: bytes) -> dict:
+    try:
+        samples = []
+        step = max(1, len(audio_bytes) // 200)
+        for i in range(0, len(audio_bytes) - 1, step):
+            val = audio_bytes[i]
+            normalized = abs(val - 128) / 128.0
+            samples.append(normalized)
+        if not samples:
+            return {"volume": 0.5, "consistency": 0.5}
+        avg_volume = sum(samples) / len(samples)
+        variance = sum((s - avg_volume) ** 2 for s in samples) / len(samples)
+        consistency = max(0, 1 - (variance * 10))
+        return {
+            "volume": round(min(1.0, avg_volume * 4), 2),
+            "consistency": round(consistency, 2),
+        }
+    except Exception:
+        return {"volume": 0.5, "consistency": 0.5}
+
+
+def analyze_text_confidence(text: str, question: str) -> dict:
+    words = text.split()
+    word_count = len(words)
+    confident_words = [
+        "definitely", "certainly", "absolutely", "successfully", "achieved",
+        "led", "built", "delivered", "managed", "expert", "proficient", "strong",
+    ]
+    hesitant_words = [
+        "um", "uh", "maybe", "perhaps", "not sure", "i think", "possibly",
+        "kind of", "sort of", "i guess", "like",
+    ]
+    text_lower = text.lower()
+    confident_count = sum(1 for w in confident_words if w in text_lower)
+    hesitant_count = sum(1 for w in hesitant_words if w in text_lower)
+    base = 0.5
+    length_bonus = min(0.3, word_count / 100)
+    confident_bonus = min(0.2, confident_count * 0.05)
+    hesitant_penalty = min(0.3, hesitant_count * 0.08)
+    score = base + length_bonus + confident_bonus - hesitant_penalty
+    score = max(0.1, min(1.0, score))
+    return {
+        "word_count": word_count,
+        "confident_signals": confident_count,
+        "hesitant_signals": hesitant_count,
+        "text_score": round(score, 2),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Session endpoints
 # ---------------------------------------------------------------------------
 
@@ -2035,6 +2088,8 @@ async def process_audio(session_id: str, audio: UploadFile = File(...)) -> Respo
         print(f"Audio content type: {audio.content_type}")
         print(f"Audio size: {len(audio_bytes)} bytes")
 
+        audio_metrics = analyze_audio_confidence(audio_bytes)
+
         candidate_answer = "I have relevant experience and have worked on similar challenges."
         if OPENAI_API_KEY:
             try:
@@ -2055,11 +2110,33 @@ async def process_audio(session_id: str, audio: UploadFile = File(...)) -> Respo
                 traceback.print_exc()
                 raise HTTPException(status_code=500, detail=f"Whisper API error: {e}")
 
+        prev_question = ""
         transcript = session["transcript"]
+        if transcript and transcript[-1].get("q"):
+            prev_question = transcript[-1]["q"]
+
+        text_metrics = analyze_text_confidence(candidate_answer, prev_question)
+        confidence_score = round((
+            audio_metrics["volume"] * 0.35
+            + audio_metrics["consistency"] * 0.25
+            + text_metrics["text_score"] * 0.40
+        ) * 100)
+        confidence_payload = {
+            "confidence": confidence_score,
+            "metrics": {
+                "volume": audio_metrics["volume"],
+                "consistency": audio_metrics["consistency"],
+                "word_count": text_metrics["word_count"],
+                "hesitant_signals": text_metrics["hesitant_signals"],
+                "confident_signals": text_metrics["confident_signals"],
+            },
+        }
+
         if transcript and transcript[-1]["a"] == "":
             transcript[-1]["a"] = candidate_answer
+            transcript[-1].update(confidence_payload)
         else:
-            transcript.append({"q": "", "a": candidate_answer, "score": None})
+            transcript.append({"q": "", "a": candidate_answer, "score": None, **confidence_payload})
 
         # Check interview duration
         elapsed_minutes = 0.0
@@ -2287,6 +2364,52 @@ async def end_session(
 
         scorecard["transcript"] = session.get("transcript", [])
         scorecard["violations"] = session.get("violations", [])
+
+        # Confidence analytics across all answered questions
+        answered = [e for e in scorecard["transcript"] if e.get("a") and e.get("confidence")]
+        if answered:
+            scores = [e["confidence"] for e in answered]
+            avg_confidence = round(sum(scores) / len(scores))
+            peak_q = max(answered, key=lambda x: x["confidence"])
+            lowest_q = min(answered, key=lambda x: x["confidence"])
+            if len(scores) >= 3:
+                half = len(scores) // 2
+                first_half = sum(scores[:half]) / half
+                second_half = sum(scores[half:]) / (len(scores) - half)
+                trend = ("improving" if second_half > first_half + 5
+                         else "declining" if first_half > second_half + 5
+                         else "steady")
+            else:
+                trend = "steady"
+            if avg_confidence >= 75:
+                confidence_label, confidence_color = "High Confidence", "#0F6E56"
+            elif avg_confidence >= 50:
+                confidence_label, confidence_color = "Moderate Confidence", "#854F0B"
+            else:
+                confidence_label, confidence_color = "Low Confidence", "#A32D2D"
+            scorecard["confidence_analysis"] = {
+                "average_score": avg_confidence,
+                "label": confidence_label,
+                "color": confidence_color,
+                "trend": trend,
+                "peak_question": peak_q.get("q", "")[:80],
+                "peak_score": peak_q["confidence"],
+                "lowest_question": lowest_q.get("q", "")[:80],
+                "lowest_score": lowest_q["confidence"],
+                "per_question": [
+                    {
+                        "question_num": i + 1,
+                        "question": e.get("q", "")[:60],
+                        "score": e.get("confidence", 50),
+                        "word_count": e.get("metrics", {}).get("word_count", 0),
+                        "hesitant": e.get("metrics", {}).get("hesitant_signals", 0),
+                        "volume": e.get("metrics", {}).get("volume", 0.5),
+                    }
+                    for i, e in enumerate(answered)
+                ],
+                "total_words": sum(e.get("metrics", {}).get("word_count", 0) for e in answered),
+            }
+
         session["status"] = "complete"
         session["scorecard"] = scorecard
         await _write_session(session_id, session)
