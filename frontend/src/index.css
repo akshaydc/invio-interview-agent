@@ -1668,8 +1668,7 @@ body {
 }
 
 .avatar-guide__primary,
-.avatar-guide__secondary,
-.avatar-guide__next {
+.avatar-guide__secondary {
   min-height: 38px;
   border-radius: 9px;
   font-family: var(--font);
@@ -1689,35 +1688,14 @@ body {
   opacity: 0.55;
 }
 
-.avatar-guide__secondary,
-.avatar-guide__next {
+.avatar-guide__secondary {
   border: 1px solid var(--primary-border);
   background: var(--primary-bg);
   color: var(--primary);
 }
 
-.avatar-guide__secondary:hover,
-.avatar-guide__next:hover {
+.avatar-guide__secondary:hover {
   background: var(--primary-surface);
-}
-
-.avatar-guide__actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.avatar-guide__step {
-  margin-right: auto;
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.avatar-guide__next {
-  padding: 7px 14px;
 }
 
 .avatar-guide--speaking .avatar-guide__image {

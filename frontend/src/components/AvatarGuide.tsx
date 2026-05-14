@@ -124,7 +124,6 @@ function tuneGuideVoice(utterance: SpeechSynthesisUtterance, voices: SpeechSynth
 
 export default function AvatarGuide({ page, auth, selectedJobTitle, onBrowseAllOpenings, onMatchResult }: Props) {
   const [collapsed, setCollapsed] = useState(false)
-  const [tipState, setTipState] = useState({ page, index: 0 })
   const [speaking, setSpeaking] = useState(false)
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -134,9 +133,8 @@ export default function AvatarGuide({ page, auth, selectedJobTitle, onBrowseAllO
 
   const tips = GUIDE_COPY[page]
   const title = getGreeting(page, auth, selectedJobTitle)
-  const tipIndex = tipState.page === page ? tipState.index : 0
-  const currentTip = tips[tipIndex]
-  const spokenMessage = buildSpokenMessage(title, currentTip)
+  const guideMessage = tips.join(' ')
+  const spokenMessage = buildSpokenMessage(title, guideMessage)
 
   function stopSpeaking() {
     window.speechSynthesis.cancel()
@@ -174,7 +172,6 @@ export default function AvatarGuide({ page, auth, selectedJobTitle, onBrowseAllO
 
   useEffect(() => {
     setCollapsed(false)
-    setTipState({ page, index: 0 })
     lastSpokenRef.current = ''
   }, [page])
 
@@ -233,7 +230,7 @@ export default function AvatarGuide({ page, auth, selectedJobTitle, onBrowseAllO
             x
           </button>
         </div>
-        <p className="avatar-guide__message">{currentTip}</p>
+        <p className="avatar-guide__message">{guideMessage}</p>
 
         {page === 'landing' && (
           <div className="avatar-guide__choice-panel">
@@ -289,21 +286,6 @@ export default function AvatarGuide({ page, auth, selectedJobTitle, onBrowseAllO
           </div>
         )}
 
-        <div className="avatar-guide__actions">
-          <span className="avatar-guide__step">
-            {tipIndex + 1}/{tips.length}
-          </span>
-          <button
-            className="avatar-guide__next"
-            onClick={(event) => {
-              event.stopPropagation()
-              stopSpeaking()
-              setTipState({ page, index: (tipIndex + 1) % tips.length })
-            }}
-          >
-            Next
-          </button>
-        </div>
       </div>
     </aside>
   )

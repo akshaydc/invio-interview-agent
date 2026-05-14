@@ -38,6 +38,11 @@ const INTRO_CSS = `
     0% { width: 0; opacity: 1; }
     100% { width: 130px; opacity: 0; }
   }
+  @keyframes ai-cut-glint {
+    0% { opacity: 0; transform: rotate(-12deg) scaleX(.35) scaleY(.8); filter: blur(6px); }
+    24% { opacity: .95; transform: rotate(-12deg) scaleX(1.65) scaleY(1); filter: blur(0); }
+    100% { opacity: 0; transform: rotate(-12deg) scaleX(2.8) scaleY(.72); filter: blur(5px); }
+  }
   @keyframes ai-char-in {
     0% { opacity: 0; transform: translateY(9px); }
     100% { opacity: .82; transform: translateY(0); }
@@ -53,6 +58,7 @@ const INTRO_CSS = `
 `
 
 export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
+  const wordRef = useRef<HTMLDivElement>(null)
   const lastLetterRef = useRef<HTMLSpanElement>(null)
   const starContainerRef = useRef<HTMLDivElement>(null)
   const onCompleteRef = useRef(onComplete)
@@ -82,11 +88,18 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
       await delay(1500)
       if (cancelled) return
 
-      if (!lastLetterRef.current) return
-      const rect = lastLetterRef.current.getBoundingClientRect()
-      const endX = rect.left + rect.width / 2
-      const endY = rect.top + rect.height / 2
-      const angle = (Math.atan2(endY - (-180), endX - (-220)) * 180) / Math.PI
+      if (!wordRef.current || !lastLetterRef.current) return
+      const wordRect = wordRef.current.getBoundingClientRect()
+      const finalARect = lastLetterRef.current.getBoundingClientRect()
+      const startX = wordRect.left - Math.max(180, wordRect.width * 0.22)
+      const startY = wordRect.top + wordRect.height * 0.48
+      const midX = wordRect.left + wordRect.width * 0.48
+      const midY = wordRect.top + wordRect.height * 0.43
+      const cutX = finalARect.left + finalARect.width * 0.52
+      const cutY = finalARect.top + finalARect.height * 0.42
+      const exitX = finalARect.right + Math.max(120, finalARect.width * 0.9)
+      const exitY = cutY - 10
+      const angle = (Math.atan2(cutY - startY, cutX - startX) * 180) / Math.PI
 
       setStarAngle(angle)
       setStarFired(true)
@@ -97,23 +110,26 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
 
       starContainerRef.current.animate(
         [
-          { transform: 'translate(-220px, -180px)' },
-          { transform: `translate(${endX}px, ${endY}px)` },
+          { transform: `translate(${startX}px, ${startY}px) scale(.82)`, opacity: 0 },
+          { transform: `translate(${startX + 52}px, ${startY - 2}px) scale(1)`, opacity: 1, offset: 0.1 },
+          { transform: `translate(${midX}px, ${midY}px) scale(1.02)`, opacity: 1, offset: 0.55 },
+          { transform: `translate(${cutX}px, ${cutY}px) scale(1.08)`, opacity: 1, offset: 0.84 },
+          { transform: `translate(${exitX}px, ${exitY}px) scale(.9)`, opacity: 0 },
         ],
-        { duration: 1700, easing: 'cubic-bezier(.55,.08,.68,.53)', fill: 'forwards' }
+        { duration: 1450, easing: 'cubic-bezier(.22,.72,.22,1)', fill: 'forwards' }
       )
 
-      await delay(1750)
+      await delay(1240)
       if (cancelled) return
 
-      if (lastLetterRef.current) {
-        const r2 = lastLetterRef.current.getBoundingClientRect()
-        setBurstPos({ x: r2.left + r2.width / 2, y: r2.top + r2.height / 2 })
-      }
-      setStarFired(false)
+      setBurstPos({ x: cutX, y: cutY })
       setShowBurst(true)
 
-      await delay(450)
+      await delay(360)
+      if (cancelled) return
+      setStarFired(false)
+
+      await delay(220)
       if (cancelled) return
       setTaglineVisible(true)
 
@@ -172,7 +188,7 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
       ))}
 
       {/* ASTRA letters */}
-      <div style={{
+      <div ref={wordRef} style={{
         display: 'flex',
         fontFamily: "'Instrument Serif', serif",
         fontSize: 'clamp(4.5rem, 13vw, 10rem)',
@@ -189,12 +205,35 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
             ref={i === LETTERS.length - 1 ? lastLetterRef : undefined}
             style={{
               display: 'inline-block',
+              position: 'relative',
               opacity: 0,
               animation: `ai-letter-in 0.55s ease-out ${i * LETTER_STAGGER}ms forwards`,
               textShadow: '0 0 80px rgba(110,183,255,0.45)',
             }}
           >
             {letter}
+            {i === LETTERS.length - 1 && showBurst && (
+              <span
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  left: '43%',
+                  top: '34%',
+                  width: '18%',
+                  height: '18%',
+                  borderRadius: '999px',
+                  background: 'rgba(255,255,255,0.88)',
+                  boxShadow: [
+                    '0 0 12px rgba(255,255,255,0.95)',
+                    '0 0 28px rgba(110,183,255,0.9)',
+                    '0 0 54px rgba(110,183,255,0.5)',
+                  ].join(', '),
+                  transform: 'rotate(-12deg) scaleX(1.55)',
+                  pointerEvents: 'none',
+                  animation: 'ai-cut-glint 0.72s ease-out forwards',
+                }}
+              />
+            )}
           </span>
         ))}
       </div>
@@ -244,22 +283,29 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
             {/* Tail — extends behind (−x direction in rotated frame) */}
             <div style={{
               position: 'absolute',
-              right: 0, top: -2,
-              width: 260, height: 4,
-              background: 'linear-gradient(to right, transparent, rgba(110,183,255,0.45), rgba(207,230,255,0.85))',
-              filter: 'blur(1.5px)',
+              right: 0, top: -1,
+              width: 340, height: 2,
+              background: 'linear-gradient(to right, transparent, rgba(110,183,255,0.18), rgba(207,230,255,0.92))',
+              filter: 'blur(.7px)',
+            }} />
+            <div style={{
+              position: 'absolute',
+              right: 8, top: -7,
+              width: 180, height: 14,
+              background: 'linear-gradient(to right, transparent, rgba(110,183,255,0.16), rgba(207,230,255,0.38))',
+              filter: 'blur(7px)',
             }} />
             {/* Head */}
             <div style={{
               position: 'absolute',
-              left: -12, top: -12,
-              width: 24, height: 24,
+              left: -9, top: -9,
+              width: 18, height: 18,
               borderRadius: '50%',
               background: 'radial-gradient(circle, #ffffff 20%, rgba(110,183,255,0.85) 60%, transparent 100%)',
               boxShadow: [
-                '0 0 8px 3px rgba(110,183,255,0.9)',
-                '0 0 18px 7px rgba(50,110,210,0.6)',
-                '0 0 36px 14px rgba(20,60,160,0.35)',
+                '0 0 8px 2px rgba(255,255,255,0.92)',
+                '0 0 18px 6px rgba(110,183,255,0.66)',
+                '0 0 38px 12px rgba(20,60,160,0.28)',
               ].join(', '),
             }} />
           </div>
