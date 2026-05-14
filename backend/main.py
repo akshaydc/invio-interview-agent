@@ -2,12 +2,9 @@ import io
 import json
 import os
 import random
-import smtplib
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from pathlib import Path
 
 try:
@@ -18,6 +15,7 @@ except ImportError:
 
 import aiofiles
 import anthropic
+import httpx
 import openai
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
@@ -29,8 +27,6 @@ load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-GMAIL_USER = os.getenv("GMAIL_USER")
-GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 RECRUITER_EMAIL = os.getenv("RECRUITER_EMAIL")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://your-frontend.railway.app")
 
@@ -471,38 +467,48 @@ async def _analyze_resume_match(
 # Email
 # ---------------------------------------------------------------------------
 
-def send_email(to_email: str, subject: str, html_body: str) -> bool:
-    gmail_user = os.getenv("GMAIL_USER")
-    gmail_password = os.getenv("GMAIL_APP_PASSWORD")
-    if not gmail_user or not gmail_password:
-        print("Email not configured")
+def mask_email(email: str) -> str:
+    parts = email.split("@")
+    if len(parts) != 2:
+        return email
+    name = parts[0]
+    masked = name[0] + "***" if len(name) > 1 else "***"
+    return f"{masked}@{parts[1]}"
+
+
+async def send_email(to_email: str, subject: str, html_body: str) -> bool:
+    resend_key = os.getenv("RESEND_API_KEY")
+    from_email = os.getenv("FROM_EMAIL", "onboarding@resend.dev")
+    if not resend_key:
+        print("RESEND_API_KEY not configured")
         return False
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = gmail_user
-        msg["To"] = to_email
-        msg.attach(MIMEText(html_body, "html"))
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(gmail_user, gmail_password)
-            server.sendmail(gmail_user, to_email, msg.as_string())
-        print(f"Email sent to {to_email}")
-        return True
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {resend_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": f"ASTRA Recruitment <{from_email}>",
+                    "to": [to_email],
+                    "subject": subject,
+                    "html": html_body,
+                },
+                timeout=10.0,
+            )
+            print(f"Resend response: {response.status_code} {response.text[:200]}")
+            return response.status_code == 200
     except Exception as e:
-        print(f"Email error: {type(e).__name__}: {e}")
+        print(f"Email send error: {type(e).__name__}: {e}")
         traceback.print_exc()
         return False
 
 
-def send_scorecard_email(scorecard: dict, job_role: str, session_id: str, candidate_name: str = "") -> None:
-    print(f"GMAIL_USER: {GMAIL_USER}")
-    print(f"GMAIL_APP_PASSWORD set: {bool(GMAIL_APP_PASSWORD)}")
-    print(f"RECRUITER_EMAIL: {RECRUITER_EMAIL}")
-    if not GMAIL_USER or not GMAIL_APP_PASSWORD or not RECRUITER_EMAIL:
-        print("Email not configured — skipping scorecard email.")
+async def send_scorecard_email(scorecard: dict, job_role: str, session_id: str, candidate_name: str = "") -> None:
+    if not RECRUITER_EMAIL:
+        print("RECRUITER_EMAIL not configured — skipping scorecard email.")
         return
 
     def score_box(label: str, value: int) -> str:
@@ -563,21 +569,8 @@ def send_scorecard_email(scorecard: dict, job_role: str, session_id: str, candid
     </body></html>
     """
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"Interview Scorecard — {job_role}" + (f" — {candidate_name}" if candidate_name else "")
-    msg["From"] = GMAIL_USER
-    msg["To"] = RECRUITER_EMAIL
-    msg.attach(MIMEText(html, "html"))
-
-    try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
-            server.sendmail(GMAIL_USER, RECRUITER_EMAIL, msg.as_string())
-        print(f"Scorecard email sent to {RECRUITER_EMAIL}")
-    except Exception:
-        traceback.print_exc()
-        print("Failed to send scorecard email.")
+    subject = f"Interview Scorecard — {job_role}" + (f" — {candidate_name}" if candidate_name else "")
+    await send_email(RECRUITER_EMAIL, subject, html)
 
 
 # ---------------------------------------------------------------------------
@@ -796,7 +789,6 @@ async def invite_candidate_alias(
 @app.post("/recruiter/candidates/{ct_number}/shortlist")
 async def shortlist_candidate(
     ct_number: str,
-    background_tasks: BackgroundTasks,
     _auth: dict = Depends(verify_recruiter_token),
 ) -> dict:
     candidates = await _read_candidates()
@@ -812,6 +804,7 @@ async def shortlist_candidate(
     cand_name = candidate.get("name", "Candidate")
     job_title = candidate.get("job_role", "the role")
     slot_booking_url = f"{FRONTEND_URL}/book-slot?token={slot_booking_token}&ct={ct_number}"
+    email_sent = False
     if cand_email:
         shortlist_html = (
             f"<h2>Congratulations! You have been shortlisted.</h2>"
@@ -823,12 +816,18 @@ async def shortlist_candidate(
             f"<p>Slots are available between 9 AM and 6 PM. Please book at the earliest.</p>"
             f"<p>Best regards,<br>ASTRA Recruitment Team</p>"
         )
-        background_tasks.add_task(
-            send_email, cand_email,
+        email_sent = await send_email(
+            cand_email,
             f"You've been shortlisted! Book your interview slot — {job_title}",
             shortlist_html,
         )
-    return {"success": True, "message": "Shortlisted. Email sent with slot booking link."}
+    return {
+        "success": True,
+        "email_sent": email_sent,
+        "email_to": mask_email(cand_email) if cand_email else None,
+        "slot_booking_url": slot_booking_url,
+        "message": "Candidate shortlisted successfully",
+    }
 
 
 @app.post("/recruiter/candidates/{ct_number}/reject")
