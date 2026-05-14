@@ -1,0 +1,233 @@
+{
+  "session_id": "0f6ef23e-0d3a-475b-b32c-2337bb2acba6",
+  "ct_number": "CT20260013",
+  "job_role": "QA Engineer",
+  "job_description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products.",
+  "status": "complete",
+  "transcript": [
+    {
+      "q": "Describe your experience with test automation frameworks.",
+      "a": "Um I have used Selenium a bit. I am not that experienced with it yet but I am learning. I think I can pick it up quickly.",
+      "score": 4,
+      "confidence": 28,
+      "metrics": {
+        "volume": 0.32,
+        "consistency": 0.35,
+        "word_count": 28,
+        "hesitant_signals": 5,
+        "confident_signals": 0
+      }
+    },
+    {
+      "q": "How do you decide what to test and what not to test?",
+      "a": "I guess I test the main features first. Maybe the important ones. I am not sure exactly, I just kind of go through the requirements.",
+      "score": 4,
+      "confidence": 31,
+      "metrics": {
+        "volume": 0.34,
+        "consistency": 0.38,
+        "word_count": 30,
+        "hesitant_signals": 5,
+        "confident_signals": 0
+      }
+    },
+    {
+      "q": "Tell me about a bug you found that had significant impact.",
+      "a": "There was a bug in the login page once. It was not loading properly for some users. I reported it and the developers fixed it. It was important I think.",
+      "score": 5,
+      "confidence": 38,
+      "metrics": {
+        "volume": 0.4,
+        "consistency": 0.42,
+        "word_count": 36,
+        "hesitant_signals": 3,
+        "confident_signals": 0
+      }
+    },
+    {
+      "q": "How do you handle tight deadlines in testing?",
+      "a": "I prioritise the important test cases and try to finish as fast as possible. I communicate with the team if I am falling behind. I think that is the right approach.",
+      "score": 6,
+      "confidence": 44,
+      "metrics": {
+        "volume": 0.46,
+        "consistency": 0.48,
+        "word_count": 38,
+        "hesitant_signals": 2,
+        "confident_signals": 1
+      }
+    },
+    {
+      "q": "Do you have any questions for us?",
+      "a": "No I think I am okay. Thank you.",
+      "score": 3,
+      "confidence": 25,
+      "metrics": {
+        "volume": 0.28,
+        "consistency": 0.3,
+        "word_count": 8,
+        "hesitant_signals": 0,
+        "confident_signals": 0
+      }
+    }
+  ],
+  "violations": [
+    {
+      "type": "tab_switch",
+      "timestamp": "2026-05-13T10:04:22"
+    },
+    {
+      "type": "face_detection",
+      "timestamp": "2026-05-13T10:06:15",
+      "reason": "Not looking at screen"
+    }
+  ],
+  "scorecard": {
+    "communication": 5,
+    "technical_depth": 4,
+    "problem_solving": 5,
+    "cultural_fit": 6,
+    "summary": "Ananya struggled to articulate her testing experience with specificity. Answers were brief and lacked concrete examples. She showed willingness to learn but the technical depth required for this role was not evident in her responses.",
+    "strengths": [
+      "Enthusiastic and eager to learn",
+      "Basic manual testing knowledge confirmed"
+    ],
+    "red_flags": [
+      "Could not explain automation framework setup",
+      "Very short answers \u2014 limited elaboration on past experience",
+      "High hesitancy signals throughout"
+    ],
+    "recommendation": "Consider",
+    "transcript": [
+      {
+        "q": "Describe your experience with test automation frameworks.",
+        "a": "Um I have used Selenium a bit. I am not that experienced with it yet but I am learning. I think I can pick it up quickly.",
+        "score": 4,
+        "confidence": 28,
+        "metrics": {
+          "volume": 0.32,
+          "consistency": 0.35,
+          "word_count": 28,
+          "hesitant_signals": 5,
+          "confident_signals": 0
+        }
+      },
+      {
+        "q": "How do you decide what to test and what not to test?",
+        "a": "I guess I test the main features first. Maybe the important ones. I am not sure exactly, I just kind of go through the requirements.",
+        "score": 4,
+        "confidence": 31,
+        "metrics": {
+          "volume": 0.34,
+          "consistency": 0.38,
+          "word_count": 30,
+          "hesitant_signals": 5,
+          "confident_signals": 0
+        }
+      },
+      {
+        "q": "Tell me about a bug you found that had significant impact.",
+        "a": "There was a bug in the login page once. It was not loading properly for some users. I reported it and the developers fixed it. It was important I think.",
+        "score": 5,
+        "confidence": 38,
+        "metrics": {
+          "volume": 0.4,
+          "consistency": 0.42,
+          "word_count": 36,
+          "hesitant_signals": 3,
+          "confident_signals": 0
+        }
+      },
+      {
+        "q": "How do you handle tight deadlines in testing?",
+        "a": "I prioritise the important test cases and try to finish as fast as possible. I communicate with the team if I am falling behind. I think that is the right approach.",
+        "score": 6,
+        "confidence": 44,
+        "metrics": {
+          "volume": 0.46,
+          "consistency": 0.48,
+          "word_count": 38,
+          "hesitant_signals": 2,
+          "confident_signals": 1
+        }
+      },
+      {
+        "q": "Do you have any questions for us?",
+        "a": "No I think I am okay. Thank you.",
+        "score": 3,
+        "confidence": 25,
+        "metrics": {
+          "volume": 0.28,
+          "consistency": 0.3,
+          "word_count": 8,
+          "hesitant_signals": 0,
+          "confident_signals": 0
+        }
+      }
+    ],
+    "violations": [
+      {
+        "type": "tab_switch",
+        "timestamp": "2026-05-13T10:04:22"
+      },
+      {
+        "type": "face_detection",
+        "timestamp": "2026-05-13T10:06:15",
+        "reason": "Not looking at screen"
+      }
+    ],
+    "confidence_analysis": {
+      "average_score": 33,
+      "label": "Low Confidence",
+      "color": "#A32D2D",
+      "trend": "declining",
+      "peak_question": "How do you handle tight deadlines in testing?",
+      "peak_score": 44,
+      "lowest_question": "Do you have any questions for us?",
+      "lowest_score": 25,
+      "per_question": [
+        {
+          "question_num": 1,
+          "question": "Describe your automation framework experience...",
+          "score": 28,
+          "word_count": 28,
+          "hesitant": 5,
+          "volume": 0.32
+        },
+        {
+          "question_num": 2,
+          "question": "How do you decide what to test...",
+          "score": 31,
+          "word_count": 30,
+          "hesitant": 5,
+          "volume": 0.34
+        },
+        {
+          "question_num": 3,
+          "question": "Tell me about a bug with significant impact...",
+          "score": 38,
+          "word_count": 36,
+          "hesitant": 3,
+          "volume": 0.4
+        },
+        {
+          "question_num": 4,
+          "question": "How do you handle tight deadlines...",
+          "score": 44,
+          "word_count": 38,
+          "hesitant": 2,
+          "volume": 0.46
+        },
+        {
+          "question_num": 5,
+          "question": "Do you have any questions for us...",
+          "score": 25,
+          "word_count": 8,
+          "hesitant": 0,
+          "volume": 0.28
+        }
+      ],
+      "total_words": 140
+    }
+  }
+}

@@ -1563,7 +1563,7 @@ async def update_job(
 
 
 def _seed_demo_data() -> None:
-    """Seed 4 demo jobs and 12 demo candidates if not already present."""
+    """Seed 4 demo jobs, 14 demo candidates, and mock scorecards."""
     DEMO_JOB_IDS = {
         "sf_admin": "d1e2f3a4-0001-0000-0000-000000000001",
         "sf_dev":   "d1e2f3a4-0002-0000-0000-000000000002",
@@ -1671,15 +1671,14 @@ def _seed_demo_data() -> None:
 
     existing_candidates = json.loads(CANDIDATES_FILE.read_text()) if CANDIDATES_FILE.exists() else []
     existing_cts = {c["ct_number"] for c in existing_candidates}
-    if "CT20260001" in existing_cts:
-        return
 
-    sf_admin_jd = "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform."
-    sf_dev_jd = "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform."
-    qa_jd = "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products."
-    ba_jd = "We are looking for a Business Analyst to bridge the gap between business needs and technical solutions."
+    if "CT20260001" not in existing_cts:
+        sf_admin_jd = "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform."
+        sf_dev_jd = "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform."
+        qa_jd = "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products."
+        ba_jd = "We are looking for a Business Analyst to bridge the gap between business needs and technical solutions."
 
-    demo_candidates = [
+        demo_candidates = [
         {
             "name": "Priya Sharma", "ct_number": "CT20260001",
             "email": "priya.sharma@gmail.com", "phone": "9876543210",
@@ -1910,10 +1909,370 @@ def _seed_demo_data() -> None:
         },
     ]
 
-    new_candidates = [c for c in demo_candidates if c["ct_number"] not in existing_cts]
-    if new_candidates:
-        CANDIDATES_FILE.write_text(json.dumps(existing_candidates + new_candidates, indent=2))
-        print(f"Seeded {len(new_candidates)} demo candidate(s).")
+        new_candidates = [c for c in demo_candidates if c["ct_number"] not in existing_cts]
+        if new_candidates:
+            existing_candidates = existing_candidates + new_candidates
+            existing_cts = {c["ct_number"] for c in existing_candidates}
+            CANDIDATES_FILE.write_text(json.dumps(existing_candidates, indent=2))
+            print(f"Seeded {len(new_candidates)} demo candidate(s).")
+
+    # ── New demo candidates (always check) ──────────────────────────────────
+    sf_dev_jd2 = "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform."
+    qa_jd2 = "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products."
+    new_v2 = [
+        {
+            "name": "Ananya Krishnan", "ct_number": "CT20260013",
+            "email": "ananya.k@gmail.com", "phone": "9812309876",
+            "location": "Chennai, Tamil Nadu",
+            "linkedin_url": "https://linkedin.com/in/ananyak",
+            "current_role": "Junior QA Analyst",
+            "current_ctc": "380000", "expected_ctc": "620000",
+            "notice_period": "30 days",
+            "job_id": DEMO_JOB_IDS["qa_eng"],
+            "job_role": "QA Engineer", "job_description": qa_jd2,
+            "resume_text": "",
+            "match_percentage": 48, "recommendation": "Consider",
+            "match_summary": "Ananya has basic manual testing knowledge but lacks automation skills and technical depth required for the role.",
+            "match_strengths": ["Enthusiastic learner", "Basic manual testing"],
+            "match_gaps": ["No automation experience", "Limited API testing", "Short answers"],
+            "compensation_fit": "good", "notice_fit": "good",
+            "session_id": None, "status": "interview_complete",
+            "applied_at": "2026-04-17T09:00:00+00:00",
+        },
+        {
+            "name": "Vikram Nair", "ct_number": "CT20260014",
+            "email": "vikram.nair@gmail.com", "phone": "9876540123",
+            "location": "Bangalore, Karnataka",
+            "linkedin_url": "https://linkedin.com/in/vikramnair",
+            "current_role": "Senior Salesforce Developer",
+            "current_ctc": "1400000", "expected_ctc": "2000000",
+            "notice_period": "30 days",
+            "job_id": DEMO_JOB_IDS["sf_dev"],
+            "job_role": "Salesforce Developer", "job_description": sf_dev_jd2,
+            "resume_text": "",
+            "match_percentage": 79, "recommendation": "Hire",
+            "match_summary": "Vikram is technically strong with real Apex and integration experience. Minor dip on system design questions but recovered well.",
+            "match_strengths": ["Strong Apex", "Platform events", "CI/CD experience"],
+            "match_gaps": ["Multi-org architecture gap", "Could improve structured delivery"],
+            "compensation_fit": "partial", "notice_fit": "good",
+            "session_id": None, "status": "interview_complete",
+            "applied_at": "2026-04-17T11:00:00+00:00",
+        },
+    ]
+    v2_to_add = [c for c in new_v2 if c["ct_number"] not in existing_cts]
+    if v2_to_add:
+        existing_candidates = existing_candidates + v2_to_add
+        existing_cts = {c["ct_number"] for c in existing_candidates}
+        CANDIDATES_FILE.write_text(json.dumps(existing_candidates, indent=2))
+        print(f"Seeded {len(v2_to_add)} new v2 demo candidate(s).")
+
+    # ── Mock scorecards ──────────────────────────────────────────────────────
+    mock_scorecards: dict[str, dict] = {
+        "CT20260001": {
+            "communication": 9, "technical_depth": 8,
+            "problem_solving": 8, "cultural_fit": 9,
+            "summary": (
+                "Priya demonstrated exceptional communication throughout the interview. Her answers were "
+                "structured, confident, and backed by specific examples from her 4+ years at TCS. She showed "
+                "deep Salesforce Admin knowledge and a clear passion for the role."
+            ),
+            "strengths": [
+                "Certified Salesforce Administrator with hands-on Sales Cloud and Service Cloud experience",
+                "Articulate and structured communication — used STAR method consistently",
+                "Strong cultural alignment — values collaboration and continuous learning",
+            ],
+            "red_flags": ["Limited exposure to large-scale data migrations"],
+            "recommendation": "Strong Hire",
+            "transcript": [
+                {
+                    "q": "Tell me about your Salesforce experience and what you enjoy most about it.",
+                    "a": "I have been working with Salesforce for over 4 years at TCS, primarily as a Salesforce Administrator. I have handled Sales Cloud and Service Cloud implementations, user management for teams of 200 plus users, and built complex Flow automations. What I enjoy most is solving business problems elegantly using declarative tools.",
+                    "score": 9, "confidence": 85,
+                    "metrics": {"volume": 0.78, "consistency": 0.82, "word_count": 68, "hesitant_signals": 0, "confident_signals": 4},
+                },
+                {
+                    "q": "Describe a challenging Salesforce project you led and its outcome.",
+                    "a": "I led a full Sales Cloud implementation for a 150-person sales team. The challenge was migrating 5 years of legacy CRM data while keeping the team productive. I built a phased rollout plan, trained 8 super users, and we went live on time with 95 percent user adoption in the first month.",
+                    "score": 9, "confidence": 88,
+                    "metrics": {"volume": 0.81, "consistency": 0.85, "word_count": 72, "hesitant_signals": 0, "confident_signals": 5},
+                },
+                {
+                    "q": "How do you handle a situation where a business requirement conflicts with Salesforce best practices?",
+                    "a": "I always start by understanding the underlying business need rather than just the stated requirement. Then I present two options — one that meets the requirement as stated and one aligned with best practices — with pros and cons for each. I have found that stakeholders almost always choose the better approach when they understand the long term implications.",
+                    "score": 8, "confidence": 82,
+                    "metrics": {"volume": 0.75, "consistency": 0.79, "word_count": 78, "hesitant_signals": 1, "confident_signals": 3},
+                },
+                {
+                    "q": "Where do you see yourself in 3 years within the Salesforce ecosystem?",
+                    "a": "I am actively working towards my Salesforce Architect certification. In 3 years I see myself leading a Salesforce Centre of Excellence within an organisation, setting standards and mentoring junior admins and developers. I want to be the person who bridges business strategy and Salesforce capability.",
+                    "score": 8, "confidence": 79,
+                    "metrics": {"volume": 0.72, "consistency": 0.76, "word_count": 65, "hesitant_signals": 1, "confident_signals": 3},
+                },
+                {
+                    "q": "Do you have any questions for us about the role or the company?",
+                    "a": "Yes, I would love to know more about the current Salesforce org setup — how many objects, integrations, and active users. Also what does success look like in the first 90 days for this role?",
+                    "score": 9, "confidence": 83,
+                    "metrics": {"volume": 0.76, "consistency": 0.80, "word_count": 48, "hesitant_signals": 0, "confident_signals": 2},
+                },
+            ],
+            "violations": [],
+            "confidence_analysis": {
+                "average_score": 83, "label": "High Confidence", "color": "#0F6E56", "trend": "steady",
+                "peak_question": "Describe a challenging Salesforce project you led and its outcome.",
+                "peak_score": 88,
+                "lowest_question": "Where do you see yourself in 3 years within the Salesforce ecosystem?",
+                "lowest_score": 79,
+                "per_question": [
+                    {"question_num": 1, "question": "Tell me about your Salesforce experience...", "score": 85, "word_count": 68, "hesitant": 0, "volume": 0.78},
+                    {"question_num": 2, "question": "Describe a challenging Salesforce project...", "score": 88, "word_count": 72, "hesitant": 0, "volume": 0.81},
+                    {"question_num": 3, "question": "How do you handle conflicting requirements...", "score": 82, "word_count": 78, "hesitant": 1, "volume": 0.75},
+                    {"question_num": 4, "question": "Where do you see yourself in 3 years...", "score": 79, "word_count": 65, "hesitant": 1, "volume": 0.72},
+                    {"question_num": 5, "question": "Do you have any questions for us...", "score": 83, "word_count": 48, "hesitant": 0, "volume": 0.76},
+                ],
+                "total_words": 331,
+            },
+        },
+        "CT20260002": {
+            "communication": 7, "technical_depth": 7,
+            "problem_solving": 6, "cultural_fit": 7,
+            "summary": (
+                "Rahul showed solid technical knowledge but struggled with confidence in the early questions. "
+                "He visibly warmed up as the interview progressed and his later answers showed genuine depth. "
+                "With some coaching he could be a strong performer."
+            ),
+            "strengths": [
+                "Good Salesforce Developer fundamentals — Apex and LWC knowledge confirmed",
+                "Honest and self-aware — acknowledged gaps openly and explained how he is addressing them",
+                "Improved significantly as interview progressed",
+            ],
+            "red_flags": [
+                "Hesitant in early answers — may struggle under pressure",
+                "Limited integration experience beyond REST APIs",
+            ],
+            "recommendation": "Hire",
+            "transcript": [
+                {
+                    "q": "Walk me through your experience with Apex and Lightning Web Components.",
+                    "a": "Um, so I have been working with Apex for about 2 years now. I have built triggers and batch classes. LWC I am still kind of learning but I have done a few components. I think I am getting better at it.",
+                    "score": 6, "confidence": 42,
+                    "metrics": {"volume": 0.45, "consistency": 0.48, "word_count": 45, "hesitant_signals": 4, "confident_signals": 0},
+                },
+                {
+                    "q": "Tell me about a bug you found and fixed in production.",
+                    "a": "Yes so there was a governor limit issue in a trigger that was causing failures for bulk imports. I think it was maybe because of SOQL queries inside loops. I used debug logs to find it and refactored the code to use collections. It was quite a tricky one to be honest.",
+                    "score": 7, "confidence": 55,
+                    "metrics": {"volume": 0.55, "consistency": 0.58, "word_count": 58, "hesitant_signals": 3, "confident_signals": 1},
+                },
+                {
+                    "q": "How do you approach writing test classes in Salesforce?",
+                    "a": "I always aim for at least 85 percent coverage but I focus on meaningful assertions rather than just hitting the coverage number. I write test data factories to keep things clean and I test both positive and negative scenarios. I have started using Test.startTest and stopTest properly to isolate governor limits.",
+                    "score": 8, "confidence": 71,
+                    "metrics": {"volume": 0.68, "consistency": 0.72, "word_count": 68, "hesitant_signals": 0, "confident_signals": 3},
+                },
+                {
+                    "q": "What is your experience with Salesforce integrations?",
+                    "a": "I have built REST API integrations using Named Credentials and Connected Apps. I integrated Salesforce with an ERP system to sync order data in real time. The main challenges were handling error responses and building retry logic for failed callouts. I am now learning about platform events for event-driven integrations.",
+                    "score": 8, "confidence": 76,
+                    "metrics": {"volume": 0.72, "consistency": 0.74, "word_count": 72, "hesitant_signals": 0, "confident_signals": 3},
+                },
+                {
+                    "q": "Do you have any questions for us?",
+                    "a": "Yes — what is the team structure like? And is there a mentoring programme for developers? I am keen to grow quickly and would love to know how the organisation supports that.",
+                    "score": 8, "confidence": 74,
+                    "metrics": {"volume": 0.70, "consistency": 0.72, "word_count": 40, "hesitant_signals": 0, "confident_signals": 2},
+                },
+            ],
+            "violations": [],
+            "confidence_analysis": {
+                "average_score": 64, "label": "Moderate Confidence", "color": "#854F0B", "trend": "improving",
+                "peak_question": "What is your experience with Salesforce integrations?",
+                "peak_score": 76,
+                "lowest_question": "Walk me through your experience with Apex and Lightning Web Components.",
+                "lowest_score": 42,
+                "per_question": [
+                    {"question_num": 1, "question": "Walk me through your Apex and LWC experience...", "score": 42, "word_count": 45, "hesitant": 4, "volume": 0.45},
+                    {"question_num": 2, "question": "Tell me about a bug you found in production...", "score": 55, "word_count": 58, "hesitant": 3, "volume": 0.55},
+                    {"question_num": 3, "question": "How do you approach writing test classes...", "score": 71, "word_count": 68, "hesitant": 0, "volume": 0.68},
+                    {"question_num": 4, "question": "What is your experience with integrations...", "score": 76, "word_count": 72, "hesitant": 0, "volume": 0.72},
+                    {"question_num": 5, "question": "Do you have any questions for us...", "score": 74, "word_count": 40, "hesitant": 0, "volume": 0.70},
+                ],
+                "total_words": 283,
+            },
+        },
+        "CT20260013": {
+            "communication": 5, "technical_depth": 4,
+            "problem_solving": 5, "cultural_fit": 6,
+            "summary": (
+                "Ananya struggled to articulate her testing experience with specificity. Answers were brief and "
+                "lacked concrete examples. She showed willingness to learn but the technical depth required for "
+                "this role was not evident in her responses."
+            ),
+            "strengths": [
+                "Enthusiastic and eager to learn",
+                "Basic manual testing knowledge confirmed",
+            ],
+            "red_flags": [
+                "Could not explain automation framework setup",
+                "Very short answers — limited elaboration on past experience",
+                "High hesitancy signals throughout",
+            ],
+            "recommendation": "Consider",
+            "transcript": [
+                {
+                    "q": "Describe your experience with test automation frameworks.",
+                    "a": "Um I have used Selenium a bit. I am not that experienced with it yet but I am learning. I think I can pick it up quickly.",
+                    "score": 4, "confidence": 28,
+                    "metrics": {"volume": 0.32, "consistency": 0.35, "word_count": 28, "hesitant_signals": 5, "confident_signals": 0},
+                },
+                {
+                    "q": "How do you decide what to test and what not to test?",
+                    "a": "I guess I test the main features first. Maybe the important ones. I am not sure exactly, I just kind of go through the requirements.",
+                    "score": 4, "confidence": 31,
+                    "metrics": {"volume": 0.34, "consistency": 0.38, "word_count": 30, "hesitant_signals": 5, "confident_signals": 0},
+                },
+                {
+                    "q": "Tell me about a bug you found that had significant impact.",
+                    "a": "There was a bug in the login page once. It was not loading properly for some users. I reported it and the developers fixed it. It was important I think.",
+                    "score": 5, "confidence": 38,
+                    "metrics": {"volume": 0.40, "consistency": 0.42, "word_count": 36, "hesitant_signals": 3, "confident_signals": 0},
+                },
+                {
+                    "q": "How do you handle tight deadlines in testing?",
+                    "a": "I prioritise the important test cases and try to finish as fast as possible. I communicate with the team if I am falling behind. I think that is the right approach.",
+                    "score": 6, "confidence": 44,
+                    "metrics": {"volume": 0.46, "consistency": 0.48, "word_count": 38, "hesitant_signals": 2, "confident_signals": 1},
+                },
+                {
+                    "q": "Do you have any questions for us?",
+                    "a": "No I think I am okay. Thank you.",
+                    "score": 3, "confidence": 25,
+                    "metrics": {"volume": 0.28, "consistency": 0.30, "word_count": 8, "hesitant_signals": 0, "confident_signals": 0},
+                },
+            ],
+            "violations": [
+                {"type": "tab_switch", "timestamp": "2026-05-13T10:04:22"},
+                {"type": "face_detection", "timestamp": "2026-05-13T10:06:15", "reason": "Not looking at screen"},
+            ],
+            "confidence_analysis": {
+                "average_score": 33, "label": "Low Confidence", "color": "#A32D2D", "trend": "declining",
+                "peak_question": "How do you handle tight deadlines in testing?",
+                "peak_score": 44,
+                "lowest_question": "Do you have any questions for us?",
+                "lowest_score": 25,
+                "per_question": [
+                    {"question_num": 1, "question": "Describe your automation framework experience...", "score": 28, "word_count": 28, "hesitant": 5, "volume": 0.32},
+                    {"question_num": 2, "question": "How do you decide what to test...", "score": 31, "word_count": 30, "hesitant": 5, "volume": 0.34},
+                    {"question_num": 3, "question": "Tell me about a bug with significant impact...", "score": 38, "word_count": 36, "hesitant": 3, "volume": 0.40},
+                    {"question_num": 4, "question": "How do you handle tight deadlines...", "score": 44, "word_count": 38, "hesitant": 2, "volume": 0.46},
+                    {"question_num": 5, "question": "Do you have any questions for us...", "score": 25, "word_count": 8, "hesitant": 0, "volume": 0.28},
+                ],
+                "total_words": 140,
+            },
+        },
+        "CT20260014": {
+            "communication": 8, "technical_depth": 8,
+            "problem_solving": 7, "cultural_fit": 8,
+            "summary": (
+                "Vikram is a technically strong developer who showed excellent command of Apex and integration "
+                "patterns. He had a noticeable dip mid-interview when asked about system design but recovered well. "
+                "His closing answer showed genuine enthusiasm and preparation."
+            ),
+            "strengths": [
+                "Strong Apex knowledge with real production experience",
+                "Good integration architecture understanding",
+                "Enthusiastic and well-prepared for the interview",
+            ],
+            "red_flags": [
+                "Struggled briefly with system design concepts",
+                "Could improve on structured answer delivery",
+            ],
+            "recommendation": "Hire",
+            "transcript": [
+                {
+                    "q": "Tell me about your most complex Apex development work.",
+                    "a": "I built a real-time stock sync system between Salesforce and an ERP using platform events and batch Apex. It processed 50,000 records nightly with zero failures over 18 months. The key was building robust error handling and a dead letter queue for failed records.",
+                    "score": 9, "confidence": 84,
+                    "metrics": {"volume": 0.80, "consistency": 0.82, "word_count": 58, "hesitant_signals": 0, "confident_signals": 5},
+                },
+                {
+                    "q": "How do you design a Salesforce solution for scalability?",
+                    "a": "I start with data model design — getting that right is 80 percent of scalability. Then I think about sharing rules, governor limits, and async processing. I always prototype in a scratch org first.",
+                    "score": 8, "confidence": 76,
+                    "metrics": {"volume": 0.72, "consistency": 0.75, "word_count": 48, "hesitant_signals": 0, "confident_signals": 3},
+                },
+                {
+                    "q": "Design a multi-org data synchronisation architecture.",
+                    "a": "Hmm that is a complex one. I think you would use maybe a middleware layer, possibly MuleSoft or something. I have not done this exactly but I understand the concept. It is quite involved I think.",
+                    "score": 6, "confidence": 45,
+                    "metrics": {"volume": 0.48, "consistency": 0.50, "word_count": 42, "hesitant_signals": 5, "confident_signals": 0},
+                },
+                {
+                    "q": "How do you ensure code quality in a team environment?",
+                    "a": "We use a strict pull request process with mandatory peer review. I also enforce PMD static analysis in our CI pipeline. Every PR needs 90 percent test coverage and I personally review all governor limit implications before approving.",
+                    "score": 9, "confidence": 80,
+                    "metrics": {"volume": 0.78, "consistency": 0.80, "word_count": 55, "hesitant_signals": 0, "confident_signals": 4},
+                },
+                {
+                    "q": "Do you have any questions for us?",
+                    "a": "Absolutely. I would love to understand the current technical debt situation and what the roadmap looks like for the next 12 months. I am also curious about the deployment process — are you using SFDX and CI/CD pipelines currently?",
+                    "score": 9, "confidence": 82,
+                    "metrics": {"volume": 0.79, "consistency": 0.81, "word_count": 52, "hesitant_signals": 0, "confident_signals": 3},
+                },
+            ],
+            "violations": [],
+            "confidence_analysis": {
+                "average_score": 73, "label": "High Confidence", "color": "#0F6E56", "trend": "improving",
+                "peak_question": "Tell me about your most complex Apex development work.",
+                "peak_score": 84,
+                "lowest_question": "Design a multi-org data synchronisation architecture.",
+                "lowest_score": 45,
+                "per_question": [
+                    {"question_num": 1, "question": "Tell me about your most complex Apex work...", "score": 84, "word_count": 58, "hesitant": 0, "volume": 0.80},
+                    {"question_num": 2, "question": "How do you design for scalability...", "score": 76, "word_count": 48, "hesitant": 0, "volume": 0.72},
+                    {"question_num": 3, "question": "Design a multi-org sync architecture...", "score": 45, "word_count": 42, "hesitant": 5, "volume": 0.48},
+                    {"question_num": 4, "question": "How do you ensure code quality...", "score": 80, "word_count": 55, "hesitant": 0, "volume": 0.78},
+                    {"question_num": 5, "question": "Do you have any questions for us...", "score": 82, "word_count": 52, "hesitant": 0, "volume": 0.79},
+                ],
+                "total_words": 255,
+            },
+        },
+    }
+
+    candidates_updated = False
+    for ct, scorecard_data in mock_scorecards.items():
+        cand = next((c for c in existing_candidates if c["ct_number"] == ct), None)
+        if not cand:
+            continue
+        existing_sid = cand.get("session_id")
+        if existing_sid:
+            session_path = DATA_DIR / f"{existing_sid}.json"
+            if session_path.exists():
+                try:
+                    sess = json.loads(session_path.read_text())
+                    if sess.get("scorecard", {}).get("confidence_analysis"):
+                        continue
+                except Exception:
+                    pass
+        session_id = str(uuid.uuid4())
+        session_data = {
+            "session_id": session_id,
+            "ct_number": ct,
+            "job_role": cand.get("job_role", ""),
+            "job_description": cand.get("job_description", ""),
+            "status": "complete",
+            "transcript": scorecard_data.get("transcript", []),
+            "violations": scorecard_data.get("violations", []),
+            "scorecard": scorecard_data,
+        }
+        (DATA_DIR / f"{session_id}.json").write_text(json.dumps(session_data, indent=2))
+        cand["session_id"] = session_id
+        cand["status"] = "interview_complete"
+        candidates_updated = True
+        print(f"Seeded mock scorecard for {ct} → session {session_id[:8]}…")
+
+    if candidates_updated:
+        CANDIDATES_FILE.write_text(json.dumps(existing_candidates, indent=2))
+        print("Candidate records updated with session IDs.")
 
 
 @app.on_event("startup")
