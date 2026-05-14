@@ -13,8 +13,95 @@ const STARS = Array.from({ length: 70 }, (_, i) => ({
   twinkleDuration: 2 + (i % 3),
 }))
 
+const CONSTELLATION_POINTS = [
+  { x: 18, y: 27 }, { x: 28, y: 20 }, { x: 39, y: 31 },
+  { x: 61, y: 22 }, { x: 73, y: 32 }, { x: 82, y: 24 },
+]
+
 function delay(ms: number) {
   return new Promise<void>(r => setTimeout(r, ms))
+}
+
+function playIntroSound() {
+  const AudioContextCtor =
+    window.AudioContext ||
+    (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+  if (!AudioContextCtor) return
+
+  try {
+    const context = new AudioContextCtor()
+    const now = context.currentTime
+    const master = context.createGain()
+    const shimmer = context.createGain()
+    const sweep = context.createBiquadFilter()
+    const impact = context.createBiquadFilter()
+
+    master.gain.setValueAtTime(0.0001, now)
+    master.gain.exponentialRampToValueAtTime(0.34, now + 0.12)
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 3.15)
+    master.connect(context.destination)
+    if (context.state === 'suspended') void context.resume()
+
+    sweep.type = 'bandpass'
+    sweep.frequency.setValueAtTime(740, now)
+    sweep.frequency.exponentialRampToValueAtTime(3900, now + 1.58)
+    sweep.Q.setValueAtTime(10, now)
+
+    const trail = context.createOscillator()
+    const trailGain = context.createGain()
+    trail.type = 'sine'
+    trail.frequency.setValueAtTime(220, now)
+    trail.frequency.exponentialRampToValueAtTime(1320, now + 1.58)
+    trailGain.gain.setValueAtTime(0.0001, now)
+    trailGain.gain.exponentialRampToValueAtTime(0.17, now + 0.22)
+    trailGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.72)
+    trail.connect(sweep)
+    sweep.connect(trailGain)
+    trailGain.connect(master)
+    trail.start(now)
+    trail.stop(now + 1.78)
+
+    shimmer.gain.setValueAtTime(0.0001, now + 1.08)
+    shimmer.gain.exponentialRampToValueAtTime(0.16, now + 1.32)
+    shimmer.gain.exponentialRampToValueAtTime(0.0001, now + 2.2)
+    shimmer.connect(master)
+
+    ;[880, 1175, 1568].forEach((frequency, index) => {
+      const osc = context.createOscillator()
+      const gain = context.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(frequency, now + 1.18 + index * 0.05)
+      gain.gain.setValueAtTime(0.0001, now + 1.18 + index * 0.05)
+      gain.gain.exponentialRampToValueAtTime(0.07, now + 1.28 + index * 0.05)
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.15 + index * 0.06)
+      osc.connect(gain)
+      gain.connect(shimmer)
+      osc.start(now + 1.18 + index * 0.05)
+      osc.stop(now + 2.35)
+    })
+
+    impact.type = 'lowpass'
+    impact.frequency.setValueAtTime(240, now + 1.23)
+    impact.frequency.exponentialRampToValueAtTime(90, now + 1.78)
+
+    const thump = context.createOscillator()
+    const thumpGain = context.createGain()
+    thump.type = 'sine'
+    thump.frequency.setValueAtTime(128, now + 1.23)
+    thump.frequency.exponentialRampToValueAtTime(46, now + 1.72)
+    thumpGain.gain.setValueAtTime(0.0001, now + 1.22)
+    thumpGain.gain.exponentialRampToValueAtTime(0.22, now + 1.28)
+    thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.95)
+    thump.connect(impact)
+    impact.connect(thumpGain)
+    thumpGain.connect(master)
+    thump.start(now + 1.22)
+    thump.stop(now + 2)
+
+    window.setTimeout(() => void context.close().catch(() => {}), 3600)
+  } catch {
+    // Browsers can block autoplay audio until the user interacts with the page.
+  }
 }
 
 const INTRO_CSS = `
@@ -55,6 +142,23 @@ const INTRO_CSS = `
     0%, 100% { opacity: .06; }
     50% { opacity: .13; }
   }
+  @keyframes ai-grid-drift {
+    from { transform: perspective(900px) rotateX(66deg) translateY(0); }
+    to { transform: perspective(900px) rotateX(66deg) translateY(42px); }
+  }
+  @keyframes ai-orbit {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  @keyframes ai-scan {
+    0% { transform: translateY(-120%); opacity: 0; }
+    20%, 70% { opacity: .8; }
+    100% { transform: translateY(120%); opacity: 0; }
+  }
+  @keyframes ai-letter-sheen {
+    0% { background-position: 160% 50%; }
+    100% { background-position: -80% 50%; }
+  }
 `
 
 export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
@@ -85,6 +189,7 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
     setFadingOut(false)
 
     async function run() {
+      playIntroSound()
       await delay(1500)
       if (cancelled) return
 
@@ -150,6 +255,11 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
     return () => { cancelled = true }
   }, [replayKey])
 
+  function replayIntro() {
+    playIntroSound()
+    setReplayKey(k => k + 1)
+  }
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
@@ -174,6 +284,58 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
         animation: 'ai-glow-pulse 4s ease-in-out infinite',
       }} />
 
+      <div style={{
+        position: 'absolute',
+        inset: 'auto -20% -34% -20%',
+        height: '55%',
+        pointerEvents: 'none',
+        opacity: 0.42,
+        backgroundImage: [
+          'linear-gradient(rgba(94, 172, 255, 0.22) 1px, transparent 1px)',
+          'linear-gradient(90deg, rgba(94, 172, 255, 0.18) 1px, transparent 1px)',
+        ].join(', '),
+        backgroundSize: '64px 64px',
+        maskImage: 'linear-gradient(to bottom, transparent, black 30%, transparent 92%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 30%, transparent 92%)',
+        animation: 'ai-grid-drift 3.6s linear infinite',
+      }} />
+
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        background: 'linear-gradient(180deg, transparent 0%, rgba(136,205,255,0.11) 48%, transparent 56%)',
+        mixBlendMode: 'screen',
+        animation: 'ai-scan 3.8s ease-in-out infinite',
+      }} />
+
+      <div style={{
+        position: 'absolute',
+        left: '50%',
+        top: '48%',
+        width: 'min(72vw, 720px)',
+        aspectRatio: '1',
+        borderRadius: '50%',
+        border: '1px solid rgba(110,183,255,0.12)',
+        boxShadow: 'inset 0 0 64px rgba(110,183,255,0.05), 0 0 90px rgba(70,130,255,0.08)',
+        transform: 'translate(-50%, -50%)',
+        pointerEvents: 'none',
+      }}>
+        {[0, 1, 2].map((ring) => (
+          <span key={ring} style={{
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
+            width: `${76 + ring * 12}%`,
+            height: `${38 + ring * 7}%`,
+            border: '1px solid rgba(147,206,255,0.12)',
+            borderRadius: '50%',
+            transform: `translate(-50%, -50%) rotate(${ring * 42}deg)`,
+            animation: `ai-orbit ${18 + ring * 6}s linear infinite`,
+          }} />
+        ))}
+      </div>
+
       {/* Stars */}
       {STARS.map(s => (
         <div key={s.id} style={{
@@ -187,56 +349,87 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
         }} />
       ))}
 
-      {/* ASTRA letters */}
-      <div ref={wordRef} style={{
-        display: 'flex',
-        fontFamily: "'Instrument Serif', serif",
-        fontSize: 'clamp(4.5rem, 13vw, 10rem)',
-        letterSpacing: '0.14em',
-        color: '#cfe6ff',
-        lineHeight: 1,
-        position: 'relative',
-        zIndex: 2,
-        userSelect: 'none',
-      }}>
-        {LETTERS.map((letter, i) => (
-          <span
-            key={i}
-            ref={i === LETTERS.length - 1 ? lastLetterRef : undefined}
-            style={{
-              display: 'inline-block',
-              position: 'relative',
-              opacity: 0,
-              animation: `ai-letter-in 0.55s ease-out ${i * LETTER_STAGGER}ms forwards`,
-              textShadow: '0 0 80px rgba(110,183,255,0.45)',
-            }}
-          >
-            {letter}
-            {i === LETTERS.length - 1 && showBurst && (
-              <span
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  left: '43%',
-                  top: '34%',
-                  width: '18%',
-                  height: '18%',
-                  borderRadius: '999px',
-                  background: 'rgba(255,255,255,0.88)',
-                  boxShadow: [
-                    '0 0 12px rgba(255,255,255,0.95)',
-                    '0 0 28px rgba(110,183,255,0.9)',
-                    '0 0 54px rgba(110,183,255,0.5)',
-                  ].join(', '),
-                  transform: 'rotate(-12deg) scaleX(1.55)',
-                  pointerEvents: 'none',
-                  animation: 'ai-cut-glint 0.72s ease-out forwards',
-                }}
-              />
-            )}
-          </span>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 100 60"
+        preserveAspectRatio="none"
+        style={{
+          position: 'absolute',
+          inset: '10% 8% auto 8%',
+          height: '44%',
+          opacity: 0.34,
+          pointerEvents: 'none',
+          filter: 'drop-shadow(0 0 10px rgba(110,183,255,0.4))',
+        }}
+      >
+        <polyline
+          points={CONSTELLATION_POINTS.map(point => `${point.x},${point.y}`).join(' ')}
+          fill="none"
+          stroke="rgba(136,205,255,0.44)"
+          strokeWidth="0.18"
+        />
+        {CONSTELLATION_POINTS.map(point => (
+          <circle key={`${point.x}-${point.y}`} cx={point.x} cy={point.y} r="0.6" fill="rgba(222,242,255,0.9)" />
         ))}
-      </div>
+      </svg>
+
+      <div ref={wordRef} style={{
+          display: 'flex',
+          fontFamily: "'Instrument Serif', serif",
+          fontSize: 'clamp(4.5rem, 13vw, 10rem)',
+          letterSpacing: '0.14em',
+          color: '#cfe6ff',
+          lineHeight: 1,
+          position: 'relative',
+          zIndex: 2,
+          userSelect: 'none',
+        }}>
+          {LETTERS.map((letter, i) => (
+            <span
+              key={i}
+              ref={i === LETTERS.length - 1 ? lastLetterRef : undefined}
+              style={{
+                display: 'inline-block',
+                position: 'relative',
+                opacity: 0,
+                textShadow: '0 0 80px rgba(110,183,255,0.45)',
+                background: 'linear-gradient(100deg, #cfe6ff 18%, #ffffff 36%, #8be7cf 52%, #6eb7ff 72%)',
+                backgroundSize: '240% 100%',
+                WebkitBackgroundClip: 'text',
+                color: 'transparent',
+                animationName: 'ai-letter-in, ai-letter-sheen',
+                animationDuration: '0.55s, 2.3s',
+                animationDelay: `${i * LETTER_STAGGER}ms, 1.72s`,
+                animationTimingFunction: 'ease-out, cubic-bezier(.16,.8,.24,1)',
+                animationFillMode: 'forwards, forwards',
+              }}
+            >
+              {letter}
+              {i === LETTERS.length - 1 && showBurst && (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    left: '43%',
+                    top: '34%',
+                    width: '18%',
+                    height: '18%',
+                    borderRadius: '999px',
+                    background: 'rgba(255,255,255,0.88)',
+                    boxShadow: [
+                      '0 0 12px rgba(255,255,255,0.95)',
+                      '0 0 28px rgba(139,231,207,0.85)',
+                      '0 0 54px rgba(110,183,255,0.5)',
+                    ].join(', '),
+                    transform: 'rotate(-12deg) scaleX(1.55)',
+                    pointerEvents: 'none',
+                    animation: 'ai-cut-glint 0.72s ease-out forwards',
+                  }}
+                />
+              )}
+            </span>
+          ))}
+        </div>
 
       {/* Tagline */}
       {taglineVisible && (
@@ -280,7 +473,7 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
           }}
         >
           <div style={{ transform: `rotate(${starAngle}deg)`, position: 'relative', width: 0, height: 0 }}>
-            {/* Tail — extends behind (−x direction in rotated frame) */}
+            {/* Tail extends behind the star head. */}
             <div style={{
               position: 'absolute',
               right: 0, top: -1,
@@ -360,7 +553,7 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
       {/* Replay button */}
       {showReplay && !fadingOut && (
         <button
-          onClick={() => setReplayKey(k => k + 1)}
+          onClick={replayIntro}
           style={{
             position: 'fixed',
             bottom: 32, right: 32,
@@ -377,7 +570,7 @@ export default function AstraIntro({ onComplete }: { onComplete: () => void }) {
             zIndex: 20,
           }}
         >
-          ↺ Replay
+          Replay
         </button>
       )}
     </div>
