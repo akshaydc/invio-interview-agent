@@ -648,6 +648,19 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
               <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.1rem' }}>📞</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' }}>AI Call</span>
+                </div>
+                <p style={{ margin: 0, fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' }}>
+                  Rina will call the candidate now
+                </p>
+                <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>
+                  {shortlistConfirm.name}&apos;s number on file will be contacted shortly
+                </p>
+              </div>
+
+              <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: '1.1rem' }}>🔗</span>
                   <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' }}>Slot Booking Link</span>
                 </div>
