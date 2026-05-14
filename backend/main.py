@@ -523,6 +523,9 @@ def mask_email(email: str) -> str:
 async def send_email(to_email: str, subject: str, html_body: str) -> bool:
     resend_key = os.getenv("RESEND_API_KEY")
     from_email = os.getenv("FROM_EMAIL", "onboarding@resend.dev")
+    actual_to = os.getenv("EMAIL_OVERRIDE") or to_email
+    if os.getenv("EMAIL_OVERRIDE"):
+        subject = f"[To: {to_email}] {subject}"
     if not resend_key:
         print("RESEND_API_KEY not configured")
         return False
@@ -536,7 +539,7 @@ async def send_email(to_email: str, subject: str, html_body: str) -> bool:
                 },
                 json={
                     "from": f"ASTRA Recruitment <{from_email}>",
-                    "to": [to_email],
+                    "to": [actual_to],
                     "subject": subject,
                     "html": html_body,
                 },
