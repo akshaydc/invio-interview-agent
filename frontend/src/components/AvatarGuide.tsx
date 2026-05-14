@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
+import axios from 'axios'
 import type { AuthInfo } from '../App'
-import tobyAvatar from '../assets/toby-avatar.svg'
+import type { ResumeMatchResult } from '../pages/JobMatches'
+import { API_BASE_URL as API } from '../config'
+import rinaAvatar from '../assets/rina-avatar.png'
 
 type GuidePage =
   | 'landing'
@@ -18,78 +21,115 @@ type Props = {
   page: GuidePage
   auth: AuthInfo | null
   selectedJobTitle?: string
+  onBrowseAllOpenings?: () => void
+  onMatchResult?: (result: ResumeMatchResult) => void
 }
 
 const GUIDE_COPY: Record<GuidePage, string[]> = {
   'landing': [
-    'Welcome to ASTRA. Upload your resume to find the best matching roles, or browse all open positions.',
-    'I am Toby, your guide. I will help you navigate the hiring process from start to finish.',
+    'Welcome to ASTRA. I can match your resume to the strongest roles, or open the full jobs board when you want to browse manually.',
+    'Choose a starting point below. I will keep the flow ready and stay with you on every page.',
   ],
   'job-matches': [
-    'Here are the roles that match your profile. The higher the match percentage, the better the fit.',
-    'Click Apply to start your application with your resume details pre-filled.',
+    'These roles are ranked against your resume. Start with the strongest match, then compare the reasons and gaps.',
+    'When a role looks right, apply from here and I will carry the resume details into the form.',
   ],
   'job-listings': [
-    'Hi, I am Toby. I will guide you through ASTRA. Pick a role to see the details, or sign in if you already have a CT number.',
-    'Recruiters can jump into the dashboard from the top right.',
+    'These are all current openings. Select a role to review the details, or return home when you want the resume match flow.',
+    'Recruiters can sign in from the top navigation to manage candidates, jobs, and scorecards.',
   ],
   'job-detail': [
-    'This is the role briefing. Check the requirements, then apply when it feels like a fit.',
-    'Your resume helps the recruiter compare your profile against this job.',
+    'This is the role briefing. Review the responsibilities, requirements, and location before you apply.',
+    'When the fit looks good, start the application and attach the right resume for this role.',
   ],
   'application-form': [
-    'Fill in the essentials and attach your resume. ASTRA will generate your candidate tracking number after you apply.',
-    'Use your current details here so the recruiter can judge role, compensation, and notice fit.',
+    'Complete the application details carefully. The recruiter uses this information with your resume match signals.',
+    'Use your current compensation, expected compensation, and notice period so the fit assessment is accurate.',
   ],
   'candidate-login': [
     'Enter your CT number to return to your application and interview status.',
-    'If your interview is scheduled, this login takes you straight to the interview room.',
+    'If your interview is scheduled, this login takes you straight into the interview room.',
   ],
   'recruiter-login': [
     'Recruiter access opens the candidate pipeline, job controls, and scorecards.',
     'After login, start with the candidates tab to review matches and interview progress.',
   ],
   'recruiter-dashboard': [
-    'This is mission control. Review candidates, schedule interviews, and inspect AI match signals.',
+    'This is your hiring control room. Review candidates, schedule interviews, and inspect AI match signals.',
     'Use the jobs tab to create or update roles before inviting more candidates.',
   ],
   'recruiter-scorecard': [
-    'Here is the interview scorecard. Look at the summary, strengths, and red flags before deciding next steps.',
+    'This scorecard summarizes the interview outcome, strengths, and risk signals for the candidate.',
     'Use Back when you are ready to return to the recruiter dashboard.',
   ],
   'candidate-interview': [
-    'I will stay nearby while the interview runs. Answer naturally and use the mic control when you are ready.',
-    'Keep your camera and mic available during the interview so the session can proceed smoothly.',
+    'I will stay nearby while the interview runs. Answer naturally and keep your microphone and camera available.',
+    'The interviewer asks questions by voice. Take a breath, then answer clearly when prompted.',
   ],
 }
 
 function getGreeting(page: GuidePage, auth: AuthInfo | null, selectedJobTitle?: string) {
-  if (page === 'candidate-interview' && auth?.name) return `Hi ${auth.name}, I am Toby`
-  if (page === 'job-detail' && selectedJobTitle) return `Toby for ${selectedJobTitle}`
-  if (page === 'recruiter-dashboard') return 'Toby, Recruiter Guide'
-  return 'Hi, I am Toby'
+  if (page === 'candidate-interview' && auth?.name) return `Rina with ${auth.name}`
+  if (page === 'job-detail' && selectedJobTitle) return `Rina for ${selectedJobTitle}`
+  if (page === 'recruiter-dashboard') return 'Rina, Recruiter Guide'
+  return 'Greetings I am Rina, ASTRA Guide'
 }
 
 function buildSpokenMessage(title: string, tip: string) {
-  return tip.startsWith('Hi, I am Toby') ? tip : `${title}. ${tip}`
+  return `${title}. ${tip}`
 }
 
-function tuneGuideVoice(utterance: SpeechSynthesisUtterance) {
-  const voices = window.speechSynthesis.getVoices()
-  const preferredVoice = voices.find((voice) =>
-    /female|zira|aria|jenny|samantha|google us english/i.test(`${voice.name} ${voice.voiceURI}`),
-  )
+function femaleVoiceScore(voice: SpeechSynthesisVoice) {
+  const label = `${voice.name} ${voice.voiceURI}`.toLowerCase()
+  if (/male|david|mark|guy|daniel|george|alex|fred|ralph|bruce|tom|google uk english male/.test(label)) return -1
+  if (/zira|aria|jenny|samantha|susan|victoria|karen|moira|tessa|serena|fiona|ava|allison|salli|joanna|kendra|kimberly|ivy/.test(label)) return 3
+  if (/female|woman|girl|google uk english female/.test(label)) return 2
+  return 0
+}
+
+function getPreferredFemaleVoice(voices: SpeechSynthesisVoice[]) {
+  return voices
+    .filter((voice) => /english|en-/i.test(`${voice.lang} ${voice.name}`))
+    .map((voice) => ({ voice, score: femaleVoiceScore(voice) }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)[0]?.voice
+}
+
+function getVoicesWhenReady() {
+  const currentVoices = window.speechSynthesis.getVoices()
+  if (currentVoices.length > 0) return Promise.resolve(currentVoices)
+
+  return new Promise<SpeechSynthesisVoice[]>((resolve) => {
+    const timeout = window.setTimeout(() => {
+      window.speechSynthesis.onvoiceschanged = null
+      resolve(window.speechSynthesis.getVoices())
+    }, 1200)
+
+    window.speechSynthesis.onvoiceschanged = () => {
+      window.clearTimeout(timeout)
+      window.speechSynthesis.onvoiceschanged = null
+      resolve(window.speechSynthesis.getVoices())
+    }
+  })
+}
+
+function tuneGuideVoice(utterance: SpeechSynthesisUtterance, voices: SpeechSynthesisVoice[]) {
+  const preferredVoice = getPreferredFemaleVoice(voices)
 
   if (preferredVoice) utterance.voice = preferredVoice
-  utterance.rate = 0.94
-  utterance.pitch = 1.08
-  utterance.volume = 0.86
+  utterance.rate = 0.96
+  utterance.pitch = preferredVoice ? 1.12 : 1.34
+  utterance.volume = 0.9
 }
 
-export default function AvatarGuide({ page, auth, selectedJobTitle }: Props) {
+export default function AvatarGuide({ page, auth, selectedJobTitle, onBrowseAllOpenings, onMatchResult }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [tipState, setTipState] = useState({ page, index: 0 })
   const [speaking, setSpeaking] = useState(false)
+  const [resumeFile, setResumeFile] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const lastSpokenRef = useRef('')
 
   const tips = GUIDE_COPY[page]
@@ -103,20 +143,61 @@ export default function AvatarGuide({ page, auth, selectedJobTitle }: Props) {
     setSpeaking(false)
   }
 
+  async function handleFindMatches() {
+    if (!resumeFile) {
+      setError('Upload a PDF or TXT resume first.')
+      return
+    }
+    if (!onMatchResult) return
+
+    setError('')
+    setLoading(true)
+    stopSpeaking()
+    try {
+      const fd = new FormData()
+      fd.append('resume', resumeFile)
+      const res = await axios.post<Omit<ResumeMatchResult, 'resume_file'>>(
+        `${API}/resume/match`,
+        fd,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      )
+      onMatchResult({ ...res.data, resume_file: resumeFile })
+    } catch (err) {
+      const msg = axios.isAxiosError(err)
+        ? err.response?.data?.detail ?? 'Failed to analyse resume.'
+        : 'Failed to analyse resume.'
+      setError(String(msg))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    setCollapsed(false)
+    setTipState({ page, index: 0 })
+    lastSpokenRef.current = ''
+  }, [page])
+
   useEffect(() => {
     if (collapsed || lastSpokenRef.current === spokenMessage) return
     lastSpokenRef.current = spokenMessage
-    const timer = window.setTimeout(() => {
+    let cancelled = false
+    const timer = window.setTimeout(async () => {
+      const voices = await getVoicesWhenReady()
+      if (cancelled) return
       window.speechSynthesis.cancel()
       const utterance = new SpeechSynthesisUtterance(spokenMessage)
-      tuneGuideVoice(utterance)
+      tuneGuideVoice(utterance, voices)
       utterance.onend = () => setSpeaking(false)
       utterance.onerror = () => setSpeaking(false)
       setSpeaking(true)
       window.speechSynthesis.speak(utterance)
-    }, 450)
+    }, 420)
 
-    return () => window.clearTimeout(timer)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
   }, [collapsed, spokenMessage])
 
   if (collapsed) {
@@ -126,15 +207,15 @@ export default function AvatarGuide({ page, auth, selectedJobTitle }: Props) {
         onClick={() => setCollapsed(false)}
         aria-label="Open ASTRA guide"
       >
-        <img className="avatar-guide__image avatar-guide__image--collapsed" src={tobyAvatar} alt="" />
+        <img className="avatar-guide__image avatar-guide__image--collapsed" src={rinaAvatar} alt="" />
       </button>
     )
   }
 
   return (
-    <aside className={`avatar-guide${speaking ? ' avatar-guide--speaking' : ''}`} aria-label="ASTRA guide">
+    <aside className={`avatar-guide${speaking ? ' avatar-guide--speaking' : ''}${page === 'landing' ? ' avatar-guide--landing' : ''}`} aria-label="ASTRA guide">
       <div className="avatar-guide__character" aria-hidden="true">
-        <img className="avatar-guide__image" src={tobyAvatar} alt="" />
+        <img className="avatar-guide__image" src={rinaAvatar} alt="" />
       </div>
 
       <div className="avatar-guide__bubble">
@@ -147,12 +228,67 @@ export default function AvatarGuide({ page, auth, selectedJobTitle }: Props) {
               stopSpeaking()
               setCollapsed(true)
             }}
-            aria-label="Stop Toby and hide guide"
+            aria-label="Stop Rina and hide guide"
           >
             x
           </button>
         </div>
-        <p className="avatar-guide__message">{tips[tipIndex]}</p>
+        <p className="avatar-guide__message">{currentTip}</p>
+
+        {page === 'landing' && (
+          <div className="avatar-guide__choice-panel">
+            <div className="avatar-guide__choice-header">
+              <span>Start with Rina</span>
+              <strong>Resume match or full job list</strong>
+            </div>
+
+            <button
+              className="avatar-guide__upload"
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <span className="avatar-guide__upload-icon">+</span>
+              <span>
+                <strong>{resumeFile ? resumeFile.name : 'Upload resume'}</strong>
+                <small>PDF or TXT for matched roles</small>
+              </span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.txt"
+              className="avatar-guide__file-input"
+              onChange={(event) => {
+                setResumeFile(event.target.files?.[0] ?? null)
+                setError('')
+              }}
+            />
+
+            {error && <p className="avatar-guide__error">{error}</p>}
+
+            <div className="avatar-guide__choice-actions">
+              <button
+                className="avatar-guide__primary"
+                type="button"
+                onClick={handleFindMatches}
+                disabled={loading || !resumeFile}
+              >
+                {loading ? 'Matching...' : 'Match me with jobs'}
+              </button>
+              <button
+                className="avatar-guide__secondary"
+                type="button"
+                onClick={() => {
+                  stopSpeaking()
+                  onBrowseAllOpenings?.()
+                }}
+              >
+                Browse all openings
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="avatar-guide__actions">
           <span className="avatar-guide__step">
             {tipIndex + 1}/{tips.length}

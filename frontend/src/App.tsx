@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import AstraIntro from './components/AstraIntro'
 import LandingPage from './pages/LandingPage'
 import JobListings, { type Job } from './pages/JobListings'
@@ -110,9 +110,7 @@ function App() {
       )}
       <div className="app">
       {page === 'landing' && (
-        <LandingPage
-          onMatchResult={handleMatchResult}
-          onBrowseAll={() => setPage('job-listings')}
+        <LandingPage          onBrowseAll={() => setPage('job-listings')}
           onCandidateLoginClick={() => setPage('candidate-login')}
           onRecruiterLoginClick={() => setPage('recruiter-login')}
         />
@@ -223,10 +221,17 @@ function App() {
         />
       )}
 
-      <AvatarGuide page={page} auth={auth} selectedJobTitle={selectedJob?.title} />
+      <AvatarGuide
+        page={page}
+        auth={auth}
+        selectedJobTitle={selectedJob?.title}
+        onBrowseAllOpenings={() => setPage('job-listings')}
+        onMatchResult={handleMatchResult}
+      />
     </div>
     </>
   )
 }
 
 export default App
+
