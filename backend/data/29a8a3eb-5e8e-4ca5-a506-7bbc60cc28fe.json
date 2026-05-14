@@ -1,0 +1,213 @@
+{
+  "session_id": "29a8a3eb-5e8e-4ca5-a506-7bbc60cc28fe",
+  "ct_number": "CT20260014",
+  "job_role": "Salesforce Developer",
+  "job_description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform.",
+  "status": "complete",
+  "transcript": [
+    {
+      "q": "Tell me about your most complex Apex development work.",
+      "a": "I built a real-time stock sync system between Salesforce and an ERP using platform events and batch Apex. It processed 50,000 records nightly with zero failures over 18 months. The key was building robust error handling and a dead letter queue for failed records.",
+      "score": 9,
+      "confidence": 84,
+      "metrics": {
+        "volume": 0.8,
+        "consistency": 0.82,
+        "word_count": 58,
+        "hesitant_signals": 0,
+        "confident_signals": 5
+      }
+    },
+    {
+      "q": "How do you design a Salesforce solution for scalability?",
+      "a": "I start with data model design \u2014 getting that right is 80 percent of scalability. Then I think about sharing rules, governor limits, and async processing. I always prototype in a scratch org first.",
+      "score": 8,
+      "confidence": 76,
+      "metrics": {
+        "volume": 0.72,
+        "consistency": 0.75,
+        "word_count": 48,
+        "hesitant_signals": 0,
+        "confident_signals": 3
+      }
+    },
+    {
+      "q": "Design a multi-org data synchronisation architecture.",
+      "a": "Hmm that is a complex one. I think you would use maybe a middleware layer, possibly MuleSoft or something. I have not done this exactly but I understand the concept. It is quite involved I think.",
+      "score": 6,
+      "confidence": 45,
+      "metrics": {
+        "volume": 0.48,
+        "consistency": 0.5,
+        "word_count": 42,
+        "hesitant_signals": 5,
+        "confident_signals": 0
+      }
+    },
+    {
+      "q": "How do you ensure code quality in a team environment?",
+      "a": "We use a strict pull request process with mandatory peer review. I also enforce PMD static analysis in our CI pipeline. Every PR needs 90 percent test coverage and I personally review all governor limit implications before approving.",
+      "score": 9,
+      "confidence": 80,
+      "metrics": {
+        "volume": 0.78,
+        "consistency": 0.8,
+        "word_count": 55,
+        "hesitant_signals": 0,
+        "confident_signals": 4
+      }
+    },
+    {
+      "q": "Do you have any questions for us?",
+      "a": "Absolutely. I would love to understand the current technical debt situation and what the roadmap looks like for the next 12 months. I am also curious about the deployment process \u2014 are you using SFDX and CI/CD pipelines currently?",
+      "score": 9,
+      "confidence": 82,
+      "metrics": {
+        "volume": 0.79,
+        "consistency": 0.81,
+        "word_count": 52,
+        "hesitant_signals": 0,
+        "confident_signals": 3
+      }
+    }
+  ],
+  "violations": [],
+  "scorecard": {
+    "communication": 8,
+    "technical_depth": 8,
+    "problem_solving": 7,
+    "cultural_fit": 8,
+    "summary": "Vikram is a technically strong developer who showed excellent command of Apex and integration patterns. He had a noticeable dip mid-interview when asked about system design but recovered well. His closing answer showed genuine enthusiasm and preparation.",
+    "strengths": [
+      "Strong Apex knowledge with real production experience",
+      "Good integration architecture understanding",
+      "Enthusiastic and well-prepared for the interview"
+    ],
+    "red_flags": [
+      "Struggled briefly with system design concepts",
+      "Could improve on structured answer delivery"
+    ],
+    "recommendation": "Hire",
+    "transcript": [
+      {
+        "q": "Tell me about your most complex Apex development work.",
+        "a": "I built a real-time stock sync system between Salesforce and an ERP using platform events and batch Apex. It processed 50,000 records nightly with zero failures over 18 months. The key was building robust error handling and a dead letter queue for failed records.",
+        "score": 9,
+        "confidence": 84,
+        "metrics": {
+          "volume": 0.8,
+          "consistency": 0.82,
+          "word_count": 58,
+          "hesitant_signals": 0,
+          "confident_signals": 5
+        }
+      },
+      {
+        "q": "How do you design a Salesforce solution for scalability?",
+        "a": "I start with data model design \u2014 getting that right is 80 percent of scalability. Then I think about sharing rules, governor limits, and async processing. I always prototype in a scratch org first.",
+        "score": 8,
+        "confidence": 76,
+        "metrics": {
+          "volume": 0.72,
+          "consistency": 0.75,
+          "word_count": 48,
+          "hesitant_signals": 0,
+          "confident_signals": 3
+        }
+      },
+      {
+        "q": "Design a multi-org data synchronisation architecture.",
+        "a": "Hmm that is a complex one. I think you would use maybe a middleware layer, possibly MuleSoft or something. I have not done this exactly but I understand the concept. It is quite involved I think.",
+        "score": 6,
+        "confidence": 45,
+        "metrics": {
+          "volume": 0.48,
+          "consistency": 0.5,
+          "word_count": 42,
+          "hesitant_signals": 5,
+          "confident_signals": 0
+        }
+      },
+      {
+        "q": "How do you ensure code quality in a team environment?",
+        "a": "We use a strict pull request process with mandatory peer review. I also enforce PMD static analysis in our CI pipeline. Every PR needs 90 percent test coverage and I personally review all governor limit implications before approving.",
+        "score": 9,
+        "confidence": 80,
+        "metrics": {
+          "volume": 0.78,
+          "consistency": 0.8,
+          "word_count": 55,
+          "hesitant_signals": 0,
+          "confident_signals": 4
+        }
+      },
+      {
+        "q": "Do you have any questions for us?",
+        "a": "Absolutely. I would love to understand the current technical debt situation and what the roadmap looks like for the next 12 months. I am also curious about the deployment process \u2014 are you using SFDX and CI/CD pipelines currently?",
+        "score": 9,
+        "confidence": 82,
+        "metrics": {
+          "volume": 0.79,
+          "consistency": 0.81,
+          "word_count": 52,
+          "hesitant_signals": 0,
+          "confident_signals": 3
+        }
+      }
+    ],
+    "violations": [],
+    "confidence_analysis": {
+      "average_score": 73,
+      "label": "High Confidence",
+      "color": "#0F6E56",
+      "trend": "improving",
+      "peak_question": "Tell me about your most complex Apex development work.",
+      "peak_score": 84,
+      "lowest_question": "Design a multi-org data synchronisation architecture.",
+      "lowest_score": 45,
+      "per_question": [
+        {
+          "question_num": 1,
+          "question": "Tell me about your most complex Apex work...",
+          "score": 84,
+          "word_count": 58,
+          "hesitant": 0,
+          "volume": 0.8
+        },
+        {
+          "question_num": 2,
+          "question": "How do you design for scalability...",
+          "score": 76,
+          "word_count": 48,
+          "hesitant": 0,
+          "volume": 0.72
+        },
+        {
+          "question_num": 3,
+          "question": "Design a multi-org sync architecture...",
+          "score": 45,
+          "word_count": 42,
+          "hesitant": 5,
+          "volume": 0.48
+        },
+        {
+          "question_num": 4,
+          "question": "How do you ensure code quality...",
+          "score": 80,
+          "word_count": 55,
+          "hesitant": 0,
+          "volume": 0.78
+        },
+        {
+          "question_num": 5,
+          "question": "Do you have any questions for us...",
+          "score": 82,
+          "word_count": 52,
+          "hesitant": 0,
+          "volume": 0.79
+        }
+      ],
+      "total_words": 255
+    }
+  }
+}
