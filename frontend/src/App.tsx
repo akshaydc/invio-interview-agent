@@ -10,6 +10,7 @@ import RecruiterLogin from './pages/RecruiterLogin'
 import RecruiterDashboard from './pages/RecruiterDashboard'
 import ScorecardView from './pages/ScorecardView'
 import CandidateInterview from './pages/CandidateInterview'
+import BookSlot from './pages/BookSlot'
 import AvatarGuide from './components/AvatarGuide'
 import './index.css'
 
@@ -48,11 +49,14 @@ type Page =
   | 'recruiter-dashboard'
   | 'recruiter-scorecard'
   | 'candidate-interview'
+  | 'book-slot'
 
 
 function App() {
   const [introSeen, setIntroSeen] = useState(() => !!localStorage.getItem('astra_intro_seen'))
-  const [page, setPage] = useState<Page>('landing')
+  const [page, setPage] = useState<Page>(() =>
+    window.location.pathname === '/book-slot' ? 'book-slot' : 'landing'
+  )
   const [auth, setAuth] = useState<AuthInfo | null>(null)
   const [scorecardCt, setScorecardCt] = useState<string>('')
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
@@ -209,6 +213,8 @@ function App() {
           onBack={() => setPage('recruiter-dashboard')}
         />
       )}
+
+      {page === 'book-slot' && <BookSlot />}
 
       {page === 'candidate-interview' && auth && (
         <CandidateInterview
