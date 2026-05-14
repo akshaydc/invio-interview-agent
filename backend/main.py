@@ -1930,6 +1930,9 @@ async def start_session(
     body: StartSessionRequest,
     x_auth_token: str = Header(None),
 ) -> dict:
+    print(f"Token received: {x_auth_token[:8] if x_auth_token else 'NONE'}")
+    print(f"Active sessions: {list(active_sessions.keys())[:3]}")
+
     session_id = str(uuid.uuid4())
     ct_number = None
 
@@ -1942,6 +1945,9 @@ async def start_session(
         else:
             job_role = body.job_role
             job_description = body.job_description
+    elif x_auth_token:
+        print(f"Token not found in active_sessions — likely expired after server restart")
+        raise HTTPException(status_code=401, detail="Session expired. Please log out and log in again.")
     else:
         job_role = body.job_role
         job_description = body.job_description

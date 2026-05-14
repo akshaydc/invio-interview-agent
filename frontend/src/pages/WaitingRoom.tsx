@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import Navbar from '../components/Navbar'
+import PageLayout from '../components/PageLayout'
 import { API_BASE_URL as API } from '../config'
 
 type SlotOption = { slot: string; display: string }
@@ -123,10 +123,17 @@ export default function WaitingRoom({ candidateName, interviewSlot, token, onSta
     ? `${hours}h ${minutes}m`
     : `${minutes}:${String(seconds).padStart(2, '0')}`
 
-  return (
+  const navRight = (
     <>
-      <Navbar rightContent={<button className="btn btn-secondary" onClick={onLogout}>Exit</button>} />
-      <main style={{ maxWidth: 600, margin: '0 auto', padding: '40px 24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {candidateName && (
+        <span className="muted" style={{ fontSize: '0.875rem', paddingRight: 8 }}>{candidateName}</span>
+      )}
+      <button className="btn btn-secondary" onClick={onLogout}>Logout</button>
+    </>
+  )
+
+  return (
+    <PageLayout navbar={{ rightContent: navRight }} contentStyle={{ maxWidth: 600 }}>
         <div className="card" style={{ textAlign: 'center', padding: '40px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
           <div style={{ fontSize: '2.5rem' }}>🕐</div>
           <h2 style={{ margin: 0 }}>Hi {candidateName}, your interview is scheduled</h2>
@@ -238,7 +245,6 @@ export default function WaitingRoom({ candidateName, interviewSlot, token, onSta
             </div>
           </div>
         )}
-      </main>
-    </>
+    </PageLayout>
   )
 }

@@ -9,7 +9,7 @@ type Props = {
 const STATS = [
   { number: '10x',   label: 'Faster screening vs manual process',   color: '#0C447C' },
   { number: '94%',   label: 'Accuracy in candidate shortlisting',    color: '#0F6E56' },
-  { number: '<24h',  label: 'From application to AI feedback',       color: '#854F0B' },
+  { number: '<24h',  label: 'Application to Interview',       color: '#854F0B' },
   { number: '0',     label: 'Recruiter hours for initial screening',  color: '#1d1d1f' },
 ]
 
@@ -47,7 +47,7 @@ export default function LandingPage({ onCandidateLoginClick, onRecruiterLoginCli
               <p className="landing-quote__text">
                 &ldquo;ASTRA screened 40 candidates in the time it would have taken us to review 5 resumes.&rdquo;
               </p>
-              <p className="landing-quote__attribution">&mdash; HR Lead, TechCorp India</p>
+              <p className="landing-quote__attribution">&mdash; HR Lead</p>
             </blockquote>
           </div>
         </div>
