@@ -123,9 +123,8 @@ function QuestionBar({ q }: { q: PerQuestion }) {
 // ─── Confidence section ─────────────────────────────────────────────────────
 function ConfidenceSection({ ca }: { ca: ConfidenceAnalysis }) {
   const chartData = ca.per_question.map(q => ({
-    name: `Q${q.question_num}`,
-    score: q.score,
     ...q,
+    name: `Q${q.question_num}`,
   }))
 
   const trendIcon = ca.trend === 'improving' ? '↑' : ca.trend === 'declining' ? '↓' : '—'
