@@ -76,7 +76,7 @@ export default function ScorecardView({ token, ctNumber, onBack }: Props) {
       }}
     >
       <div>
-        <h1 className="title" style={{ fontSize: '1.6rem' }}>Scorecard</h1>
+        <h1 className="title" style={{ fontSize: '1.6rem' }}>Interview Feedback</h1>
         {candidate && (
           <p className="muted" style={{ marginTop: 4 }}>
             {candidate.name} · <span style={{ fontFamily: 'monospace' }}>{candidate.ct_number}</span> · {candidate.job_role}

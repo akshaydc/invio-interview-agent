@@ -21,6 +21,7 @@ export type AuthInfo = {
   jobRole?: string
   jobDescription?: string
   status?: string
+  interviewSlot?: string
 }
 
 type ApplicationPrefill = {
@@ -217,6 +218,7 @@ function App() {
           jobDescription={auth.jobDescription ?? ''}
           candidateStatus={auth.status ?? 'applied'}
           ctNumber={auth.ctNumber ?? ''}
+          interviewSlot={auth.interviewSlot}
           onLogout={handleLogout}
         />
       )}

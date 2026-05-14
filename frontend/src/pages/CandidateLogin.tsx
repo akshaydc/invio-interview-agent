@@ -29,6 +29,7 @@ export default function CandidateLogin({ onLogin, onBack }: Props) {
         job_role: string
         job_description: string
         status: string
+        interview_slot?: string
       }>(`${API}/auth/candidate/login`, { ct_number: ctNumber.trim() })
       onLogin({
         token: res.data.token,
@@ -38,6 +39,7 @@ export default function CandidateLogin({ onLogin, onBack }: Props) {
         jobRole: res.data.job_role,
         jobDescription: res.data.job_description,
         status: res.data.status,
+        interviewSlot: res.data.interview_slot ?? undefined,
       })
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Login failed.' : 'Login failed.'

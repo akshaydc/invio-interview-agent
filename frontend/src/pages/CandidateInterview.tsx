@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import InterviewRoom from '../components/InterviewRoom'
 import Navbar from '../components/Navbar'
+import WaitingRoom from './WaitingRoom'
 
 type CandidateStatus = 'not_started' | 'applied' | 'interview_scheduled' | 'interview_complete' | 'rejected' | string
 
@@ -11,7 +12,19 @@ type Props = {
   jobDescription: string
   candidateStatus: CandidateStatus
   ctNumber: string
+  interviewSlot?: string
   onLogout: () => void
+}
+
+function getSecondsUntilSlot(slot: string): number {
+  try {
+    const [datePart, timePart] = slot.split(' ')
+    const [year, month, day] = datePart.split('-').map(Number)
+    const [hour, minute] = timePart.split(':').map(Number)
+    return Math.floor((new Date(year, month - 1, day, hour, minute).getTime() - Date.now()) / 1000)
+  } catch {
+    return -1
+  }
 }
 
 export default function CandidateInterview({
@@ -20,9 +33,11 @@ export default function CandidateInterview({
   jobRole,
   jobDescription,
   candidateStatus,
+  interviewSlot,
   onLogout,
 }: Props) {
   const [interviewDone, setInterviewDone] = useState(false)
+  const [slotOverride, setSlotOverride] = useState(false)
 
   const effectiveStatus: CandidateStatus = interviewDone ? 'interview_complete' : candidateStatus
 
@@ -88,6 +103,18 @@ export default function CandidateInterview({
   }
 
   if (effectiveStatus === 'interview_scheduled') {
+    const tooEarly = interviewSlot && !slotOverride && getSecondsUntilSlot(interviewSlot) > 120
+    if (tooEarly) {
+      return (
+        <WaitingRoom
+          candidateName={candidateName}
+          interviewSlot={interviewSlot!}
+          token={token}
+          onStartInterview={() => setSlotOverride(true)}
+          onLogout={onLogout}
+        />
+      )
+    }
     return (
       <InterviewRoom
         token={token}
