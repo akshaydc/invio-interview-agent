@@ -181,6 +181,16 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [scheduleDateSelected, setScheduleDateSelected] = useState('')
   const [shortlistingCt, setShortlistingCt] = useState<string | null>(null)
 
+  type ShortlistConfirm = {
+    name: string
+    emailSent: boolean
+    emailTo: string | null
+    slotBookingUrl: string
+  }
+  const [shortlistConfirm, setShortlistConfirm] = useState<ShortlistConfirm | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const filteredCandidates = useMemo(() => {
     let result = [...candidates].sort((a, b) => {
       const aMatch = a.match_percentage ?? -1
@@ -285,13 +295,33 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     }
   }
 
+  function showToast(message: string) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    setToast(message)
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+  }
+
   async function handleShortlist(ct: string) {
     setShortlistingCt(ct)
     try {
-      await axios.post(`${API}/recruiter/candidates/${ct}/shortlist`, {}, { headers })
+      const res = await axios.post<{
+        success: boolean
+        email_sent: boolean
+        email_to: string | null
+        slot_booking_url: string
+        message: string
+      }>(`${API}/recruiter/candidates/${ct}/shortlist`, {}, { headers })
+      const cand = candidates.find(c => c.ct_number === ct)
       setCandidates(prev =>
         prev.map(c => c.ct_number === ct ? { ...c, status: 'shortlisted' as CandidateStatus } : c)
       )
+      setShortlistConfirm({
+        name: cand?.name ?? ct,
+        emailSent: res.data.email_sent,
+        emailTo: res.data.email_to,
+        slotBookingUrl: res.data.slot_booking_url,
+      })
+      showToast(`${cand?.name ?? ct} shortlisted. ${res.data.email_sent ? 'Email sent.' : 'Email not configured.'}`)
     } catch { /* silent */ } finally { setShortlistingCt(null) }
   }
 
@@ -577,6 +607,72 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
           </div>
         )
       })()}
+      {shortlistConfirm && (
+        <div className="modal-overlay" onClick={() => setShortlistConfirm(null)}>
+          <div
+            className="card"
+            style={{ maxWidth: 520, width: '100%', padding: 0, overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: '#5B21B6', borderRadius: '12px 12px 0 0' }}>
+              <div>
+                <div style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>Candidate Shortlisted</div>
+                <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.82rem' }}>{shortlistConfirm.name}</div>
+              </div>
+              <button
+                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontWeight: 600 }}
+                onClick={() => setShortlistConfirm(null)}
+              >
+                Close
+              </button>
+            </div>
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.1rem' }}>{shortlistConfirm.emailSent ? '✅' : '⚠️'}</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' }}>
+                    {shortlistConfirm.emailSent ? 'Slot booking email sent' : 'Email not sent'}
+                  </span>
+                </div>
+                {shortlistConfirm.emailTo && (
+                  <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>
+                    Sent to: <strong style={{ color: 'var(--text)' }}>{shortlistConfirm.emailTo}</strong>
+                  </p>
+                )}
+                {!shortlistConfirm.emailSent && (
+                  <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.82rem' }}>
+                    RESEND_API_KEY may not be configured. Share the slot booking link manually.
+                  </p>
+                )}
+              </div>
+
+              <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.1rem' }}>🔗</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' }}>Slot Booking Link</span>
+                </div>
+                <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.82rem' }}>Share this link with the candidate to let them pick an interview slot.</p>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    readOnly
+                    value={shortlistConfirm.slotBookingUrl}
+                    style={{ flex: 1, fontSize: '0.78rem', padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)', fontFamily: 'monospace' }}
+                    onClick={e => (e.target as HTMLInputElement).select()}
+                  />
+                  <button
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.8rem', padding: '6px 12px', whiteSpace: 'nowrap' }}
+                    onClick={() => navigator.clipboard.writeText(shortlistConfirm.slotBookingUrl)}
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="dash-subheader">
         <h1 className="title" style={{ fontSize: '1.6rem' }}>Recruiter Dashboard</h1>
         <div className="dash-header-actions">
@@ -1161,6 +1257,29 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
         </>
       )}
       </div>
+
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: 28,
+          right: 28,
+          background: '#16A34A',
+          color: '#fff',
+          padding: '12px 20px',
+          borderRadius: 10,
+          fontWeight: 500,
+          fontSize: '0.9rem',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          maxWidth: 360,
+          lineHeight: 1.4,
+        }}>
+          ✓ {toast}
+        </div>
+      )}
     </div>
   )
 }
