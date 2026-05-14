@@ -37,6 +37,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "https://your-frontend.railway.app")
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 CANDIDATES_FILE = DATA_DIR / "candidates.json"
+SLOTS_FILE = DATA_DIR / "slots.json"
 
 app = FastAPI(title="AI Interview Agent")
 active_sessions: dict = {}
@@ -205,6 +206,14 @@ class EndSessionRequest(BaseModel):
     violations: list[dict] = []
 
 
+class BookSlotRequest(BaseModel):
+    slot: str  # "YYYY-MM-DD HH:MM"
+
+
+class RescheduleRequest(BaseModel):
+    new_slot: str  # "YYYY-MM-DD HH:MM"
+
+
 # ---------------------------------------------------------------------------
 # Auth helpers
 # ---------------------------------------------------------------------------
@@ -214,6 +223,15 @@ def verify_recruiter_token(x_auth_token: str = Header(None)) -> dict:
         raise HTTPException(status_code=401, detail="Unauthorized")
     sess = active_sessions[x_auth_token]
     if sess["role"] != "recruiter":
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return sess
+
+
+def verify_candidate_token(x_auth_token: str = Header(None)) -> dict:
+    if not x_auth_token or x_auth_token not in active_sessions:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    sess = active_sessions[x_auth_token]
+    if sess["role"] != "candidate":
         raise HTTPException(status_code=403, detail="Forbidden")
     return sess
 
@@ -254,6 +272,37 @@ async def _read_jobs() -> list:
 async def _write_jobs(jobs: list) -> None:
     async with aiofiles.open(JOBS_FILE, "w") as f:
         await f.write(json.dumps(jobs, indent=2))
+
+
+async def _read_slots() -> dict:
+    if not SLOTS_FILE.exists():
+        return {}
+    async with aiofiles.open(SLOTS_FILE, "r") as f:
+        return json.loads(await f.read())
+
+
+async def _write_slots(slots: dict) -> None:
+    async with aiofiles.open(SLOTS_FILE, "w") as f:
+        await f.write(json.dumps(slots, indent=2))
+
+
+def _generate_slots() -> list[str]:
+    today = datetime.now().strftime("%Y-%m-%d")
+    slots = []
+    for hour in range(9, 18):
+        for minute in (0, 15, 30, 45):
+            slots.append(f"{today} {hour:02d}:{minute:02d}")
+    return slots
+
+
+def _format_slot_display(slot: str) -> str:
+    try:
+        dt = datetime.strptime(slot, "%Y-%m-%d %H:%M")
+        am_pm = "AM" if dt.hour < 12 else "PM"
+        display_hour = dt.hour % 12 or 12
+        return f"{display_hour}:{dt.minute:02d} {am_pm}"
+    except Exception:
+        return slot
 
 
 async def _find_candidate_by_session(session_id: str) -> dict | None:
@@ -531,6 +580,7 @@ async def candidate_login(body: CandidateLoginRequest) -> dict:
         "job_description": candidate.get("job_description", ""),
         "session_id": candidate.get("session_id"),
         "status": candidate.get("status", "applied"),
+        "interview_slot": candidate.get("interview_slot"),
     }
 
 
@@ -739,7 +789,140 @@ async def cancel_schedule(
     ct_number: str,
     _auth: dict = Depends(verify_recruiter_token),
 ) -> dict:
-    return await _set_candidate_status(ct_number, "applied", "updated_at")
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    interview_slot = candidate.get("interview_slot")
+    if interview_slot:
+        slots_data = await _read_slots()
+        if slots_data.get(interview_slot) == ct_number:
+            del slots_data[interview_slot]
+            await _write_slots(slots_data)
+        candidate["interview_slot"] = None
+    candidate["status"] = "applied"
+    candidate["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await _write_candidates(candidates)
+    return {"success": True}
+
+
+@app.get("/recruiter/slots")
+async def get_recruiter_slots(_auth: dict = Depends(verify_recruiter_token)) -> list:
+    slots_data = await _read_slots()
+    all_slots = _generate_slots()
+    return [
+        {
+            "slot": slot,
+            "display": _format_slot_display(slot),
+            "available": slots_data.get(slot) is None,
+            "booked_by": slots_data.get(slot),
+        }
+        for slot in all_slots
+    ]
+
+
+@app.post("/recruiter/candidates/{ct_number}/book-slot")
+async def book_slot(
+    ct_number: str,
+    body: BookSlotRequest,
+    background_tasks: BackgroundTasks,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    slots_data = await _read_slots()
+    existing = slots_data.get(body.slot)
+    if existing and existing != ct_number:
+        raise HTTPException(status_code=409, detail="Slot already booked by another candidate")
+    old_slot = candidate.get("interview_slot")
+    if old_slot and old_slot in slots_data and slots_data[old_slot] == ct_number:
+        del slots_data[old_slot]
+    slots_data[body.slot] = ct_number
+    await _write_slots(slots_data)
+    candidate["interview_slot"] = body.slot
+    candidate["status"] = "interview_scheduled"
+    candidate["scheduled_at"] = datetime.now(timezone.utc).isoformat()
+    await _write_candidates(candidates)
+    cand_email = candidate.get("email", "")
+    cand_name = candidate.get("name", "Candidate")
+    job_title = candidate.get("job_role", "the role")
+    slot_display = _format_slot_display(body.slot)
+    if cand_email:
+        schedule_html = (
+            f"<h2>Your Interview Has Been Scheduled</h2>"
+            f"<p>Dear {cand_name},</p>"
+            f"<p>Your AI interview for <b>{job_title}</b> has been scheduled for <b>{slot_display}</b>.</p>"
+            f"<p>Login with your CT Number <b>{ct_number}</b> at "
+            f'<a href="{FRONTEND_URL}">{FRONTEND_URL}</a> to join at the scheduled time.</p>'
+            f"<p>Best regards,<br>Invio Recruitment Team</p>"
+        )
+        background_tasks.add_task(send_email, cand_email, f"Interview Scheduled — {job_title}", schedule_html)
+    return {"success": True, "slot": body.slot}
+
+
+@app.post("/recruiter/candidates/{ct_number}/make-call")
+async def make_call(
+    ct_number: str,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    candidate["status"] = "interview_scheduled"
+    candidate["scheduled_at"] = datetime.now(timezone.utc).isoformat()
+    await _write_candidates(candidates)
+    return {"success": True, "message": f"Call initiated for {candidate['name']}. They can join immediately."}
+
+
+# ---------------------------------------------------------------------------
+# Candidate slot endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/candidate/slots")
+async def get_candidate_slots(_auth: dict = Depends(verify_candidate_token)) -> dict:
+    ct_number = _auth["ct_number"]
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    slots_data = await _read_slots()
+    all_slots = _generate_slots()
+    available_slots = [
+        {"slot": slot, "display": _format_slot_display(slot)}
+        for slot in all_slots
+        if slots_data.get(slot) is None or slots_data[slot] == ct_number
+    ]
+    return {
+        "available_slots": available_slots,
+        "current_slot": candidate.get("interview_slot"),
+    }
+
+
+@app.post("/candidate/reschedule")
+async def reschedule_interview(
+    body: RescheduleRequest,
+    _auth: dict = Depends(verify_candidate_token),
+) -> dict:
+    ct_number = _auth["ct_number"]
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    slots_data = await _read_slots()
+    existing = slots_data.get(body.new_slot)
+    if existing and existing != ct_number:
+        raise HTTPException(status_code=409, detail="Slot already booked")
+    old_slot = candidate.get("interview_slot")
+    if old_slot and slots_data.get(old_slot) == ct_number:
+        del slots_data[old_slot]
+    slots_data[body.new_slot] = ct_number
+    await _write_slots(slots_data)
+    candidate["interview_slot"] = body.new_slot
+    await _write_candidates(candidates)
+    return {"success": True, "slot": body.new_slot}
 
 
 # ---------------------------------------------------------------------------
@@ -1533,6 +1716,19 @@ async def start_session(
     else:
         job_role = body.job_role
         job_description = body.job_description
+
+    if ct_number:
+        _cands = await _read_candidates()
+        _cand = next((c for c in _cands if c["ct_number"] == ct_number), None)
+        if _cand and _cand.get("interview_slot"):
+            try:
+                _slot_dt = datetime.strptime(_cand["interview_slot"], "%Y-%m-%d %H:%M")
+                if (_slot_dt - datetime.now()).total_seconds() > 120:
+                    raise HTTPException(status_code=403, detail="too_early")
+            except HTTPException:
+                raise
+            except Exception:
+                pass
 
     first_question = "Welcome! Tell me about yourself and what interests you about this role."
 

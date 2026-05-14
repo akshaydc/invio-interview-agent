@@ -40,7 +40,10 @@ type Candidate = {
   notice_fit?: string
   recommendation?: string
   applied_at?: string
+  interview_slot?: string
 }
+
+type SlotInfo = { slot: string; display: string; available: boolean; booked_by: string | null }
 
 type Job = {
   id: string
@@ -89,6 +92,22 @@ function matchBadge(pct: number | null | undefined) {
   if (pct == null) return <span className="muted" style={{ fontSize: '0.85rem' }}>—</span>
   const cls = pct >= 70 ? 'match-badge match-badge--green' : pct >= 50 ? 'match-badge match-badge--amber' : 'match-badge match-badge--red'
   return <span className={cls}>{pct}%</span>
+}
+
+function formatSlotDisplay(slot: string): string {
+  try {
+    const [datePart, timePart] = slot.split(' ')
+    const [year, month, day] = datePart.split('-').map(Number)
+    const [hour, minute] = timePart.split(':').map(Number)
+    const dt = new Date(year, month - 1, day, hour, minute)
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const amPm = hour < 12 ? 'AM' : 'PM'
+    const displayHour = hour % 12 || 12
+    return `${dayNames[dt.getDay()]}, ${day} ${monthNames[dt.getMonth()]} ${year} · ${displayHour}:${String(minute).padStart(2, '0')} ${amPm}`
+  } catch {
+    return slot
+  }
 }
 
 type Tab = 'candidates' | 'jobs'
@@ -148,6 +167,17 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [filterMinMatch, setFilterMinMatch] = useState(0)
   const [filterRecommendation, setFilterRecommendation] = useState('All')
   const [filterStatus, setFilterStatus] = useState('All')
+
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [scheduleModalCt, setScheduleModalCt] = useState('')
+  const [scheduleOption, setScheduleOption] = useState<'pick' | 'call' | null>(null)
+  const [callSuccess, setCallSuccess] = useState(false)
+  const [callLoading, setCallLoading] = useState(false)
+  const [slots, setSlots] = useState<SlotInfo[]>([])
+  const [slotsLoading, setSlotsLoading] = useState(false)
+  const [selectedSlot, setSelectedSlot] = useState('')
+  const [bookingLoading, setBookingLoading] = useState(false)
+  const [bookSlotError, setBookSlotError] = useState('')
 
   const filteredCandidates = useMemo(() => {
     let result = [...candidates].sort((a, b) => {
@@ -221,14 +251,69 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     setExpandedCt(prev => prev === ct ? null : ct)
   }
 
-  async function handleSchedule(ct: string) {
-    setActionCt(ct)
+  function openScheduleModal(ct: string) {
+    setScheduleModalCt(ct)
+    setShowScheduleModal(true)
+    setScheduleOption(null)
+    setCallSuccess(false)
+    setCallLoading(false)
+    setSlots([])
+    setSelectedSlot('')
+    setBookSlotError('')
+  }
+
+  function closeScheduleModal() {
+    setShowScheduleModal(false)
+    setScheduleModalCt('')
+    setScheduleOption(null)
+  }
+
+  async function fetchSlots() {
+    setSlotsLoading(true)
     try {
-      await axios.post(`${API}/recruiter/candidates/${ct}/schedule`, {}, { headers })
+      const res = await axios.get<SlotInfo[]>(`${API}/recruiter/slots`, { headers })
+      setSlots(res.data)
+    } catch {
+      // silent
+    } finally {
+      setSlotsLoading(false)
+    }
+  }
+
+  async function handleMakeCall() {
+    setCallLoading(true)
+    try {
+      await axios.post(`${API}/recruiter/candidates/${scheduleModalCt}/make-call`, {}, { headers })
       setCandidates(prev =>
-        prev.map(c => c.ct_number === ct ? { ...c, status: 'interview_scheduled' as CandidateStatus } : c)
+        prev.map(c => c.ct_number === scheduleModalCt ? { ...c, status: 'interview_scheduled' as CandidateStatus } : c)
       )
-    } catch { /* silent */ } finally { setActionCt(null) }
+      setCallSuccess(true)
+    } catch {
+      // silent
+    } finally {
+      setCallLoading(false)
+    }
+  }
+
+  async function handleBookSlot() {
+    if (!selectedSlot) return
+    setBookingLoading(true)
+    setBookSlotError('')
+    try {
+      await axios.post(`${API}/recruiter/candidates/${scheduleModalCt}/book-slot`, { slot: selectedSlot }, { headers })
+      setCandidates(prev =>
+        prev.map(c => c.ct_number === scheduleModalCt
+          ? { ...c, status: 'interview_scheduled' as CandidateStatus, interview_slot: selectedSlot }
+          : c
+        )
+      )
+      closeScheduleModal()
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Booking failed.' : 'Booking failed.'
+      setBookSlotError(String(msg))
+    } finally {
+      setBookingLoading(false)
+    }
   }
 
   async function handleReject(ct: string) {
@@ -436,6 +521,69 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
           </div>
         </div>
       )}
+      {showScheduleModal && (
+        <div className="modal-overlay" onClick={closeScheduleModal}>
+          <div className="card schedule-modal" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ margin: 0 }}>Schedule Interview</h3>
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.5rem', lineHeight: 1 }} onClick={closeScheduleModal}>×</button>
+            </div>
+            {!scheduleOption && (
+              <div className="schedule-options">
+                <div className="schedule-option-card" onClick={() => { setScheduleOption('call'); handleMakeCall() }}>
+                  <div style={{ fontSize: '2rem' }}>📞</div>
+                  <h4 style={{ margin: '8px 0 4px' }}>Make a Call</h4>
+                  <p className="muted" style={{ fontSize: '0.85rem' }}>Invite the candidate to join immediately.</p>
+                </div>
+                <div className="schedule-option-card" onClick={() => { setScheduleOption('pick'); fetchSlots() }}>
+                  <div style={{ fontSize: '2rem' }}>📅</div>
+                  <h4 style={{ margin: '8px 0 4px' }}>Pick a Slot</h4>
+                  <p className="muted" style={{ fontSize: '0.85rem' }}>Choose a time. Candidate gets an email.</p>
+                </div>
+              </div>
+            )}
+            {scheduleOption === 'call' && (
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                {callLoading && <p className="muted">Initiating call...</p>}
+                {callSuccess && (
+                  <>
+                    <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>✅</div>
+                    <p style={{ color: 'var(--green)', fontWeight: 600, marginBottom: 8 }}>Call initiated successfully</p>
+                    <p className="muted" style={{ fontSize: '0.875rem' }}>The candidate can log in and start their interview immediately.</p>
+                    <button className="btn btn-secondary" style={{ marginTop: 16 }} onClick={closeScheduleModal}>Done</button>
+                  </>
+                )}
+              </div>
+            )}
+            {scheduleOption === 'pick' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {slotsLoading && <p className="muted">Loading available slots...</p>}
+                {!slotsLoading && (
+                  <div className="slot-grid">
+                    {slots.map(s => (
+                      <button
+                        key={s.slot}
+                        className={`slot-cell ${s.available ? 'slot-cell--available' : 'slot-cell--booked'}${selectedSlot === s.slot ? ' slot-cell--selected' : ''}`}
+                        disabled={!s.available}
+                        onClick={() => s.available && setSelectedSlot(s.slot)}
+                      >
+                        {s.display}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {bookSlotError && <p className="error-text">{bookSlotError}</p>}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button className="btn btn-primary" onClick={handleBookSlot} disabled={!selectedSlot || bookingLoading}>
+                    {bookingLoading ? 'Booking...' : 'Confirm Slot'}
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => setScheduleOption(null)}>Back</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="dash-subheader">
         <h1 className="title" style={{ fontSize: '1.6rem' }}>Recruiter Dashboard</h1>
         <div className="dash-header-actions">
@@ -601,8 +749,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                     <button
                                       className="btn btn-primary"
                                       style={{ padding: '6px 12px', fontSize: '0.82rem' }}
-                                      disabled={actionCt === c.ct_number}
-                                      onClick={() => handleSchedule(c.ct_number)}
+                                      onClick={() => openScheduleModal(c.ct_number)}
                                     >
                                       Schedule
                                     </button>
@@ -632,7 +779,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                     style={{ padding: '6px 14px', fontSize: '0.82rem' }}
                                     onClick={() => onViewScorecard(c.ct_number)}
                                   >
-                                    Scorecard
+                                    View Feedback
                                   </button>
                                 )}
                               </td>
@@ -749,16 +896,24 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                       </div>
                                     )}
 
+                                    {c.interview_slot && (
+                                      <div style={{ marginTop: 16 }}>
+                                        <p className="role-label" style={{ marginBottom: 6 }}>Scheduled Interview</p>
+                                        <span style={{ color: 'var(--primary-light)', fontWeight: 600, fontSize: '0.9rem' }}>
+                                          {formatSlotDisplay(c.interview_slot)}
+                                        </span>
+                                      </div>
+                                    )}
+
                                     <div className="candidate-panel-actions">
                                       {c.status === 'applied' && (
                                         <>
                                           <button
                                             className="btn btn-primary"
                                             style={{ fontSize: '0.875rem', padding: '8px 20px' }}
-                                            disabled={actionCt === c.ct_number}
-                                            onClick={e => { e.stopPropagation(); handleSchedule(c.ct_number) }}
+                                            onClick={e => { e.stopPropagation(); openScheduleModal(c.ct_number) }}
                                           >
-                                            {actionCt === c.ct_number ? 'Scheduling…' : 'Schedule Interview'}
+                                            Schedule Interview
                                           </button>
                                           <button
                                             className="btn btn-danger"
@@ -786,7 +941,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                           style={{ fontSize: '0.875rem', padding: '8px 20px' }}
                                           onClick={e => { e.stopPropagation(); onViewScorecard(c.ct_number) }}
                                         >
-                                          View Scorecard
+                                          View Feedback
                                         </button>
                                       )}
                                       {c.resume_text && (

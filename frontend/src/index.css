@@ -1772,3 +1772,73 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Schedule modal
+   --------------------------------------------------------------------------- */
+.schedule-modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.schedule-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.schedule-option-card {
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 16px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.schedule-option-card:hover {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+}
+
+/* ---------------------------------------------------------------------------
+   Slot grid
+   --------------------------------------------------------------------------- */
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.slot-cell {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 4px;
+  font-size: 0.82rem;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.15s, background 0.15s;
+  text-align: center;
+}
+
+.slot-cell--available:hover {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+}
+
+.slot-cell--booked {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--surface-2);
+}
+
+.slot-cell--selected {
+  border-color: var(--primary) !important;
+  background: var(--primary-bg) !important;
+  color: var(--primary) !important;
+  font-weight: 600;
+}
