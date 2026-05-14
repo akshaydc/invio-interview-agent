@@ -550,6 +550,19 @@ async def send_email(to_email: str, subject: str, html_body: str) -> bool:
         return False
 
 
+def send_email_sync(to_email: str, subject: str, html_body: str) -> bool:
+    import asyncio
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(send_email(to_email, subject, html_body))
+        loop.close()
+        return result
+    except Exception as e:
+        print(f"send_email_sync error: {e}")
+        return False
+
+
 async def send_scorecard_email(scorecard: dict, job_role: str, session_id: str, candidate_name: str = "") -> None:
     if not RECRUITER_EMAIL:
         print("RECRUITER_EMAIL not configured — skipping scorecard email.")
@@ -615,6 +628,17 @@ async def send_scorecard_email(scorecard: dict, job_role: str, session_id: str, 
 
     subject = f"Interview Scorecard — {job_role}" + (f" — {candidate_name}" if candidate_name else "")
     await send_email(RECRUITER_EMAIL, subject, html)
+
+
+def send_scorecard_email_sync(scorecard: dict, job_role: str, session_id: str, candidate_name: str = "") -> None:
+    import asyncio
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(send_scorecard_email(scorecard, job_role, session_id, candidate_name))
+        loop.close()
+    except Exception as e:
+        print(f"send_scorecard_email_sync error: {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -799,7 +823,7 @@ async def schedule_candidate(
             f'<a href="{FRONTEND_URL}">{FRONTEND_URL}</a> to start your interview.</p>'
             f"<p>Best regards,<br>Invio Recruitment Team</p>"
         )
-        background_tasks.add_task(send_email, cand_email, f"Interview Invitation — {job_title}", schedule_html)
+        background_tasks.add_task(send_email_sync, cand_email, f"Interview Invitation — {job_title}", schedule_html)
     return result
 
 
@@ -826,13 +850,14 @@ async def invite_candidate_alias(
             f'<a href="{FRONTEND_URL}">{FRONTEND_URL}</a> to start your interview.</p>'
             f"<p>Best regards,<br>Invio Recruitment Team</p>"
         )
-        background_tasks.add_task(send_email, cand_email, f"Interview Invitation — {job_title}", schedule_html)
+        background_tasks.add_task(send_email_sync, cand_email, f"Interview Invitation — {job_title}", schedule_html)
     return result
 
 
 @app.post("/recruiter/candidates/{ct_number}/shortlist")
 async def shortlist_candidate(
     ct_number: str,
+    background_tasks: BackgroundTasks,
     _auth: dict = Depends(verify_recruiter_token),
 ) -> dict:
     candidates = await _read_candidates()
@@ -848,7 +873,7 @@ async def shortlist_candidate(
     cand_name = candidate.get("name", "Candidate")
     job_title = candidate.get("job_role", "the role")
     slot_booking_url = f"{FRONTEND_URL}/book-slot?token={slot_booking_token}&ct={ct_number}"
-    email_sent = False
+    email_queued = False
     if cand_email:
         shortlist_html = (
             f"<h2>Congratulations! You have been shortlisted.</h2>"
@@ -860,14 +885,16 @@ async def shortlist_candidate(
             f"<p>Slots are available between 9 AM and 6 PM. Please book at the earliest.</p>"
             f"<p>Best regards,<br>ASTRA Recruitment Team</p>"
         )
-        email_sent = await send_email(
+        background_tasks.add_task(
+            send_email_sync,
             cand_email,
             f"You've been shortlisted! Book your interview slot — {job_title}",
             shortlist_html,
         )
+        email_queued = True
     return {
         "success": True,
-        "email_sent": email_sent,
+        "email_sent": email_queued,
         "email_to": mask_email(cand_email) if cand_email else None,
         "slot_booking_url": slot_booking_url,
         "message": "Candidate shortlisted successfully",
@@ -897,7 +924,7 @@ async def reject_candidate(
             f"<p>We encourage you to apply for future openings.</p>"
             f"<p>Best regards,<br>Invio Recruitment Team</p>"
         )
-        background_tasks.add_task(send_email, cand_email, f"Application Update — {job_title}", reject_html)
+        background_tasks.add_task(send_email_sync, cand_email, f"Application Update — {job_title}", reject_html)
     return result
 
 
@@ -979,7 +1006,7 @@ async def book_slot(
             f'<a href="{FRONTEND_URL}">{FRONTEND_URL}</a> to join at the scheduled time.</p>'
             f"<p>Best regards,<br>Invio Recruitment Team</p>"
         )
-        background_tasks.add_task(send_email, cand_email, f"Interview Scheduled — {job_title}", schedule_html)
+        background_tasks.add_task(send_email_sync, cand_email, f"Interview Scheduled — {job_title}", schedule_html)
     return {"success": True, "slot": body.slot}
 
 
@@ -2275,7 +2302,7 @@ async def end_session(
             print(f"WARNING: Could not update candidate status: {e}")
             traceback.print_exc()
 
-        background_tasks.add_task(send_scorecard_email, scorecard, job_role, session_id, candidate_name)
+        background_tasks.add_task(send_scorecard_email_sync, scorecard, job_role, session_id, candidate_name)
         return scorecard
 
     except Exception as e:
