@@ -48,6 +48,18 @@ app.add_middleware(
 
 JOBS_FILE = DATA_DIR / "jobs.json"
 
+
+@app.get("/debug/env")
+async def debug_env():
+    return {
+        "RESEND_API_KEY_set": bool(os.getenv("RESEND_API_KEY")),
+        "RESEND_API_KEY_prefix": os.getenv("RESEND_API_KEY", "")[:8] if os.getenv("RESEND_API_KEY") else "NOT SET",
+        "FROM_EMAIL": os.getenv("FROM_EMAIL", "NOT SET"),
+        "FRONTEND_URL": os.getenv("FRONTEND_URL", "NOT SET"),
+        "ANTHROPIC_KEY_set": bool(os.getenv("ANTHROPIC_API_KEY")),
+    }
+
+
 _SEED_JOBS = [
     {
         "id": "b1e2c3d4-0001-0000-0000-000000000001",
