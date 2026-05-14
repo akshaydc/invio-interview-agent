@@ -60,6 +60,38 @@ async def debug_env():
     }
 
 
+@app.post("/debug/test-email")
+async def test_email(x_auth_token: str = Header(None)):
+    resend_key = os.getenv("RESEND_API_KEY")
+    from_email = os.getenv("FROM_EMAIL", "onboarding@resend.dev")
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {resend_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": f"ASTRA <{from_email}>",
+                    "to": ["akshaydc102@gmail.com"],
+                    "subject": "ASTRA Test Email",
+                    "html": "<h1>Test email from ASTRA</h1><p>Email is working!</p>",
+                },
+                timeout=10.0,
+            )
+            return {
+                "status_code": response.status_code,
+                "response": response.text,
+                "success": response.status_code == 200,
+            }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+        }
+
+
 _SEED_JOBS = [
     {
         "id": "b1e2c3d4-0001-0000-0000-000000000001",
