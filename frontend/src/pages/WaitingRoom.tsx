@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar'
 import { API_BASE_URL as API } from '../config'
 
 type SlotOption = { slot: string; display: string }
+type DateOption = { date: string; display: string }
 
 type Props = {
   candidateName: string
@@ -29,6 +30,18 @@ function formatFullSlot(slot: string): string {
   }
 }
 
+function formatTimeOnly(slot: string): string {
+  try {
+    const [, timePart] = slot.split(' ')
+    const [hour, minute] = timePart.split(':').map(Number)
+    const amPm = hour < 12 ? 'AM' : 'PM'
+    const displayHour = hour % 12 || 12
+    return `${displayHour}:${String(minute).padStart(2, '0')} ${amPm}`
+  } catch {
+    return slot
+  }
+}
+
 function getSecondsUntilSlot(slot: string): number {
   try {
     const [datePart, timePart] = slot.split(' ')
@@ -48,6 +61,8 @@ export default function WaitingRoom({ candidateName, interviewSlot, token, onSta
   const [selectedSlot, setSelectedSlot] = useState('')
   const [rescheduling, setRescheduling] = useState(false)
   const [rescheduleError, setRescheduleError] = useState('')
+  const [rescheduleDate, setRescheduleDate] = useState('')
+  const [rescheduleDates, setRescheduleDates] = useState<DateOption[]>([])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -56,14 +71,17 @@ export default function WaitingRoom({ candidateName, interviewSlot, token, onSta
     return () => clearInterval(interval)
   }, [interviewSlot])
 
-  async function fetchSlots() {
+  async function fetchSlotsForDate(date: string, updateDates = false) {
     setSlotsLoading(true)
     try {
-      const res = await axios.get<{ available_slots: SlotOption[] }>(
-        `${API}/candidate/slots`,
+      const res = await axios.get<{ available_slots: SlotOption[]; available_dates: DateOption[] }>(
+        `${API}/candidate/slots?date=${date}`,
         { headers: { 'X-Auth-Token': token } }
       )
       setSlots(res.data.available_slots.filter(s => s.slot !== interviewSlot))
+      if (updateDates && res.data.available_dates) {
+        setRescheduleDates(res.data.available_dates)
+      }
     } catch {
       // silent
     } finally {
@@ -75,7 +93,9 @@ export default function WaitingRoom({ candidateName, interviewSlot, token, onSta
     setShowReschedule(true)
     setSelectedSlot('')
     setRescheduleError('')
-    fetchSlots()
+    const today = new Date().toISOString().split('T')[0]
+    setRescheduleDate(today)
+    fetchSlotsForDate(today, true)
   }
 
   async function handleReschedule() {
@@ -91,16 +111,17 @@ export default function WaitingRoom({ candidateName, interviewSlot, token, onSta
     }
   }
 
-  const canStart = secondsLeft <= 120
+  const canStart = secondsLeft <= 0
+  const rescheduleBlocked = secondsLeft <= 300
   const absSeconds = Math.abs(secondsLeft)
   const hours = Math.floor(absSeconds / 3600)
   const minutes = Math.floor((absSeconds % 3600) / 60)
   const seconds = absSeconds % 60
   const countdownText = secondsLeft <= 0
-    ? 'Interview time!'
+    ? '0:00'
     : hours > 0
     ? `${hours}h ${minutes}m`
-    : `${minutes}m ${String(seconds).padStart(2, '0')}s`
+    : `${minutes}:${String(seconds).padStart(2, '0')}`
 
   return (
     <>
@@ -134,22 +155,64 @@ export default function WaitingRoom({ candidateName, interviewSlot, token, onSta
               </div>
             </div>
           )}
-          {canStart && (
-            <button className="btn btn-primary" style={{ fontSize: '1rem', padding: '12px 32px' }} onClick={onStartInterview}>
-              Start Interview
-            </button>
-          )}
-          <button className="btn btn-secondary" style={{ fontSize: '0.875rem' }} onClick={handleOpenReschedule}>
-            Reschedule Interview
+          <button
+            className="btn btn-primary"
+            style={{ fontSize: '1rem', padding: '12px 32px', opacity: canStart ? 1 : 0.5, cursor: canStart ? 'pointer' : 'not-allowed' }}
+            onClick={canStart ? onStartInterview : undefined}
+            disabled={!canStart}
+          >
+            {canStart ? 'Start Interview →' : `Interview starts at ${formatTimeOnly(interviewSlot)}`}
           </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-secondary"
+              style={{ fontSize: '0.875rem', opacity: rescheduleBlocked ? 0.5 : 1, cursor: rescheduleBlocked ? 'not-allowed' : 'pointer' }}
+              onClick={rescheduleBlocked ? undefined : handleOpenReschedule}
+              disabled={rescheduleBlocked}
+              title={rescheduleBlocked ? 'Reschedule not available within 5 minutes of interview' : undefined}
+            >
+              Reschedule Interview
+            </button>
+            {rescheduleBlocked && (
+              <p className="muted" style={{ fontSize: '0.78rem', marginTop: 4 }}>Not available within 5 minutes of interview</p>
+            )}
+          </div>
         </div>
 
         {showReschedule && (
           <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <h3 style={{ margin: 0 }}>Pick a new time slot</h3>
+
+            {rescheduleDates.length > 0 && (
+              <div>
+                <p className="role-label" style={{ marginBottom: 8 }}>Select a date</p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {rescheduleDates.map(d => (
+                    <button
+                      key={d.date}
+                      onClick={() => { setRescheduleDate(d.date); setSelectedSlot(''); fetchSlotsForDate(d.date) }}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: 20,
+                        border: '1.5px solid',
+                        borderColor: rescheduleDate === d.date ? 'var(--primary)' : 'var(--border)',
+                        background: rescheduleDate === d.date ? 'var(--primary)' : 'transparent',
+                        color: rescheduleDate === d.date ? '#fff' : 'var(--text)',
+                        cursor: 'pointer',
+                        fontSize: '0.82rem',
+                        fontWeight: rescheduleDate === d.date ? 600 : 400,
+                      }}
+                    >
+                      {d.display}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {slotsLoading && <p className="muted">Loading slots...</p>}
             {!slotsLoading && slots.length === 0 && (
-              <p className="muted">No other slots available today.</p>
+              <p className="muted">No other slots available for this date.</p>
             )}
             {!slotsLoading && slots.length > 0 && (
               <div className="slot-grid">

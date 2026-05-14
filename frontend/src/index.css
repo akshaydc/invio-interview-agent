@@ -536,6 +536,11 @@ body {
 .badge--red {
   background: var(--red-bg);
   color: var(--red);
+}
+
+.badge--purple {
+  background: #EDE9FE;
+  color: #5B21B6;
   border: 1px solid rgba(163, 45, 45, 0.25);
 }
 
