@@ -3,7 +3,7 @@ import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
 import PageLayout from '../components/PageLayout'
 
-const NOTICE_OPTIONS = ['Immediate', '15 days', '30 days', '60 days', '90 days']
+const NOTICE_OPTIONS = ['Immediate', '15 days', '30 days', '60 days', '90 days', 'Flexible']
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const LINKEDIN_RE = /^https:\/\/(www\.)?linkedin\.com\/in\/.+/
 
@@ -45,6 +45,7 @@ function validate(
   currentRole: string,
   currentCtc: string,
   expectedCtc: string,
+  noticePeriod: string,
   resumeFile: File | null,
   resumePreloaded = false,
 ): FieldErrors {
@@ -59,6 +60,7 @@ function validate(
   if (!currentCtc.trim() || isNaN(ctcVal) || ctcVal <= 0) e.currentCtc = 'Enter a valid positive number.'
   const ectcVal = parseFloat(expectedCtc.replace(/[,\s]/g, ''))
   if (!expectedCtc.trim() || isNaN(ectcVal) || ectcVal <= 0) e.expectedCtc = 'Enter a valid positive number.'
+  if (!noticePeriod) e.noticePeriod = 'Please select your notice period.'
   if (!resumeFile && !resumePreloaded) e.resumeFile = 'Please upload your resume (PDF or TXT).'
   return e
 }
@@ -98,7 +100,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
   const [currentRole, setCurrentRole] = useState(prefill?.currentRole ?? '')
   const [currentCtc, setCurrentCtc] = useState('')
   const [expectedCtc, setExpectedCtc] = useState('')
-  const [noticePeriod, setNoticePeriod] = useState('30 days')
+  const [noticePeriod, setNoticePeriod] = useState('')
   const [resumeFile, setResumeFile] = useState<File | null>(prefill?.resumeFile ?? null)
   const [additionalComments, setAdditionalComments] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -128,7 +130,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
     return () => clearTimeout(timer)
   }, [ctNumber])
 
-  const errors = validate(name, email, phone, linkedinUrl, location, currentRole, currentCtc, expectedCtc, resumeFile, resumePreloaded)
+  const errors = validate(name, email, phone, linkedinUrl, location, currentRole, currentCtc, expectedCtc, noticePeriod, resumeFile, resumePreloaded)
   const isValid = Object.keys(errors).length === 0
   const warning = ctcWarning(currentCtc, expectedCtc)
 
@@ -141,7 +143,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
   }
 
   async function handleSubmit() {
-    const allTouched: Touched = { name: true, email: true, phone: true, location: true, currentRole: true, currentCtc: true, expectedCtc: true, resumeFile: true }
+    const allTouched: Touched = { name: true, email: true, phone: true, location: true, currentRole: true, currentCtc: true, expectedCtc: true, noticePeriod: true, resumeFile: true }
     setTouched(allTouched)
     if (!isValid) return
     if (!termsAccepted) return
@@ -373,12 +375,15 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
           <div className="role-select-group">
             <label className="role-label">Notice Period *</label>
             <select
-              className="role-select"
+              className={`role-select${err('noticePeriod') ? ' input--error' : ''}`}
               value={noticePeriod}
-              onChange={e => setNoticePeriod(e.target.value)}
+              onChange={e => { setNoticePeriod(e.target.value); touch('noticePeriod') }}
+              onBlur={() => touch('noticePeriod')}
             >
-              {NOTICE_OPTIONS.map(o => <option key={o}>{o}</option>)}
+              <option value="" disabled>Select notice period</option>
+              {NOTICE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
+            {err('noticePeriod') && <span className="field-error">{err('noticePeriod')}</span>}
           </div>
 
           <div className="role-select-group">

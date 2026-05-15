@@ -27,6 +27,13 @@ export type AuthInfo = {
   interviewSlot?: string
 }
 
+export type AppliedJob = {
+  job_id: string
+  job_title: string
+  ct_number: string
+  applied_at: string
+}
+
 type ApplicationPrefill = {
   jobId: string
   jobTitle: string
@@ -67,7 +74,7 @@ function App() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [resumeMatch, setResumeMatch] = useState<ResumeMatchResult | null>(null)
   const [applicationPrefill, setApplicationPrefill] = useState<ApplicationPrefill | null>(null)
-  const [appliedJobIds, setAppliedJobIds] = useState<string[]>([])
+  const [appliedJobs, setAppliedJobs] = useState<AppliedJob[]>([])
   const [returnedFromJobDetail, setReturnedFromJobDetail] = useState(false)
 
   function handleLogin(info: AuthInfo) {
@@ -160,13 +167,14 @@ function App() {
             setReturnedFromJobDetail(false)
             setPage('landing')
           }}
+          sessionAppliedJobs={appliedJobs}
         />
       )}
 
       {page === 'job-matches' && resumeMatch && (
         <JobMatches
           matchResult={resumeMatch}
-          appliedJobIds={appliedJobIds}
+          appliedJobIds={appliedJobs.map(j => j.job_id)}
           onApply={handleApplyFromMatch}
           onBrowseAll={() => {
             setReturnedFromJobDetail(false)
@@ -210,12 +218,20 @@ function App() {
             if (applicationPrefill) { setPage('job-matches') }
             else { setPage('job-detail') }
           }}
-          onApplied={() => {
+          onApplied={(ctNumber, jobTitle) => {
             const fromMatch = !!applicationPrefill?.matchData
-            const appliedId = applicationPrefill?.jobId
+            const appliedId = applicationPrefill?.jobId ?? selectedJob?.id ?? ''
+            const appliedTitle = jobTitle ?? applicationPrefill?.jobTitle ?? selectedJob?.title ?? ''
+            if (appliedId && ctNumber) {
+              setAppliedJobs(prev => [...prev, {
+                job_id: appliedId,
+                job_title: appliedTitle,
+                ct_number: ctNumber,
+                applied_at: new Date().toISOString(),
+              }])
+            }
             setApplicationPrefill(null)
             if (fromMatch && appliedId) {
-              setAppliedJobIds(prev => [...prev, appliedId])
               setPage('job-matches')
             } else {
               setResumeMatch(null)

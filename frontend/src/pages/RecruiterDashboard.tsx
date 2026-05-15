@@ -1245,9 +1245,9 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                     {c.call_status && (() => {
                                       const cs = c.call_status
                                       const steps = [
-                                        { label: 'Call Made', done: cs.call_made, ts: cs.call_made_at },
-                                        { label: 'Call Answered', done: cs.call_answered, ts: cs.call_answered_at },
-                                        { label: 'Call Complete', done: cs.call_complete, ts: cs.call_complete_at },
+                                        { label: 'Call Made', done: cs.call_made === true, ts: cs.call_made_at },
+                                        { label: 'Call Answered', done: cs.call_answered === true, ts: cs.call_answered_at },
+                                        { label: 'Call Complete', done: cs.call_complete === true && cs.call_answered === true, ts: cs.call_complete_at },
                                       ]
                                       return (
                                         <div style={{ marginTop: 16, border: '1px solid #e2e8f0', borderRadius: 10, padding: '16px 18px', background: '#fff' }}>

@@ -42,6 +42,12 @@ type Scorecard = {
   red_flags: string[]
   transcript: TranscriptEntry[]
   violations?: Violation[]
+  proctoring?: {
+    total_violations: number
+    clean: boolean
+    details: Violation[]
+    auto_ended?: boolean
+  }
   note?: string
   match_percentage?: number
   recommendation?: string
@@ -417,34 +423,45 @@ export default function ScorecardView({ token, ctNumber, onBack }: Props) {
 
           <div className="card">
             <h3>Proctoring Report</h3>
-            {scorecard.note ? (
-              <p className="muted" style={{ marginTop: 12, fontSize: '0.95rem' }}>
-                No proctoring data available.
-              </p>
-            ) : !scorecard.violations || scorecard.violations.length === 0 ? (
-              <p style={{ color: 'var(--green)', marginTop: 12, fontSize: '0.95rem' }}>
-                No violations detected — clean interview.
-              </p>
-            ) : (
-              <>
-                <p style={{ color: 'var(--red)', fontWeight: 600, marginTop: 12, marginBottom: 12 }}>
-                  {scorecard.violations.length} warning{scorecard.violations.length !== 1 ? 's' : ''} detected
-                </p>
-                <ul className="tag-list tag-list--red">
-                  {scorecard.violations.map((v, i) => (
-                    <li key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                      <span>
-                        <strong>{violationLabel(v.type)}</strong>
-                        {v.reason ? ` — ${v.reason}` : ''}
-                      </span>
-                      <span className="muted" style={{ fontSize: '0.8rem', fontFamily: 'monospace' }}>
-                        {new Date(v.timestamp).toLocaleTimeString()}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
+            {(() => {
+              const violations = scorecard.proctoring?.details ?? scorecard.violations ?? []
+              const totalViolations = scorecard.proctoring?.total_violations ?? violations.length
+              const wasAutoEnded = scorecard.proctoring?.auto_ended ?? false
+              if (totalViolations === 0 && !wasAutoEnded) {
+                return (
+                  <p style={{ color: 'var(--green)', marginTop: 12, fontSize: '0.95rem' }}>
+                    No violations detected — clean interview.
+                  </p>
+                )
+              }
+              return (
+                <>
+                  <p style={{ color: 'var(--red)', fontWeight: 600, marginTop: 12, marginBottom: 12 }}>
+                    {totalViolations} violation{totalViolations !== 1 ? 's' : ''} detected
+                  </p>
+                  {wasAutoEnded && (
+                    <div style={{ background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 7, padding: '10px 14px', marginBottom: 12, fontSize: '0.875rem', color: '#92400E' }}>
+                      Interview was automatically ended due to repeated proctoring violations.
+                    </div>
+                  )}
+                  {violations.length > 0 && (
+                    <ul className="tag-list tag-list--red">
+                      {violations.map((v, i) => (
+                        <li key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                          <span>
+                            <strong>{violationLabel(v.type)}</strong>
+                            {v.reason ? ` — ${v.reason}` : ''}
+                          </span>
+                          <span className="muted" style={{ fontSize: '0.8rem', fontFamily: 'monospace' }}>
+                            {new Date(v.timestamp).toLocaleTimeString()}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )
+            })()}
           </div>
         </>
       )}
