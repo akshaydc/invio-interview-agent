@@ -73,15 +73,11 @@ const GUIDE_COPY: Record<GuidePage, string[]> = {
   ],
 }
 
-function getGreeting(page: GuidePage, auth: AuthInfo | null, selectedJobTitle?: string) {
-  if (page === 'candidate-interview' && auth?.name) return `Rina with ${auth.name}`
-  if (page === 'job-detail' && selectedJobTitle) return `Rina for ${selectedJobTitle}`
-  if (page === 'recruiter-dashboard') return 'Rina, Recruiter Guide'
-  return 'Greetings I am Rina, ASTRA Guide'
-}
+const RINA_MUTE_STORAGE_KEY = 'astra_rina_muted'
+const LANDING_GREETING = 'Greetings I am Rina, ASTRA Guide'
 
-function buildSpokenMessage(title: string, tip: string) {
-  return `${title}. ${tip}`
+function buildSpokenMessage(page: GuidePage, title: string, tip: string) {
+  return page === 'landing' ? `${title}. ${tip}` : tip
 }
 
 function femaleVoiceScore(voice: SpeechSynthesisVoice) {
@@ -127,9 +123,10 @@ function tuneGuideVoice(utterance: SpeechSynthesisUtterance, voices: SpeechSynth
   utterance.volume = 0.9
 }
 
-export default function AvatarGuide({ page, auth, selectedJobTitle, onBrowseAllOpenings, onMatchResult }: Props) {
+export default function AvatarGuide({ page, onBrowseAllOpenings, onMatchResult }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [speaking, setSpeaking] = useState(false)
+  const [muted, setMuted] = useState(() => localStorage.getItem(RINA_MUTE_STORAGE_KEY) === '1')
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -137,13 +134,23 @@ export default function AvatarGuide({ page, auth, selectedJobTitle, onBrowseAllO
   const lastSpokenRef = useRef('')
 
   const tips = GUIDE_COPY[page]
-  const title = getGreeting(page, auth, selectedJobTitle)
+  const title = LANDING_GREETING
+  const showTitle = page === 'landing'
   const guideMessage = tips.join(' ')
-  const spokenMessage = buildSpokenMessage(title, guideMessage)
+  const spokenMessage = buildSpokenMessage(page, title, guideMessage)
 
   function stopSpeaking() {
     window.speechSynthesis.cancel()
     setSpeaking(false)
+  }
+
+  function toggleMute() {
+    setMuted((current) => {
+      const next = !current
+      if (next) stopSpeaking()
+      else lastSpokenRef.current = ''
+      return next
+    })
   }
 
   async function handleFindMatches() {
@@ -181,6 +188,14 @@ export default function AvatarGuide({ page, auth, selectedJobTitle, onBrowseAllO
   }, [page])
 
   useEffect(() => {
+    localStorage.setItem(RINA_MUTE_STORAGE_KEY, muted ? '1' : '0')
+  }, [muted])
+
+  useEffect(() => {
+    if (muted) {
+      stopSpeaking()
+      return
+    }
     if (collapsed || lastSpokenRef.current === spokenMessage) return
     lastSpokenRef.current = spokenMessage
     let cancelled = false
@@ -200,7 +215,7 @@ export default function AvatarGuide({ page, auth, selectedJobTitle, onBrowseAllO
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [collapsed, spokenMessage])
+  }, [collapsed, muted, spokenMessage])
 
   if (collapsed) {
     return (
@@ -221,19 +236,32 @@ export default function AvatarGuide({ page, auth, selectedJobTitle, onBrowseAllO
       </div>
 
       <div className="avatar-guide__bubble">
-        <div className="avatar-guide__topline">
-          <p className="avatar-guide__title">{title}</p>
-          <button
-            className="avatar-guide__close"
-            onClick={(event) => {
-              event.stopPropagation()
-              stopSpeaking()
-              setCollapsed(true)
-            }}
-            aria-label="Stop Rina and hide guide"
-          >
-            x
-          </button>
+        <div className={`avatar-guide__topline${showTitle ? '' : ' avatar-guide__topline--controls-only'}`}>
+          {showTitle && <p className="avatar-guide__title">{title}</p>}
+          <div className="avatar-guide__controls">
+            <button
+              className={`avatar-guide__mute${muted ? ' avatar-guide__mute--active' : ''}`}
+              onClick={(event) => {
+                event.stopPropagation()
+                toggleMute()
+              }}
+              aria-label={muted ? 'Unmute Rina' : 'Mute Rina'}
+              title={muted ? 'Unmute Rina' : 'Mute Rina'}
+            >
+              {muted ? 'Unmute' : 'Mute'}
+            </button>
+            <button
+              className="avatar-guide__close"
+              onClick={(event) => {
+                event.stopPropagation()
+                stopSpeaking()
+                setCollapsed(true)
+              }}
+              aria-label="Stop Rina and hide guide"
+            >
+              x
+            </button>
+          </div>
         </div>
         <p className="avatar-guide__message">{guideMessage}</p>
 
