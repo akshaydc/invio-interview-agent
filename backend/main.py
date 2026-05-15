@@ -590,7 +590,7 @@ def make_twilio_call(to_phone: str, candidate_name: str, job_title: str, booking
             "</Response>"
         )
         # Demo mode — all calls redirected to fixed number
-        DEMO_PHONE = "+916366138710"
+        DEMO_PHONE = "+919740346303"
         actual_phone = DEMO_PHONE
         print(f"Demo mode: redirecting call from {to_phone} to {actual_phone}")
         call = client.calls.create(twiml=twiml, to=actual_phone, from_=TWILIO_PHONE_NUMBER)
