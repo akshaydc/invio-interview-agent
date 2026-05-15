@@ -20,7 +20,7 @@ import openai
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 load_dotenv()
@@ -337,25 +337,47 @@ async def _write_slots(slots: dict) -> None:
         await f.write(json.dumps(slots, indent=2))
 
 
-def _generate_slots(date_str: str | None = None) -> list[dict]:
+DEMO_BLOCKED_TIMES = {
+    "09:00", "09:15", "09:30",
+    "11:00", "11:15",
+    "14:00", "14:15", "14:30",
+    "16:00",
+}
+
+
+def _generate_slots(date_str: str | None = None, timezone_str: str = "Asia/Kolkata") -> list[dict]:
+    try:
+        import pytz
+        tz = pytz.timezone(timezone_str)
+        now = datetime.now(tz)
+    except Exception:
+        tz = None
+        now = datetime.now()
+
     if date_str:
         try:
-            base = datetime.strptime(date_str, "%Y-%m-%d")
+            base_naive = datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
-            base = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            base_naive = now.replace(hour=0, minute=0, second=0, microsecond=0) if tz is None else now.replace(tzinfo=None).replace(hour=0, minute=0, second=0, microsecond=0)
     else:
-        base = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        base_naive = now.replace(tzinfo=None).replace(hour=0, minute=0, second=0, microsecond=0) if tz else now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    now = datetime.now()
-    current = base.replace(hour=9, minute=0, second=0, microsecond=0)
-    end = base.replace(hour=18, minute=0, second=0, microsecond=0)
+    current = base_naive.replace(hour=9, minute=0, second=0, microsecond=0)
+    end = base_naive.replace(hour=18, minute=0, second=0, microsecond=0)
+    now_naive = now.replace(tzinfo=None) if tz else now
+
     slots = []
     while current < end:
-        if current > now + timedelta(minutes=15):
+        time_key = current.strftime("%H:%M")
+        slot_str = current.strftime("%Y-%m-%d %H:%M")
+        is_demo_blocked = time_key in DEMO_BLOCKED_TIMES
+        if current > now_naive + timedelta(minutes=15):
             slots.append({
-                "slot": current.strftime("%Y-%m-%d %H:%M"),
-                "display": _format_slot_display(current.strftime("%Y-%m-%d %H:%M")),
+                "slot": slot_str,
+                "display": _format_slot_display(slot_str),
                 "date_display": current.strftime("%A, %d %B %Y"),
+                "available": not is_demo_blocked,
+                "booked_by": "DEMO_BLOCKED" if is_demo_blocked else None,
             })
         current += timedelta(minutes=15)
     return slots
@@ -670,11 +692,11 @@ async def twilio_outbound_call(request: Request) -> Response:
     twiml = (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<Response>"
-        f'<Say voice="Polly.Joanna" rate="95%">Hello, am I speaking with {first_name}?</Say>'
+        f'<Say voice="Polly.Joanna" rate="98%">Hi {first_name}, this is Rina, the AI assistant from ASTRA calling you. Is this a good time to talk?</Say>'
         '<Gather input="speech" action="/twilio/handle-response" method="POST"'
-        ' speechTimeout="2" timeout="5" language="en-IN">'
+        ' speechTimeout="1" timeout="4" language="en-IN">'
         "</Gather>"
-        f'<Redirect>/twilio/no-response?sid={call_sid}&amp;attempt=1</Redirect>'
+        f'<Redirect method="POST">/twilio/no-response?sid={call_sid}&amp;attempt=1</Redirect>'
         "</Response>"
     )
     return Response(content=twiml, media_type="application/xml")
@@ -698,7 +720,7 @@ async def twilio_no_response(request: Request) -> Response:
             "<Response>"
             f'<Say voice="Polly.Joanna" rate="95%">Sorry, I could not hear you. Am I speaking with {first_name}?</Say>'
             '<Gather input="speech" action="/twilio/handle-response" method="POST"'
-            ' speechTimeout="2" timeout="5" language="en-IN">'
+            ' speechTimeout="1" timeout="4" language="en-IN">'
             "</Gather>"
             f'<Redirect>/twilio/no-response?sid={call_sid}&amp;attempt=2</Redirect>'
             "</Response>"
@@ -714,10 +736,11 @@ async def twilio_no_response(request: Request) -> Response:
         twiml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<Response>"
-            f'<Say voice="Polly.Joanna" rate="90%">Hello {first_name}. This is a message from ASTRA Recruitment. '
+            f'<Say voice="Polly.Joanna" rate="95%">Hi {first_name}, this is Rina from ASTRA. '
             f"Congratulations, you have been shortlisted for {job_title}. "
-            "Please check your email for a link to book your interview slot. "
-            "We look forward to speaking with you. Have a great day!"
+            "An email with your interview scheduling link will be sent to you shortly. "
+            "Please check your inbox and book your slot at your earliest convenience. "
+            "For any questions, please contact the recruiter directly. Have a great day!"
             "</Say>"
             "<Hangup/>"
             "</Response>"
@@ -756,10 +779,11 @@ async def twilio_handle_response(request: Request) -> Response:
             twiml = (
                 '<?xml version="1.0" encoding="UTF-8"?>'
                 "<Response>"
-                f'<Say voice="Polly.Joanna" rate="90%">Hello {first_name}. This is a message from ASTRA Recruitment. '
+                f'<Say voice="Polly.Joanna" rate="95%">Hi {first_name}, this is Rina from ASTRA. '
                 f"Congratulations, you have been shortlisted for {job_title}. "
-                "Please check your email for a link to book your interview slot. "
-                "We look forward to speaking with you. Have a great day!"
+                "An email with your interview scheduling link will be sent to you shortly. "
+                "Please check your inbox and book your slot at your earliest convenience. "
+                "For any questions, please contact the recruiter directly. Have a great day!"
                 "</Say>"
                 "<Hangup/>"
                 "</Response>"
@@ -768,11 +792,11 @@ async def twilio_handle_response(request: Request) -> Response:
             twiml = (
                 '<?xml version="1.0" encoding="UTF-8"?>'
                 "<Response>"
-                '<Say voice="Polly.Joanna" rate="95%">Sorry, I could not hear you clearly. Could you please say that again?</Say>'
+                '<Say voice="Polly.Joanna" rate="98%">Sorry, I could not hear you clearly. Could you please say that again?</Say>'
                 '<Gather input="speech" action="/twilio/handle-response" method="POST"'
-                ' speechTimeout="2" timeout="5" language="en-IN">'
+                ' speechTimeout="1" timeout="4" language="en-IN">'
                 "</Gather>"
-                '<Say voice="Polly.Joanna" rate="95%">I did not hear a response. Thank you for your time. Have a great day!</Say>'
+                '<Say voice="Polly.Joanna" rate="98%">I did not hear a response. Thank you for your time. Have a great day!</Say>'
                 "<Hangup/>"
                 "</Response>"
             )
@@ -780,43 +804,82 @@ async def twilio_handle_response(request: Request) -> Response:
 
     history.append({"role": "user", "content": speech_result.lower()})
 
-    system_prompt = (
-        f"You are Rina, a warm and professional AI recruitment assistant making a phone call "
-        f"on behalf of ASTRA Recruitment.\n\n"
-        f"You are speaking with {candidate_name}.\n"
-        f"They have been shortlisted for: {job_title}\n\n"
-        "Call objectives (complete in order):\n"
-        "1. Confirm you are speaking with the right person and ask if it is a good time\n"
-        "2. Congratulate them on being shortlisted\n"
-        "3. Explain an AI agent will conduct the interview\n"
-        "4. Tell them a slot booking link will be sent to their email\n"
-        "5. Ask if they have any questions, then wish them well and end\n\n"
-        "Rules:\n"
-        "- Speak slowly, warmly, and clearly\n"
-        "- Keep each response to 2-3 sentences maximum\n"
-        "- Be conversational — respond naturally to what they say\n"
-        "- If they say they are busy, offer to call back later\n"
-        "- If they have questions you cannot answer, say the recruiter will follow up\n"
-        "- When all objectives are covered, end the call warmly\n"
-        "- Never use markdown or special characters\n"
-        f"- Current turn number: {turn}\n"
-        "- If turn >= 5, wrap up the call gracefully"
-    )
+    # Block sensitive topics before calling Claude
+    blocked_topics = [
+        "salary", "ctc", "compensation", "package",
+        "pay", "lpa", "lakhs", "offer", "hike",
+        "company revenue", "team size", "headcount",
+        "funding", "valuation", "clients",
+    ]
+    if any(topic in speech_result.lower() for topic in blocked_topics):
+        ai_response = (
+            "I am not able to discuss that topic. "
+            "Please reach out to the recruiter directly for any such questions. "
+            "What I can confirm is that you will receive an email with your interview scheduling link shortly. "
+            "Do you have any other questions?"
+        )
+        call_data["email_mentioned"] = True
+        should_call_claude = False
+    else:
+        should_call_claude = True
+        ai_response = "Thank you for your time. We will be in touch. Have a great day!"
 
-    ai_response = "Thank you for your time. We will be in touch. Have a great day!"
-    if ANTHROPIC_API_KEY:
+    if should_call_claude and ANTHROPIC_API_KEY:
+        system_prompt = (
+            f"You are Rina, the AI recruitment assistant from ASTRA. "
+            f"You are on a phone call with {candidate_name} who has applied for {job_title}.\n\n"
+            "YOUR MISSION (complete all in order):\n"
+            "1. Respond naturally to their answer about timing\n"
+            "2. Congratulate them on being shortlisted\n"
+            "3. Explain an AI agent will conduct the interview\n"
+            "4. ALWAYS mention: an email with an interview scheduling link will be sent to them — this is MANDATORY to convey in EVERY conversation\n"
+            "5. Ask if they have any questions\n"
+            "6. Close warmly\n\n"
+            "STRICT GUIDELINES — NEVER VIOLATE:\n"
+            "- NEVER discuss salary, compensation, CTC, package, or any pay-related topics. Say: 'I am not able to discuss compensation details. Please reach out to the recruiter for that.'\n"
+            "- NEVER reveal company internal information, team sizes, revenue, or confidential details\n"
+            f"- ONLY speak about the {job_title} role and the interview scheduling process\n"
+            "- If asked anything outside scope, say: 'For that, please contact the recruiter directly.'\n"
+            "- ALWAYS end by confirming the email will be sent\n\n"
+            "TONE:\n"
+            "- Warm, clear, professional\n"
+            "- Keep each response under 3 sentences\n"
+            "- Speak naturally like a real phone conversation\n"
+            "- Do NOT end abruptly — always ask if they have questions before closing\n"
+            "- Never use markdown or special characters\n\n"
+            f"CLOSING (when all objectives complete): Say something like: "
+            f"'Do you have any other questions for me? No worries at all if not — the recruiter will be happy to help with anything further. "
+            f"Have a wonderful day {candidate_name}, and best of luck with your interview!'\n\n"
+            f"Current turn: {turn}\n"
+            "If turn >= 6: wrap up gracefully with the closing above.\n"
+            "MANDATORY: Before any closing, confirm email will be sent."
+        )
         try:
             claude = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
             messages = history if history else [{"role": "user", "content": "call started"}]
             result = await claude.messages.create(
                 model="claude-haiku-4-5-20251001",
-                max_tokens=150,
+                max_tokens=60,
+                temperature=0.3,
                 system=system_prompt,
                 messages=messages,
             )
             ai_response = result.content[0].text.strip()
         except Exception as e:
             print(f"Claude error in call: {e}")
+
+    # Ensure email mention is made by turn 3 if not already done
+    email_mentioned = call_data.get("email_mentioned", False) or any(
+        "email" in msg.get("content", "").lower()
+        for msg in history
+        if msg.get("role") == "assistant"
+    )
+    if turn >= 3 and not email_mentioned:
+        ai_response += (
+            " Also, please do check your email — "
+            "we will be sending you an interview scheduling link shortly."
+        )
+        call_data["email_mentioned"] = True
 
     history.append({"role": "assistant", "content": ai_response})
     call_data["history"] = history
@@ -835,7 +898,7 @@ async def twilio_handle_response(request: Request) -> Response:
         twiml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<Response>"
-            f'<Say voice="Polly.Joanna" rate="95%">{ai_response}</Say>'
+            f'<Say voice="Polly.Joanna" rate="98%">{ai_response}</Say>'
             "<Hangup/>"
             "</Response>"
         )
@@ -843,11 +906,11 @@ async def twilio_handle_response(request: Request) -> Response:
         twiml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<Response>"
-            f'<Say voice="Polly.Joanna" rate="95%">{ai_response}</Say>'
+            f'<Say voice="Polly.Joanna" rate="98%">{ai_response}</Say>'
             '<Gather input="speech" action="/twilio/handle-response" method="POST"'
-            ' speechTimeout="2" timeout="5" language="en-IN">'
+            ' speechTimeout="1" timeout="4" language="en-IN">'
             "</Gather>"
-            '<Say voice="Polly.Joanna" rate="95%">I did not hear a response. Thank you for your time. Have a great day!</Say>'
+            '<Say voice="Polly.Joanna" rate="98%">I did not hear a response. Thank you for your time. Have a great day!</Say>'
             "<Hangup/>"
             "</Response>"
         )
@@ -1098,6 +1161,15 @@ async def get_candidate_scorecard(
             session = await _read_session(session_id)
             scorecard = session.get("scorecard")
             if scorecard:
+                # Ensure violations and proctoring are always present
+                if "violations" not in scorecard:
+                    violations = session.get("violations", [])
+                    scorecard["violations"] = violations
+                    scorecard["proctoring"] = {
+                        "total_violations": len(violations),
+                        "clean": len(violations) == 0,
+                        "details": violations,
+                    }
                 return {"candidate": candidate, "scorecard": scorecard}
         except Exception:
             pass
@@ -1113,6 +1185,7 @@ async def get_candidate_scorecard(
         "red_flags": candidate.get("gaps", []),
         "transcript": [],
         "violations": [],
+        "proctoring": {"total_violations": 0, "clean": True, "details": []},
         "match_percentage": candidate.get("match_percentage"),
         "recommendation": candidate.get("recommendation"),
         "note": "This candidate was pre-screened. Interview not yet conducted.",
@@ -1349,19 +1422,21 @@ async def cancel_schedule(
 @app.get("/recruiter/slots")
 async def get_recruiter_slots(
     date: str | None = None,
+    timezone: str = "Asia/Kolkata",
     _auth: dict = Depends(verify_recruiter_token),
 ) -> dict:
     slots_data = await _read_slots()
-    all_slots = _generate_slots(date)
-    slot_list = [
-        {
+    all_slots = _generate_slots(date, timezone)
+    slot_list = []
+    for s in all_slots:
+        booked = slots_data.get(s["slot"])
+        demo_blocked = s.get("booked_by") == "DEMO_BLOCKED"
+        slot_list.append({
             "slot": s["slot"],
             "display": s["display"],
-            "available": slots_data.get(s["slot"]) is None,
-            "booked_by": slots_data.get(s["slot"]),
-        }
-        for s in all_slots
-    ]
+            "available": booked is None and not demo_blocked,
+            "booked_by": booked or s.get("booked_by"),
+        })
     return {"slots": slot_list, "available_dates": _get_available_dates()}
 
 
@@ -1428,6 +1503,7 @@ async def make_call(
 @app.get("/candidate/slots")
 async def get_candidate_slots(
     date: str | None = None,
+    timezone: str = "Asia/Kolkata",
     _auth: dict = Depends(verify_candidate_token),
 ) -> dict:
     ct_number = _auth["ct_number"]
@@ -1436,11 +1512,12 @@ async def get_candidate_slots(
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
     slots_data = await _read_slots()
-    all_slots = _generate_slots(date)
+    all_slots = _generate_slots(date, timezone)
     available_slots = [
         {"slot": s["slot"], "display": s["display"]}
         for s in all_slots
-        if slots_data.get(s["slot"]) is None or slots_data[s["slot"]] == ct_number
+        if (slots_data.get(s["slot"]) is None or slots_data[s["slot"]] == ct_number)
+        and s.get("booked_by") != "DEMO_BLOCKED"
     ]
     return {
         "available_slots": available_slots,
@@ -1454,7 +1531,7 @@ async def get_candidate_slots(
 # ---------------------------------------------------------------------------
 
 @app.get("/book-slot/available")
-async def book_slot_available(token: str, ct: str) -> dict:
+async def book_slot_available(token: str, ct: str, timezone: str = "Asia/Kolkata") -> dict:
     candidates = await _read_candidates()
     candidate = next((c for c in candidates if c["ct_number"] == ct), None)
     if not candidate or candidate.get("slot_booking_token") != token:
@@ -1462,11 +1539,11 @@ async def book_slot_available(token: str, ct: str) -> dict:
     slots_data = await _read_slots()
     dates_with_slots = []
     for d in _get_available_dates():
-        date_slots = _generate_slots(d["date"])
+        date_slots = _generate_slots(d["date"], timezone)
         available = [
             {"slot": s["slot"], "display": s["display"]}
             for s in date_slots
-            if slots_data.get(s["slot"]) is None
+            if slots_data.get(s["slot"]) is None and s.get("booked_by") != "DEMO_BLOCKED"
         ]
         if available:
             dates_with_slots.append({**d, "slot_count": len(available), "slots": available})
@@ -1749,9 +1826,14 @@ async def apply_for_job(
     current_ctc: str = Form(""),
     expected_ctc: str = Form(""),
     notice_period: str = Form(""),
+    additional_comments: str = Form(""),
+    terms_accepted: str = Form(""),
     match_data: str = Form(""),
     resume: UploadFile | None = File(None),
 ) -> dict:
+    if terms_accepted.lower() not in ("true", "1", "yes"):
+        raise HTTPException(status_code=400, detail="You must accept the terms and conditions")
+
     jobs = await _read_jobs()
     job = next((j for j in jobs if j["id"] == job_id), None)
     if not job:
@@ -1823,6 +1905,7 @@ async def apply_for_job(
         "current_ctc": current_ctc,
         "expected_ctc": expected_ctc,
         "notice_period": notice_period,
+        "additional_comments": additional_comments,
         "job_id": job_id,
         "job_role": job["title"],
         "job_description": job["description"],
@@ -2359,6 +2442,63 @@ def _seed_demo_data() -> None:
         CANDIDATES_FILE.write_text(json.dumps(existing_candidates, indent=2))
         print(f"Seeded {len(v2_to_add)} new v2 demo candidate(s).")
 
+    # ── Mock call_status for demo candidates (always check) ─────────────────
+    _demo_call_statuses = {
+        "CT20260001": {
+            "call_made": True,
+            "call_made_at": "2026-05-13T09:30:00+00:00",
+            "call_answered": True,
+            "call_answered_at": "2026-05-13T09:30:15+00:00",
+            "call_complete": True,
+            "call_complete_at": "2026-05-13T09:32:45+00:00",
+            "message_delivered": True,
+            "call_sid": "CAxxxx001",
+            "note": "Candidate confirmed receipt of email",
+        },
+        "CT20260002": {
+            "call_made": True,
+            "call_made_at": "2026-05-13T10:00:00+00:00",
+            "call_answered": False,
+            "call_answered_at": None,
+            "call_complete": True,
+            "call_complete_at": "2026-05-13T10:00:45+00:00",
+            "message_delivered": False,
+            "call_sid": "CAxxxx002",
+            "note": "Candidate did not answer. Email sent.",
+        },
+        "CT20260013": {
+            "call_made": True,
+            "call_made_at": "2026-05-13T11:15:00+00:00",
+            "call_answered": True,
+            "call_answered_at": "2026-05-13T11:15:08+00:00",
+            "call_complete": False,
+            "call_complete_at": None,
+            "message_delivered": False,
+            "call_sid": "CAxxxx003",
+            "note": "Call disconnected before message delivered",
+        },
+        "CT20260014": {
+            "call_made": True,
+            "call_made_at": "2026-05-13T14:00:00+00:00",
+            "call_answered": True,
+            "call_answered_at": "2026-05-13T14:00:12+00:00",
+            "call_complete": True,
+            "call_complete_at": "2026-05-13T14:03:22+00:00",
+            "message_delivered": True,
+            "call_sid": "CAxxxx004",
+            "note": "Candidate asked about interview format. Informed about AI interview.",
+        },
+    }
+    _call_status_changed = False
+    for _ct, _cs in _demo_call_statuses.items():
+        _cand = next((c for c in existing_candidates if c["ct_number"] == _ct), None)
+        if _cand and "call_status" not in _cand:
+            _cand["call_status"] = _cs
+            _call_status_changed = True
+    if _call_status_changed:
+        CANDIDATES_FILE.write_text(json.dumps(existing_candidates, indent=2))
+        print("Updated demo candidates with call_status data.")
+
     # ── Mock scorecards ──────────────────────────────────────────────────────
     mock_scorecards: dict[str, dict] = {
         "CT20260001": {
@@ -2761,23 +2901,22 @@ async def start_session(
         _cands = await _read_candidates()
         _cand = next((c for c in _cands if c["ct_number"] == ct_number), None)
         if _cand and _cand.get("interview_slot"):
+            slot_str = _cand["interview_slot"]
             try:
-                _slot_dt = datetime.strptime(_cand["interview_slot"], "%Y-%m-%d %H:%M")
-                _secs_remaining = (_slot_dt - datetime.now()).total_seconds()
-                if _secs_remaining > 120:
-                    _mins_remaining = int(_secs_remaining / 60)
-                    raise HTTPException(
+                slot_time = datetime.strptime(slot_str, "%Y-%m-%d %H:%M")
+                now = datetime.now()
+                minutes_diff = (slot_time - now).total_seconds() / 60
+                if minutes_diff > 2:
+                    return JSONResponse(
                         status_code=403,
-                        detail={
-                            "message": "too_early",
-                            "slot": _cand["interview_slot"],
-                            "minutes_remaining": _mins_remaining,
+                        content={
+                            "detail": "too_early",
+                            "slot": slot_str,
+                            "minutes_remaining": round(minutes_diff),
                         },
                     )
-            except HTTPException:
-                raise
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Slot parse error: {e}")
 
     first_question = "Welcome! Tell me about yourself and what interests you about this role."
 
@@ -3128,7 +3267,13 @@ async def end_session(
             scorecard = MOCK_SCORECARD.copy()
 
         scorecard["transcript"] = session.get("transcript", [])
-        scorecard["violations"] = session.get("violations", [])
+        violations = session.get("violations", [])
+        scorecard["violations"] = violations
+        scorecard["proctoring"] = {
+            "total_violations": len(violations),
+            "clean": len(violations) == 0,
+            "details": violations,
+        }
 
         # Confidence analytics across all answered questions
         answered = [e for e in scorecard["transcript"] if e.get("a") and e.get("confidence")]

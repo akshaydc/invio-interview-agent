@@ -4,15 +4,13 @@ import { API_BASE_URL as API } from '../config'
 import Navbar from '../components/Navbar'
 import PipelineWidget, { type Analytics } from '../components/PipelineWidget'
 
-const JOB_ROLES = [
-  'Software Engineer',
-  'Frontend Developer',
-  'Backend Developer',
-  'Full Stack Developer',
-  'Salesforce Administrator',
-  'Product Manager',
-  'Salesforce Developer',
-  'QA Engineer',
+const TIMEZONE_OPTIONS = [
+  { value: 'Asia/Kolkata', label: 'Asia/Kolkata (IST)', sub: 'UTC+5:30' },
+  { value: 'Asia/Dubai', label: 'Asia/Dubai (GST)', sub: 'UTC+4:00' },
+  { value: 'Europe/London', label: 'Europe/London (GMT)', sub: 'UTC+0:00' },
+  { value: 'America/New_York', label: 'America/New_York (EST)', sub: 'UTC-5:00' },
+  { value: 'America/Los_Angeles', label: 'America/Los_Angeles (PST)', sub: 'UTC-8:00' },
+  { value: 'Asia/Singapore', label: 'Asia/Singapore (SGT)', sub: 'UTC+8:00' },
 ]
 
 type CandidateStatus = 'not_started' | 'applied' | 'shortlisted' | 'interview_scheduled' | 'interview_complete' | 'rejected'
@@ -138,11 +136,20 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [candidateFormError, setCandidateFormError] = useState('')
   const [candidateFormLoading, setCandidateFormLoading] = useState(false)
   const [actionCt, setActionCt] = useState<string | null>(null)
-  const [name, setName] = useState('')
-  const [ctNumber, setCtNumber] = useState('')
-  const [jobRole, setJobRole] = useState('Software Engineer')
-  const [customRole, setCustomRole] = useState('')
-  const [jobDescription, setJobDescription] = useState('')
+  const [acFullName, setAcFullName] = useState('')
+  const [acEmail, setAcEmail] = useState('')
+  const [acLinkedin, setAcLinkedin] = useState('')
+  const [acPhone, setAcPhone] = useState('')
+  const [acLocation, setAcLocation] = useState('')
+  const [acCurrentRole, setAcCurrentRole] = useState('')
+  const [acCurrentCtc, setAcCurrentCtc] = useState('')
+  const [acExpectedCtc, setAcExpectedCtc] = useState('')
+  const [acNoticePeriod, setAcNoticePeriod] = useState('Immediate')
+  const [acResume, setAcResume] = useState<File | null>(null)
+  const [acAdditionalComments, setAcAdditionalComments] = useState('')
+  const [acJobId, setAcJobId] = useState('')
+  const acResumeRef = useRef<HTMLInputElement>(null)
+  const [openJobs, setOpenJobs] = useState<Job[]>([])
 
   const [jobs, setJobs] = useState<Job[]>([])
   const [jobsLoading, setJobsLoading] = useState(true)
@@ -193,6 +200,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [bookSlotError, setBookSlotError] = useState('')
   const [availableDates, setAvailableDates] = useState<{ date: string; display: string }[]>([])
   const [scheduleDateSelected, setScheduleDateSelected] = useState('')
+  const [scheduleTimezone, setScheduleTimezone] = useState('Asia/Kolkata')
   const [shortlistingCt, setShortlistingCt] = useState<string | null>(null)
 
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
@@ -211,6 +219,18 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [shortlistConfirm, setShortlistConfirm] = useState<ShortlistConfirm | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const schedulePopularSlots = useMemo(() => {
+    const popular = new Set<string>()
+    let count = 0
+    for (const s of slots) {
+      if (s.available && count < 3) {
+        popular.add(s.slot)
+        count++
+      }
+    }
+    return popular
+  }, [slots])
 
   const filteredCandidates = useMemo(() => {
     let result = [...candidates].sort((a, b) => {
@@ -292,6 +312,9 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   useEffect(() => { fetchCandidates(); fetchAnalytics() }, [])
   useEffect(() => { if (tab === 'jobs') fetchJobs() }, [tab])
+  useEffect(() => {
+    axios.get<Job[]>(`${API}/jobs`).then(res => setOpenJobs(res.data.filter(j => j.status === 'open'))).catch(() => {})
+  }, [])
 
   function toggleExpand(ct: string) {
     setExpandedCt(prev => prev === ct ? null : ct)
@@ -304,9 +327,10 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     setSelectedSlot('')
     setBookSlotError('')
     setAvailableDates([])
+    setScheduleTimezone('Asia/Kolkata')
     const today = new Date().toISOString().split('T')[0]
     setScheduleDateSelected(today)
-    fetchSlots(today)
+    fetchSlots(today, 'Asia/Kolkata')
   }
 
   function closeScheduleModal() {
@@ -314,10 +338,12 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     setScheduleModalCt('')
   }
 
-  async function fetchSlots(date?: string) {
+  async function fetchSlots(date?: string, tz?: string) {
     setSlotsLoading(true)
+    const timezone = tz ?? scheduleTimezone
     try {
-      const url = date ? `${API}/recruiter/slots?date=${date}` : `${API}/recruiter/slots`
+      let url = `${API}/recruiter/slots?timezone=${encodeURIComponent(timezone)}`
+      if (date) url += `&date=${date}`
       const res = await axios.get<{ slots: SlotInfo[]; available_dates: { date: string; display: string }[] }>(url, { headers })
       setSlots(res.data.slots ?? [])
       if (res.data.available_dates?.length) setAvailableDates(res.data.available_dates)
@@ -401,28 +427,43 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   async function handleCreateCandidate() {
     setCandidateFormError('')
-    if (!name.trim() || !ctNumber.trim()) {
-      setCandidateFormError('Name and CT Number are required.')
+    if (!acFullName.trim() || !acEmail.trim() || !acPhone.trim() || !acLocation.trim() || !acCurrentRole.trim() || !acCurrentCtc.trim() || !acExpectedCtc.trim()) {
+      setCandidateFormError('Please fill in all required fields.')
+      return
+    }
+    if (!acJobId) {
+      setCandidateFormError('Please select a job role.')
+      return
+    }
+    if (!acResume) {
+      setCandidateFormError('Please upload a resume.')
       return
     }
     setCandidateFormLoading(true)
     try {
-      await axios.post(
-        `${API}/recruiter/candidates`,
-        {
-          name: name.trim(),
-          ct_number: ctNumber.trim().toUpperCase(),
-          job_role: customRole.trim() || jobRole,
-          job_description: jobDescription,
-        },
-        { headers }
-      )
-      setName(''); setCtNumber(''); setJobRole('Software Engineer')
-      setCustomRole(''); setJobDescription('')
+      const fd = new FormData()
+      fd.append('name', acFullName.trim())
+      fd.append('email', acEmail.trim())
+      fd.append('linkedin_url', acLinkedin.trim())
+      fd.append('phone', acPhone.trim())
+      fd.append('location', acLocation.trim())
+      fd.append('current_role', acCurrentRole.trim())
+      fd.append('current_ctc', acCurrentCtc.trim())
+      fd.append('expected_ctc', acExpectedCtc.trim())
+      fd.append('notice_period', acNoticePeriod)
+      fd.append('resume', acResume)
+      fd.append('additional_comments', acAdditionalComments.trim())
+      fd.append('terms_accepted', 'true')
+      await axios.post(`${API}/jobs/${acJobId}/apply`, fd)
+      setAcFullName(''); setAcEmail(''); setAcLinkedin(''); setAcPhone('')
+      setAcLocation(''); setAcCurrentRole(''); setAcCurrentCtc(''); setAcExpectedCtc('')
+      setAcNoticePeriod('Immediate'); setAcResume(null); setAcAdditionalComments(''); setAcJobId('')
+      if (acResumeRef.current) acResumeRef.current.value = ''
       setShowCandidateForm(false)
       await fetchCandidates()
+      await fetchAnalytics()
     } catch (err: unknown) {
-      const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Failed to create.' : 'Failed to create.'
+      const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Failed to add candidate.' : 'Failed to add candidate.'
       setCandidateFormError(String(msg))
     } finally {
       setCandidateFormLoading(false)
@@ -594,6 +635,20 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                 <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.5rem', lineHeight: 1 }} onClick={closeScheduleModal}>×</button>
               </div>
 
+              <div style={{ marginBottom: 16 }}>
+                <label className="role-label" style={{ marginBottom: 6, display: 'block' }}>Timezone</label>
+                <select
+                  className="role-select"
+                  value={scheduleTimezone}
+                  onChange={e => { setScheduleTimezone(e.target.value); setSelectedSlot(''); fetchSlots(scheduleDateSelected, e.target.value) }}
+                  style={{ maxWidth: 300 }}
+                >
+                  {TIMEZONE_OPTIONS.map(tz => (
+                    <option key={tz.value} value={tz.value}>{tz.label} — {tz.sub}</option>
+                  ))}
+                </select>
+              </div>
+
               {availableDates.length > 0 && (
                 <div style={{ marginBottom: 16 }}>
                   <p className="role-label" style={{ marginBottom: 8 }}>Select a date</p>
@@ -626,16 +681,63 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                 {!slotsLoading && slots.length === 0 && <p className="muted">No available slots for this date.</p>}
                 {!slotsLoading && slots.length > 0 && (
                   <div className="slot-grid">
-                    {slots.map(s => (
-                      <button
-                        key={s.slot}
-                        className={`slot-cell ${s.available ? 'slot-cell--available' : 'slot-cell--booked'}${selectedSlot === s.slot ? ' slot-cell--selected' : ''}`}
-                        disabled={!s.available}
-                        onClick={() => s.available && setSelectedSlot(s.slot)}
-                      >
-                        {s.display}
-                      </button>
-                    ))}
+                    {slots.map(s => {
+                      const isBooked = !s.available
+                      const isSelected = selectedSlot === s.slot
+                      const isPopular = !isBooked && schedulePopularSlots.has(s.slot)
+
+                      let bg = '#fff'
+                      let borderColor = '#0C447C'
+                      let color = '#0C447C'
+                      let cursor: React.CSSProperties['cursor'] = 'pointer'
+                      let textDecoration = 'none'
+
+                      if (isBooked) {
+                        bg = '#F8FAFC'; borderColor = '#e2e8f0'; color = '#94a3b8'
+                        cursor = 'not-allowed'; textDecoration = 'line-through'
+                      } else if (isSelected) {
+                        bg = '#0C447C'; borderColor = '#0C447C'; color = '#fff'
+                      } else if (isPopular) {
+                        bg = '#E1F5EE'; borderColor = '#0F6E56'; color = '#0F6E56'
+                      }
+
+                      return (
+                        <div key={s.slot} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <button
+                            style={{
+                              padding: '8px 4px',
+                              borderRadius: 7,
+                              border: `1.5px solid ${borderColor}`,
+                              background: bg,
+                              color,
+                              cursor,
+                              fontSize: '0.82rem',
+                              fontWeight: isSelected ? 600 : 500,
+                              textDecoration,
+                              transition: 'all 0.15s',
+                            }}
+                            disabled={isBooked}
+                            onClick={() => !isBooked && setSelectedSlot(s.slot)}
+                            onMouseEnter={e => {
+                              if (!isBooked && !isSelected)
+                                (e.target as HTMLButtonElement).style.background = '#EBF4FF'
+                            }}
+                            onMouseLeave={e => {
+                              if (!isBooked && !isSelected)
+                                (e.target as HTMLButtonElement).style.background = isPopular ? '#E1F5EE' : '#fff'
+                            }}
+                          >
+                            {s.display}
+                          </button>
+                          {isBooked && (
+                            <span style={{ textAlign: 'center', fontSize: 10, color: '#94a3b8' }}>Booked</span>
+                          )}
+                          {isPopular && !isBooked && (
+                            <span style={{ textAlign: 'center', fontSize: 10, color: '#0F6E56', fontWeight: 500 }}>Popular</span>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
                 {bookSlotError && <p className="error-text">{bookSlotError}</p>}
@@ -794,32 +896,102 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
         <>
           {showCandidateForm && (
             <div className="card">
-              <h3 style={{ marginBottom: 16, color: 'var(--text)' }}>New Candidate</h3>
+              <h3 style={{ marginBottom: 16, color: 'var(--text)' }}>Add Candidate</h3>
               <div className="form-grid">
                 <div className="role-select-group">
-                  <label className="role-label">Full Name</label>
-                  <input className="role-input" placeholder="Jane Smith" value={name} onChange={e => setName(e.target.value)} />
+                  <label className="role-label">Full Name *</label>
+                  <input className="role-input" placeholder="Jane Smith" value={acFullName} onChange={e => setAcFullName(e.target.value)} />
                 </div>
                 <div className="role-select-group">
-                  <label className="role-label">CT Number</label>
-                  <input className="role-input" placeholder="CT001" value={ctNumber} onChange={e => setCtNumber(e.target.value.toUpperCase())} />
+                  <label className="role-label">Email *</label>
+                  <input className="role-input" type="email" placeholder="jane@example.com" value={acEmail} onChange={e => setAcEmail(e.target.value)} />
                 </div>
                 <div className="role-select-group">
-                  <label className="role-label">Job Role</label>
-                  <select className="role-select" value={jobRole} onChange={e => { setJobRole(e.target.value); setCustomRole('') }}>
-                    {JOB_ROLES.map(r => <option key={r}>{r}</option>)}
+                  <label className="role-label">LinkedIn Profile URL</label>
+                  <input className="role-input" placeholder="https://linkedin.com/in/..." value={acLinkedin} onChange={e => setAcLinkedin(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Phone *</label>
+                  <input className="role-input" placeholder="+91 98765 43210" value={acPhone} onChange={e => setAcPhone(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Current Location *</label>
+                  <input className="role-input" placeholder="e.g. Bangalore, India" value={acLocation} onChange={e => setAcLocation(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Current Role *</label>
+                  <input className="role-input" placeholder="e.g. Senior Software Engineer" value={acCurrentRole} onChange={e => setAcCurrentRole(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Current CTC *</label>
+                  <input className="role-input" placeholder="e.g. 12 LPA" value={acCurrentCtc} onChange={e => setAcCurrentCtc(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Expected CTC *</label>
+                  <input className="role-input" placeholder="e.g. 18 LPA" value={acExpectedCtc} onChange={e => setAcExpectedCtc(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Notice Period *</label>
+                  <select className="role-select" value={acNoticePeriod} onChange={e => setAcNoticePeriod(e.target.value)}>
+                    <option>Immediate</option>
+                    <option>Up to 15 days</option>
+                    <option>Up to 30 days</option>
+                    <option>Up to 60 days</option>
+                    <option>Up to 90 days</option>
+                    <option>Flexible</option>
                   </select>
-                  <label className="role-label" style={{ marginTop: 8 }}>Or custom role</label>
-                  <input className="role-input" placeholder="e.g. DevOps Engineer" value={customRole} onChange={e => setCustomRole(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Job Role *</label>
+                  <select className="role-select" value={acJobId} onChange={e => setAcJobId(e.target.value)}>
+                    <option value="">— Select a job —</option>
+                    {openJobs.map(j => (
+                      <option key={j.id} value={j.id}>{j.title}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="role-label">Job Description (optional)</label>
-                  <textarea className="role-textarea" placeholder="Paste job description..." value={jobDescription} onChange={e => setJobDescription(e.target.value)} />
+                  <label className="role-label">Resume (PDF or TXT) *</label>
+                  <div
+                    className="resume-upload-area"
+                    onClick={() => acResumeRef.current?.click()}
+                  >
+                    <input
+                      ref={acResumeRef}
+                      type="file"
+                      accept=".pdf,.txt"
+                      style={{ display: 'none' }}
+                      onChange={e => setAcResume(e.target.files?.[0] ?? null)}
+                    />
+                    {acResume ? (
+                      <span style={{ color: 'var(--text)' }}>{acResume.name}</span>
+                    ) : (
+                      <span style={{ color: 'var(--muted)' }}>Click to upload resume (PDF or TXT)&hellip;</span>
+                    )}
+                  </div>
+                  {acResume && (
+                    <button
+                      style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer', padding: 0, marginTop: 4, textAlign: 'left' }}
+                      onClick={() => { setAcResume(null); if (acResumeRef.current) acResumeRef.current.value = '' }}
+                    >
+                      Remove file
+                    </button>
+                  )}
+                </div>
+                <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="role-label">Additional Comments</label>
+                  <textarea
+                    className="role-textarea"
+                    rows={4}
+                    placeholder="Any additional information about the candidate (optional)..."
+                    value={acAdditionalComments}
+                    onChange={e => setAcAdditionalComments(e.target.value)}
+                  />
                 </div>
               </div>
               {candidateFormError && <p className="error-text" style={{ marginTop: 12 }}>{candidateFormError}</p>}
               <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={handleCreateCandidate} disabled={candidateFormLoading}>
-                {candidateFormLoading ? 'Creating...' : 'Create Candidate'}
+                {candidateFormLoading ? 'Adding...' : 'Add Candidate'}
               </button>
             </div>
           )}

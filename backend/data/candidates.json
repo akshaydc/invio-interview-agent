@@ -45,7 +45,18 @@
     "notice_fit": "good",
     "session_id": "24a71143-c8a7-47cd-b058-7f4e5ff9a1a0",
     "status": "interview_complete",
-    "applied_at": "2026-04-10T09:00:00+00:00"
+    "applied_at": "2026-04-10T09:00:00+00:00",
+    "call_status": {
+      "call_made": true,
+      "call_made_at": "2026-05-13T09:30:00+00:00",
+      "call_answered": true,
+      "call_answered_at": "2026-05-13T09:30:15+00:00",
+      "call_complete": true,
+      "call_complete_at": "2026-05-13T09:32:45+00:00",
+      "message_delivered": true,
+      "call_sid": "CAxxxx001",
+      "note": "Candidate confirmed receipt of email"
+    }
   },
   {
     "name": "Rahul Mehta",
@@ -78,7 +89,18 @@
     "notice_fit": "good",
     "session_id": "80ef549d-81e3-40a3-a6f3-10a1cf64bbb1",
     "status": "interview_complete",
-    "applied_at": "2026-04-11T10:30:00+00:00"
+    "applied_at": "2026-04-11T10:30:00+00:00",
+    "call_status": {
+      "call_made": true,
+      "call_made_at": "2026-05-13T10:00:00+00:00",
+      "call_answered": false,
+      "call_answered_at": null,
+      "call_complete": true,
+      "call_complete_at": "2026-05-13T10:00:45+00:00",
+      "message_delivered": false,
+      "call_sid": "CAxxxx002",
+      "note": "Candidate did not answer. Email sent."
+    }
   },
   {
     "name": "Sneha Patel",
@@ -442,7 +464,18 @@
     "notice_fit": "good",
     "session_id": "0f6ef23e-0d3a-475b-b32c-2337bb2acba6",
     "status": "interview_complete",
-    "applied_at": "2026-04-17T09:00:00+00:00"
+    "applied_at": "2026-04-17T09:00:00+00:00",
+    "call_status": {
+      "call_made": true,
+      "call_made_at": "2026-05-13T11:15:00+00:00",
+      "call_answered": true,
+      "call_answered_at": "2026-05-13T11:15:08+00:00",
+      "call_complete": false,
+      "call_complete_at": null,
+      "message_delivered": false,
+      "call_sid": "CAxxxx003",
+      "note": "Call disconnected before message delivered"
+    }
   },
   {
     "name": "Vikram Nair",
@@ -475,6 +508,17 @@
     "notice_fit": "good",
     "session_id": "29a8a3eb-5e8e-4ca5-a506-7bbc60cc28fe",
     "status": "interview_complete",
-    "applied_at": "2026-04-17T11:00:00+00:00"
+    "applied_at": "2026-04-17T11:00:00+00:00",
+    "call_status": {
+      "call_made": true,
+      "call_made_at": "2026-05-13T14:00:00+00:00",
+      "call_answered": true,
+      "call_answered_at": "2026-05-13T14:00:12+00:00",
+      "call_complete": true,
+      "call_complete_at": "2026-05-13T14:03:22+00:00",
+      "message_delivered": true,
+      "call_sid": "CAxxxx004",
+      "note": "Candidate asked about interview format. Informed about AI interview."
+    }
   }
 ]
