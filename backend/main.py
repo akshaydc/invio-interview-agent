@@ -570,7 +570,13 @@ def send_email_sync(to_email: str, subject: str, html_body: str) -> bool:
         return False
 
 
-def make_twilio_call(to_phone: str, candidate_name: str, job_title: str, booking_url: str) -> dict:
+def make_twilio_call(
+    to_phone: str,
+    candidate_name: str,
+    job_title: str,
+    booking_url: str,
+    ct_number: str = "",
+) -> dict:
     if not all([TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER]):
         return {"success": False, "error": "Twilio not configured"}
     try:
@@ -604,6 +610,15 @@ def make_twilio_call(to_phone: str, candidate_name: str, job_title: str, booking
             "booking_url": booking_url,
             "history": [],
             "turn": 0,
+            "ct_number": ct_number,
+            "call_made": True,
+            "call_made_at": datetime.now(timezone.utc).isoformat(),
+            "call_answered": False,
+            "call_answered_at": None,
+            "call_complete": False,
+            "call_complete_at": None,
+            "no_response_count": 0,
+            "message_delivered": False,
         }
 
         print(f"Twilio call created: {call.sid}")
@@ -614,25 +629,98 @@ def make_twilio_call(to_phone: str, candidate_name: str, job_title: str, booking
         return {"success": False, "error": str(e)}
 
 
+async def _update_call_status(call_sid: str, updates: dict) -> None:
+    """Persist call status updates to the candidate's record in candidates.json."""
+    try:
+        call_data = active_calls.get(call_sid, {})
+        ct_number = call_data.get("ct_number", "")
+        if not ct_number:
+            return
+        candidates = await _read_candidates()
+        for i, c in enumerate(candidates):
+            if c.get("ct_number") == ct_number:
+                if "call_status" not in c:
+                    c["call_status"] = {}
+                c["call_status"].update(updates)
+                candidates[i] = c
+                break
+        await _write_candidates(candidates)
+    except Exception as e:
+        print(f"Error updating call status: {e}")
+
+
 @app.post("/twilio/outbound-call")
 async def twilio_outbound_call(request: Request) -> Response:
     """Initial TwiML when the outbound call connects."""
     form = await request.form()
-    call_sid = form.get("CallSid", "")
+    call_sid = str(form.get("CallSid", ""))
     call_data = active_calls.get(call_sid, {})
     candidate_name = call_data.get("candidate_name", "there")
     first_name = candidate_name.split()[0]
+
+    call_data["call_answered"] = True
+    call_data["call_answered_at"] = datetime.now(timezone.utc).isoformat()
+    active_calls[call_sid] = call_data
+    await _update_call_status(call_sid, {
+        "call_answered": True,
+        "call_answered_at": datetime.now(timezone.utc).isoformat(),
+    })
+
     twiml = (
         '<?xml version="1.0" encoding="UTF-8"?>'
         "<Response>"
-        '<Pause length="1"/>'
-        f'<Say voice="Polly.Joanna" rate="85%">Hello, am I speaking with {first_name}?</Say>'
-        '<Gather input="speech" action="/twilio/handle-response" method="POST" speechTimeout="3" timeout="8" language="en-IN">'
-        '<Say voice="Polly.Joanna" rate="85%">Please say yes to continue or no to reschedule this call.</Say>'
+        f'<Say voice="Polly.Joanna" rate="95%">Hello, am I speaking with {first_name}?</Say>'
+        '<Gather input="speech" action="/twilio/handle-response" method="POST"'
+        ' speechTimeout="2" timeout="5" language="en-IN">'
         "</Gather>"
-        '<Say voice="Polly.Joanna" rate="85%">I did not catch that. I will try again shortly. Goodbye!</Say>'
+        f'<Redirect>/twilio/no-response?sid={call_sid}&amp;attempt=1</Redirect>'
         "</Response>"
     )
+    return Response(content=twiml, media_type="application/xml")
+
+
+@app.post("/twilio/no-response")
+async def twilio_no_response(request: Request) -> Response:
+    """Retry on silence — after two failed attempts deliver the core message anyway."""
+    form = await request.form()
+    call_sid = str(form.get("CallSid", ""))
+    attempt = int(request.query_params.get("attempt", "1"))
+
+    call_data = active_calls.get(call_sid, {})
+    candidate_name = call_data.get("candidate_name", "")
+    job_title = call_data.get("job_title", "")
+    first_name = candidate_name.split()[0] if candidate_name else "there"
+
+    if attempt == 1:
+        twiml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            "<Response>"
+            f'<Say voice="Polly.Joanna" rate="95%">Sorry, I could not hear you. Am I speaking with {first_name}?</Say>'
+            '<Gather input="speech" action="/twilio/handle-response" method="POST"'
+            ' speechTimeout="2" timeout="5" language="en-IN">'
+            "</Gather>"
+            f'<Redirect>/twilio/no-response?sid={call_sid}&amp;attempt=2</Redirect>'
+            "</Response>"
+        )
+    else:
+        call_data["message_delivered"] = True
+        active_calls[call_sid] = call_data
+        await _update_call_status(call_sid, {
+            "call_complete": True,
+            "call_complete_at": datetime.now(timezone.utc).isoformat(),
+            "message_delivered": True,
+        })
+        twiml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            "<Response>"
+            f'<Say voice="Polly.Joanna" rate="90%">Hello {first_name}. This is a message from ASTRA Recruitment. '
+            f"Congratulations, you have been shortlisted for {job_title}. "
+            "Please check your email for a link to book your interview slot. "
+            "We look forward to speaking with you. Have a great day!"
+            "</Say>"
+            "<Hangup/>"
+            "</Response>"
+        )
     return Response(content=twiml, media_type="application/xml")
 
 
@@ -640,8 +728,8 @@ async def twilio_outbound_call(request: Request) -> Response:
 async def twilio_handle_response(request: Request) -> Response:
     """Handle candidate spoken responses — drives conversation via Claude."""
     form = await request.form()
-    call_sid = form.get("CallSid", "")
-    speech_result = str(form.get("SpeechResult", "")).lower()
+    call_sid = str(form.get("CallSid", ""))
+    speech_result = str(form.get("SpeechResult", "")).strip()
 
     call_data = active_calls.get(call_sid, {})
     candidate_name = call_data.get("candidate_name", "")
@@ -649,8 +737,47 @@ async def twilio_handle_response(request: Request) -> Response:
     first_name = candidate_name.split()[0] if candidate_name else "there"
     history: list = call_data.get("history", [])
     turn: int = call_data.get("turn", 0)
+    no_response_count: int = call_data.get("no_response_count", 0)
 
-    history.append({"role": "user", "content": speech_result or "no response"})
+    # Deliver core message if speech is missing or too short
+    if not speech_result or len(speech_result) < 2:
+        no_response_count += 1
+        call_data["no_response_count"] = no_response_count
+        active_calls[call_sid] = call_data
+        if no_response_count >= 2:
+            call_data["message_delivered"] = True
+            active_calls[call_sid] = call_data
+            await _update_call_status(call_sid, {
+                "call_complete": True,
+                "call_complete_at": datetime.now(timezone.utc).isoformat(),
+                "message_delivered": True,
+            })
+            twiml = (
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                "<Response>"
+                f'<Say voice="Polly.Joanna" rate="90%">Hello {first_name}. This is a message from ASTRA Recruitment. '
+                f"Congratulations, you have been shortlisted for {job_title}. "
+                "Please check your email for a link to book your interview slot. "
+                "We look forward to speaking with you. Have a great day!"
+                "</Say>"
+                "<Hangup/>"
+                "</Response>"
+            )
+        else:
+            twiml = (
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                "<Response>"
+                '<Say voice="Polly.Joanna" rate="95%">Sorry, I could not hear you clearly. Could you please say that again?</Say>'
+                '<Gather input="speech" action="/twilio/handle-response" method="POST"'
+                ' speechTimeout="2" timeout="5" language="en-IN">'
+                "</Gather>"
+                '<Say voice="Polly.Joanna" rate="95%">I did not hear a response. Thank you for your time. Have a great day!</Say>'
+                "<Hangup/>"
+                "</Response>"
+            )
+        return Response(content=twiml, media_type="application/xml")
+
+    history.append({"role": "user", "content": speech_result.lower()})
 
     system_prompt = (
         f"You are Rina, a warm and professional AI recruitment assistant making a phone call "
@@ -699,11 +826,15 @@ async def twilio_handle_response(request: Request) -> Response:
     should_end = turn >= 5 or any(p in ai_response.lower() for p in end_phrases)
 
     if should_end:
+        await _update_call_status(call_sid, {
+            "call_complete": True,
+            "call_complete_at": datetime.now(timezone.utc).isoformat(),
+            "message_delivered": True,
+        })
         twiml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<Response>"
-            f'<Say voice="Polly.Joanna" rate="85%">{ai_response}</Say>'
-            '<Pause length="1"/>'
+            f'<Say voice="Polly.Joanna" rate="95%">{ai_response}</Say>'
             "<Hangup/>"
             "</Response>"
         )
@@ -711,10 +842,11 @@ async def twilio_handle_response(request: Request) -> Response:
         twiml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<Response>"
-            f'<Say voice="Polly.Joanna" rate="85%">{ai_response}</Say>'
-            '<Gather input="speech" action="/twilio/handle-response" method="POST" speechTimeout="3" timeout="8" language="en-IN">'
+            f'<Say voice="Polly.Joanna" rate="95%">{ai_response}</Say>'
+            '<Gather input="speech" action="/twilio/handle-response" method="POST"'
+            ' speechTimeout="2" timeout="5" language="en-IN">'
             "</Gather>"
-            '<Say voice="Polly.Joanna" rate="85%">I did not hear a response. Thank you for your time. Have a great day!</Say>'
+            '<Say voice="Polly.Joanna" rate="95%">I did not hear a response. Thank you for your time. Have a great day!</Say>'
             "<Hangup/>"
             "</Response>"
         )
@@ -725,9 +857,22 @@ async def twilio_handle_response(request: Request) -> Response:
 async def twilio_call_status(request: Request) -> Response:
     """Receive call status callbacks from Twilio and clean up finished calls."""
     form = await request.form()
-    call_sid = form.get("CallSid", "")
-    status = form.get("CallStatus", "")
+    call_sid = str(form.get("CallSid", ""))
+    status = str(form.get("CallStatus", ""))
     print(f"Call {call_sid} status: {status}")
+    if status == "no-answer":
+        await _update_call_status(call_sid, {
+            "call_answered": False,
+            "call_complete": True,
+            "call_complete_at": datetime.now(timezone.utc).isoformat(),
+            "message_delivered": False,
+            "note": "Candidate did not answer",
+        })
+    elif status == "completed":
+        await _update_call_status(call_sid, {
+            "call_complete": True,
+            "call_complete_at": datetime.now(timezone.utc).isoformat(),
+        })
     if status in ("completed", "failed", "busy", "no-answer"):
         active_calls.pop(call_sid, None)
     return Response(content="OK", media_type="text/plain")
@@ -1125,8 +1270,20 @@ async def shortlist_candidate(
             candidate_name=cand_name,
             job_title=job_title,
             booking_url=slot_booking_url,
+            ct_number=ct_number,
         )
     print(f"Call result: {call_result}")
+    candidate["call_status"] = {
+        "call_made": call_result.get("success", False),
+        "call_made_at": datetime.now(timezone.utc).isoformat() if call_result.get("success") else None,
+        "call_answered": False,
+        "call_answered_at": None,
+        "call_complete": False,
+        "call_complete_at": None,
+        "message_delivered": False,
+        "call_sid": call_result.get("call_sid", ""),
+    }
+    await _write_candidates(candidates)
     return {
         "success": True,
         "email_sent": email_queued,

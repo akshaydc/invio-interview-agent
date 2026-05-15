@@ -17,6 +17,18 @@ const JOB_ROLES = [
 
 type CandidateStatus = 'not_started' | 'applied' | 'shortlisted' | 'interview_scheduled' | 'interview_complete' | 'rejected'
 
+type CallStatus = {
+  call_made: boolean
+  call_made_at: string | null
+  call_answered: boolean
+  call_answered_at: string | null
+  call_complete: boolean
+  call_complete_at: string | null
+  message_delivered: boolean
+  call_sid: string
+  note?: string
+}
+
 type Candidate = {
   name: string
   ct_number: string
@@ -42,6 +54,7 @@ type Candidate = {
   recommendation?: string
   applied_at?: string
   interview_slot?: string
+  call_status?: CallStatus
 }
 
 type SlotInfo = { slot: string; display: string; available: boolean; booked_by: string | null }
@@ -1056,6 +1069,64 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                         </span>
                                       </div>
                                     )}
+
+                                    {c.call_status && (() => {
+                                      const cs = c.call_status
+                                      const steps = [
+                                        { label: 'Call Made', done: cs.call_made, ts: cs.call_made_at },
+                                        { label: 'Call Answered', done: cs.call_answered, ts: cs.call_answered_at },
+                                        { label: 'Call Complete', done: cs.call_complete, ts: cs.call_complete_at },
+                                      ]
+                                      return (
+                                        <div style={{ marginTop: 16, border: '1px solid #e2e8f0', borderRadius: 10, padding: '16px 18px', background: '#fff' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                                            <span style={{ fontSize: '0.95rem' }}>📞</span>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#042C53' }}>Call Status</span>
+                                          </div>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                                            {steps.map((step, i) => (
+                                              <>
+                                                <div key={step.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 80 }}>
+                                                  <div style={{
+                                                    width: 28, height: 28, borderRadius: '50%',
+                                                    background: step.done ? '#0F6E56' : 'transparent',
+                                                    border: step.done ? 'none' : '2px solid #cbd5e1',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    flexShrink: 0,
+                                                  }}>
+                                                    {step.done && <span style={{ color: '#fff', fontSize: 13, lineHeight: 1 }}>✓</span>}
+                                                  </div>
+                                                  <span style={{ fontSize: 11, fontWeight: step.done ? 600 : 400, color: step.done ? '#042C53' : '#94a3b8', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                                    {step.label}
+                                                  </span>
+                                                  {step.done && step.ts && (
+                                                    <span style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>
+                                                      {new Date(step.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                {i < steps.length - 1 && (
+                                                  <div key={`line-${i}`} style={{
+                                                    flex: 1, height: 2, marginBottom: 20,
+                                                    background: (step.done && steps[i + 1].done) ? '#0F6E56' : '#e2e8f0',
+                                                  }} />
+                                                )}
+                                              </>
+                                            ))}
+                                          </div>
+                                          {cs.note && !cs.call_answered && (
+                                            <div style={{ marginTop: 12, background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 7, padding: '8px 12px', fontSize: '0.8rem', color: '#92400E' }}>
+                                              Candidate did not answer. Email sent with slot booking link.
+                                            </div>
+                                          )}
+                                          {cs.message_delivered && (
+                                            <div style={{ marginTop: 12, background: '#E1F5EE', border: '1px solid #BBF7D0', borderRadius: 7, padding: '8px 12px', fontSize: '0.8rem', color: '#0F6E56', fontWeight: 500 }}>
+                                              Core message delivered successfully.
+                                            </div>
+                                          )}
+                                        </div>
+                                      )
+                                    })()}
 
                                     <div className="candidate-panel-actions">
                                       {c.status === 'applied' && (
