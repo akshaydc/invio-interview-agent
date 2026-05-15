@@ -29,6 +29,9 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RECRUITER_EMAIL = os.getenv("RECRUITER_EMAIL")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://your-frontend.railway.app")
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
@@ -566,6 +569,42 @@ def send_email_sync(to_email: str, subject: str, html_body: str) -> bool:
         return False
 
 
+def make_twilio_call(to_phone: str, candidate_name: str, job_title: str, booking_url: str) -> dict:
+    if not all([TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER]):
+        print("Twilio not configured")
+        return {"success": False, "error": "Twilio not configured"}
+    try:
+        from twilio.rest import Client
+        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        twiml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            "<Response>"
+            '<Pause length="1"/>'
+            f'<Say voice="Polly.Joanna" rate="90%">Hello, may I speak with {candidate_name}?</Say>'
+            '<Pause length="1"/>'
+            f'<Say voice="Polly.Joanna" rate="90%">'
+            "Congratulations! This is an automated call from ASTRA Recruitment. "
+            f"We are pleased to inform you that your profile has been shortlisted for the position of {job_title}."
+            "</Say>"
+            '<Pause length="1"/>'
+            '<Say voice="Polly.Joanna" rate="90%">'
+            "Please check your email to book your interview slot at your convenience. "
+            "We look forward to speaking with you. Thank you and have a great day!"
+            "</Say>"
+            "</Response>"
+        )
+        actual_phone = to_phone.strip()
+        if not actual_phone.startswith("+"):
+            actual_phone = "+91" + actual_phone.lstrip("0")
+        call = client.calls.create(twiml=twiml, to=actual_phone, from_=TWILIO_PHONE_NUMBER)
+        print(f"Twilio call initiated: {call.sid} to {actual_phone}")
+        return {"success": True, "call_sid": call.sid, "status": call.status, "to": actual_phone}
+    except Exception as e:
+        print(f"Twilio error: {type(e).__name__}: {e}")
+        traceback.print_exc()
+        return {"success": False, "error": str(e)}
+
+
 async def send_scorecard_email(scorecard: dict, job_role: str, session_id: str, candidate_name: str = "") -> None:
     if not RECRUITER_EMAIL:
         print("RECRUITER_EMAIL not configured — skipping scorecard email.")
@@ -950,10 +989,23 @@ async def shortlist_candidate(
             shortlist_html,
         )
         email_queued = True
+    candidate_phone = candidate.get("phone", "")
+    call_result: dict = {"success": False, "error": "No phone number"}
+    if candidate_phone:
+        call_result = make_twilio_call(
+            to_phone=candidate_phone,
+            candidate_name=cand_name,
+            job_title=job_title,
+            booking_url=slot_booking_url,
+        )
+    print(f"Call result: {call_result}")
     return {
         "success": True,
         "email_sent": email_queued,
         "email_to": mask_email(cand_email) if cand_email else None,
+        "call_result": call_result,
+        "call_made": call_result.get("success", False),
+        "call_sid": call_result.get("call_sid", ""),
         "slot_booking_url": slot_booking_url,
         "message": "Candidate shortlisted successfully",
     }
