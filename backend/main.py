@@ -505,8 +505,25 @@ async def _analyze_resume_match(
         "\nGive a match percentage (0-100) based on skills and experience fit.\n"
     )
 
+    fit_instructions = ""
+    if role_budget and expected_ctc:
+        fit_instructions += (
+            f"\nFor compensation_fit: compare the candidate's expected CTC ({expected_ctc}) "
+            f"against the role budget ({role_budget}). "
+            "Use 'good' if within range, 'partial' if slightly outside (up to 20% above), "
+            "'mismatch' if significantly outside.\n"
+        )
+    if preferred_notice and notice_period:
+        fit_instructions += (
+            f"\nFor notice_fit: compare the candidate's notice period ({notice_period}) "
+            f"against the preferred notice ({preferred_notice}). "
+            "Use 'good' if it matches or is shorter, 'partial' if slightly longer, "
+            "'mismatch' if much longer.\n"
+        )
+
     prompt = (
         f"Compare this resume with the job description.{compensation_instruction}"
+        f"{fit_instructions}"
         "Based on the overall match, also provide a hiring recommendation: "
         "'Strong Hire' (80%+ match, strong skills alignment), "
         "'Hire' (65-79% match, good overall fit), "
@@ -1161,7 +1178,6 @@ async def get_candidate_scorecard(
             session = await _read_session(session_id)
             scorecard = session.get("scorecard")
             if scorecard:
-                # Ensure violations and proctoring are always present
                 if "violations" not in scorecard:
                     violations = session.get("violations", [])
                     scorecard["violations"] = violations
@@ -1169,6 +1185,15 @@ async def get_candidate_scorecard(
                         "total_violations": len(violations),
                         "clean": len(violations) == 0,
                         "details": violations,
+                        "auto_ended": session.get("auto_ended_proctoring", False),
+                    }
+                elif "proctoring" not in scorecard:
+                    violations = scorecard.get("violations", [])
+                    scorecard["proctoring"] = {
+                        "total_violations": len(violations),
+                        "clean": len(violations) == 0,
+                        "details": violations,
+                        "auto_ended": session.get("auto_ended_proctoring", False),
                     }
                 return {"candidate": candidate, "scorecard": scorecard}
         except Exception:
@@ -3200,17 +3225,21 @@ async def proctor_frame(session_id: str, body: ProctorRequest) -> dict:
 
     if result.get("flag"):
         try:
+            flag_type = "face_detection"
             session = await _read_session(session_id)
-            violations = session.get("violations", [])
-            violations.append({
-                "type": "face_detection",
-                "reason": result.get("reason", ""),
+            if "violations" not in session:
+                session["violations"] = []
+            violation_entry = {
+                "type": flag_type,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-            })
-            session["violations"] = violations
+                "reason": result.get("reason", ""),
+            }
+            session["violations"].append(violation_entry)
             await _write_session(session_id, session)
-        except Exception:
-            pass
+            print(f"Violation saved: {violation_entry}")
+            print(f"Total violations: {len(session['violations'])}")
+        except Exception as ex:
+            print(f"Error saving violation: {ex}")
 
     return result
 
@@ -3268,11 +3297,13 @@ async def end_session(
 
         scorecard["transcript"] = session.get("transcript", [])
         violations = session.get("violations", [])
+        print(f"END SESSION - violations count: {len(violations)}")
         scorecard["violations"] = violations
         scorecard["proctoring"] = {
             "total_violations": len(violations),
             "clean": len(violations) == 0,
             "details": violations,
+            "auto_ended": session.get("auto_ended_proctoring", False),
         }
 
         # Confidence analytics across all answered questions

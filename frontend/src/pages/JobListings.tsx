@@ -28,6 +28,7 @@ type Props = {
   onCandidateLoginClick: () => void
   onRecruiterLoginClick: () => void
   onHome?: () => void
+  sessionAppliedJobs?: AppliedJob[]
 }
 
 function formatAppliedDate(iso: string): string {
@@ -39,10 +40,10 @@ function formatAppliedDate(iso: string): string {
   }
 }
 
-export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecruiterLoginClick, onHome }: Props) {
+export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecruiterLoginClick, onHome, sessionAppliedJobs }: Props) {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
-  const [appliedJobs, setAppliedJobs] = useState<AppliedJob[]>([])
+  const [storedAppliedJobs, setStoredAppliedJobs] = useState<AppliedJob[]>([])
   const [widgetOpen, setWidgetOpen] = useState(false)
   const [copiedCt, setCopiedCt] = useState<string | null>(null)
 
@@ -56,11 +57,19 @@ export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecr
   useEffect(() => {
     try {
       const stored = JSON.parse(localStorage.getItem('astra_applied_jobs') ?? '[]')
-      if (Array.isArray(stored)) setAppliedJobs(stored)
+      if (Array.isArray(stored)) setStoredAppliedJobs(stored)
     } catch {
       // ignore
     }
   }, [])
+
+  // Merge localStorage + current-session applied jobs (deduplicate by ct_number)
+  const appliedJobs: AppliedJob[] = (() => {
+    const session = sessionAppliedJobs ?? []
+    const sessionCtNumbers = new Set(session.map(j => j.ct_number))
+    const deduped = storedAppliedJobs.filter(j => !sessionCtNumbers.has(j.ct_number))
+    return [...deduped, ...session]
+  })()
 
   function copyCtNumber(ct: string) {
     navigator.clipboard.writeText(ct).then(() => {
