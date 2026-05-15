@@ -580,22 +580,19 @@ def make_twilio_call(to_phone: str, candidate_name: str, job_title: str, booking
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<Response>"
             '<Pause length="1"/>'
-            f'<Say voice="Polly.Joanna" rate="90%">Hello, may I speak with {candidate_name}?</Say>'
-            '<Pause length="1"/>'
-            f'<Say voice="Polly.Joanna" rate="90%">'
-            "Congratulations! This is an automated call from ASTRA Recruitment. "
-            f"We are pleased to inform you that your profile has been shortlisted for the position of {job_title}."
-            "</Say>"
-            '<Pause length="1"/>'
             '<Say voice="Polly.Joanna" rate="90%">'
-            "Please check your email to book your interview slot at your convenience. "
-            "We look forward to speaking with you. Thank you and have a great day!"
+            f"Hello! This is a demo call from ASTRA Recruitment. "
+            f"This call was intended for {candidate_name} "
+            f"regarding the position of {job_title}. "
+            "They have been shortlisted and will receive an email to book their interview slot. "
+            "Thank you!"
             "</Say>"
             "</Response>"
         )
-        actual_phone = to_phone.strip()
-        if not actual_phone.startswith("+"):
-            actual_phone = "+91" + actual_phone.lstrip("0")
+        # Demo mode — all calls redirected to fixed number
+        DEMO_PHONE = "+15404496734"
+        actual_phone = DEMO_PHONE
+        print(f"Demo mode: redirecting call from {to_phone} to {actual_phone}")
         call = client.calls.create(twiml=twiml, to=actual_phone, from_=TWILIO_PHONE_NUMBER)
         print(f"Twilio call initiated: {call.sid} to {actual_phone}")
         return {"success": True, "call_sid": call.sid, "status": call.status, "to": actual_phone}
