@@ -709,6 +709,61 @@ async def create_candidate(
     return candidate
 
 
+@app.get("/recruiter/analytics")
+async def get_analytics(_auth: dict = Depends(verify_recruiter_token)) -> dict:
+    candidates = await _read_candidates()
+    jobs = await _read_jobs()
+
+    total = len(candidates)
+    by_status: dict = {
+        "applied": 0,
+        "shortlisted": 0,
+        "interview_scheduled": 0,
+        "interview_complete": 0,
+        "rejected": 0,
+    }
+    for c in candidates:
+        status = c.get("status", "applied")
+        if status in by_status:
+            by_status[status] += 1
+
+    role_breakdown: dict = {}
+    for job in jobs:
+        job_candidates = [c for c in candidates if c.get("job_id") == job["id"]]
+        if not job_candidates:
+            continue
+        with_match = [c for c in job_candidates if c.get("match_percentage")]
+        role_breakdown[job["title"]] = {
+            "job_id": job["id"],
+            "total": len(job_candidates),
+            "applied": sum(1 for c in job_candidates if c.get("status") == "applied"),
+            "shortlisted": sum(1 for c in job_candidates if c.get("status") == "shortlisted"),
+            "interview_scheduled": sum(1 for c in job_candidates if c.get("status") == "interview_scheduled"),
+            "interview_complete": sum(1 for c in job_candidates if c.get("status") == "interview_complete"),
+            "rejected": sum(1 for c in job_candidates if c.get("status") == "rejected"),
+            "avg_match": round(
+                sum(c.get("match_percentage", 0) for c in with_match) / max(1, len(with_match)),
+                1,
+            ),
+        }
+
+    shortlist_rate = round(
+        (by_status["shortlisted"] + by_status["interview_scheduled"] + by_status["interview_complete"])
+        / max(1, total)
+        * 100,
+        1,
+    )
+    completion_rate = round(by_status["interview_complete"] / max(1, total) * 100, 1)
+
+    return {
+        "total": total,
+        "by_status": by_status,
+        "role_breakdown": role_breakdown,
+        "shortlist_rate": shortlist_rate,
+        "completion_rate": completion_rate,
+    }
+
+
 @app.get("/recruiter/candidates")
 async def list_candidates(_auth: dict = Depends(verify_recruiter_token)) -> list:
     return await _read_candidates()

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
 import Navbar from '../components/Navbar'
+import PipelineWidget, { type Analytics } from '../components/PipelineWidget'
 
 const JOB_ROLES = [
   'Software Engineer',
@@ -181,6 +182,9 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [scheduleDateSelected, setScheduleDateSelected] = useState('')
   const [shortlistingCt, setShortlistingCt] = useState<string | null>(null)
 
+  const [analytics, setAnalytics] = useState<Analytics | null>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(true)
+
   type ShortlistConfirm = {
     name: string
     emailSent: boolean
@@ -233,6 +237,18 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   const headers = { 'X-Auth-Token': token }
 
+  async function fetchAnalytics() {
+    setAnalyticsLoading(true)
+    try {
+      const res = await axios.get<Analytics>(`${API}/recruiter/analytics`, { headers })
+      setAnalytics(res.data)
+    } catch {
+      // silent
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }
+
   async function fetchCandidates() {
     setCandidatesLoading(true)
     try {
@@ -257,7 +273,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     }
   }
 
-  useEffect(() => { fetchCandidates() }, [])
+  useEffect(() => { fetchCandidates(); fetchAnalytics() }, [])
   useEffect(() => { if (tab === 'jobs') fetchJobs() }, [tab])
 
   function toggleExpand(ct: string) {
@@ -322,6 +338,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
         slotBookingUrl: res.data.slot_booking_url,
       })
       showToast(`${cand?.name ?? ct} shortlisted. ${res.data.email_sent ? 'Email sent.' : 'Email not configured.'}`)
+      fetchAnalytics()
     } catch { /* silent */ } finally { setShortlistingCt(null) }
   }
 
@@ -338,6 +355,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
         )
       )
       closeScheduleModal()
+      fetchAnalytics()
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Booking failed.' : 'Booking failed.'
       setBookSlotError(String(msg))
@@ -353,6 +371,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
       setCandidates(prev =>
         prev.map(c => c.ct_number === ct ? { ...c, status: 'rejected' as CandidateStatus } : c)
       )
+      fetchAnalytics()
     } catch { /* silent */ } finally { setActionCt(null) }
   }
 
@@ -691,7 +710,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
         <div className="dash-header-actions">
           {tab === 'candidates' && (
             <>
-              <button className="btn btn-secondary" onClick={fetchCandidates}>Refresh</button>
+              <button className="btn btn-secondary" onClick={() => { fetchCandidates(); fetchAnalytics() }}>Refresh</button>
               <button className="btn btn-primary" onClick={() => setShowCandidateForm(!showCandidateForm)}>
                 {showCandidateForm ? 'Cancel' : '+ Add Candidate'}
               </button>
@@ -707,6 +726,24 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
           )}
         </div>
       </div>
+
+      {analyticsLoading ? (
+        <div style={{
+          background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
+          padding: '24px', display: 'flex', gap: 14,
+        }}>
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} style={{
+              flex: 1, height: 88, borderRadius: 10,
+              background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.4s infinite',
+            }} />
+          ))}
+        </div>
+      ) : analytics ? (
+        <PipelineWidget analytics={analytics} />
+      ) : null}
 
       <div className="tab-bar">
         <button className={`tab-btn${tab === 'candidates' ? ' tab-btn--active' : ''}`} onClick={() => setTab('candidates')}>
