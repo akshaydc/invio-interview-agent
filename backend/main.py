@@ -27,6 +27,7 @@ load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_TRANSCRIPTION_MODEL = os.getenv("OPENAI_TRANSCRIPTION_MODEL", "gpt-4o-mini-transcribe")
 RECRUITER_EMAIL = os.getenv("RECRUITER_EMAIL")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://your-frontend.railway.app")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
@@ -2849,11 +2850,24 @@ async def process_audio(session_id: str, audio: UploadFile = File(...)) -> Respo
                 with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
                     tmp.write(audio_bytes)
                     tmp_path = tmp.name
-                with open(tmp_path, "rb") as audio_file:
-                    whisper_resp = await oai_client.audio.transcriptions.create(
-                        model="whisper-1",
-                        file=audio_file,
+                try:
+                    with open(tmp_path, "rb") as audio_file:
+                        whisper_resp = await oai_client.audio.transcriptions.create(
+                            model=OPENAI_TRANSCRIPTION_MODEL,
+                            file=audio_file,
+                        )
+                except Exception as transcribe_error:
+                    if OPENAI_TRANSCRIPTION_MODEL == "whisper-1":
+                        raise
+                    print(
+                        f"GPT transcription model failed ({transcribe_error}); "
+                        "falling back to whisper-1"
                     )
+                    with open(tmp_path, "rb") as audio_file:
+                        whisper_resp = await oai_client.audio.transcriptions.create(
+                            model="whisper-1",
+                            file=audio_file,
+                        )
                 os.unlink(tmp_path)
                 candidate_answer = whisper_resp.text
             except Exception as e:

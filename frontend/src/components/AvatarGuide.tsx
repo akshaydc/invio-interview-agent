@@ -22,6 +22,10 @@ type Props = {
   page: GuidePage
   auth: AuthInfo | null
   selectedJobTitle?: string
+  selectedJobDepartment?: string
+  selectedJobDescription?: string
+  selectedJobRequirements?: string[]
+  returnedFromJobDetail?: boolean
   onBrowseAllOpenings?: () => void
   onMatchResult?: (result: ResumeMatchResult) => void
 }
@@ -76,6 +80,109 @@ const GUIDE_COPY: Record<GuidePage, string[]> = {
 const RINA_MUTE_STORAGE_KEY = 'astra_rina_muted'
 const LANDING_GREETING = 'Greetings I am Rina, ASTRA Guide'
 
+type RoleNarrative = {
+  test: RegExp
+  copy: (role: string, team: string, focus: string) => string
+}
+
+function sentenceFromDescription(description?: string) {
+  return description
+    ?.split(/[.!?]/)
+    .map(part => part.trim())
+    .find(part => part.length > 35 && part.length < 180)
+}
+
+function focusFromRequirements(requirements?: string[]) {
+  const focus = requirements
+    ?.map(req => req.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+
+  if (!focus?.length) return ''
+  if (focus.length === 1) return focus[0]
+  return `${focus.slice(0, -1).join(', ')} and ${focus[focus.length - 1]}`
+}
+
+const ROLE_NARRATIVES: RoleNarrative[] = [
+  {
+    test: /salesforce.*developer|developer.*salesforce|apex|lightning|lwc|visualforce/i,
+    copy: (role, team, focus) =>
+      `The ${role} role is where the ${team} team turns Salesforce requirements into working product behavior, from custom logic to the user journeys teams depend on every day.${focus ? ` A strong fit here will be comfortable with ${focus}.` : ''}`,
+  },
+  {
+    test: /qa|quality|test/i,
+    copy: (role, team, focus) =>
+      `The ${role} position is a quality gatekeeping role for the ${team} team, making sure releases are tested, risks are visible, and users receive reliable product experiences.${focus ? ` Pay close attention to the need for ${focus}.` : ''}`,
+  },
+  {
+    test: /admin|administrator|configuration|flow/i,
+    copy: (role, team, focus) =>
+      `The ${role} role keeps the ${team} team's Salesforce environment organized, usable, and ready for business teams to move quickly without breaking process discipline.${focus ? ` This opening leans on ${focus}.` : ''}`,
+  },
+  {
+    test: /business analyst|\bba\b|analyst|requirements|stakeholder/i,
+    copy: (role, team, focus) =>
+      `The ${role} position sits close to stakeholders, translating business needs into clear requirements so the ${team} team can build the right thing with fewer surprises.${focus ? ` Look for your experience around ${focus}.` : ''}`,
+  },
+  {
+    test: /data|report|dashboard|analytics|insight/i,
+    copy: (role, team, focus) =>
+      `The ${role} role helps the ${team} team turn operational data into decisions, making reports, dashboards, and patterns easier for recruiters and leaders to act on.${focus ? ` The strongest match will show ${focus}.` : ''}`,
+  },
+  {
+    test: /support|operations|coordinator|specialist/i,
+    copy: (role, team, focus) =>
+      `The ${role} opening is about keeping the ${team} team responsive and steady, solving day-to-day issues while improving how candidates, recruiters, or internal teams get help.${focus ? ` Useful signals here include ${focus}.` : ''}`,
+  },
+]
+
+function buildJobDetailCopy(
+  jobTitle?: string,
+  department?: string,
+  description?: string,
+  requirements?: string[],
+) {
+  const role = jobTitle?.trim() || 'this role'
+  const team = department?.trim() || 'the hiring'
+  const focus = focusFromRequirements(requirements)
+  const roleContext = `${role} ${team} ${description ?? ''} ${requirements?.join(' ') ?? ''}`
+  const selectedNarrative = ROLE_NARRATIVES.find(narrative => narrative.test.test(roleContext))
+  const roleIntro = selectedNarrative
+    ? selectedNarrative.copy(role, team, focus)
+    : sentenceFromDescription(description)
+      ? `The ${role} role is centered on ${sentenceFromDescription(description)?.toLowerCase()}.${focus ? ` A strong fit will show ${focus}.` : ''}`
+      : `The ${role} position has its own rhythm in the ${team} team, so review how the day-to-day work, expectations, and success signals line up with your experience.`
+
+  return [roleIntro, 'Review the responsibilities, requirements, and location carefully before you apply.']
+}
+
+function buildGuideTips(
+  page: GuidePage,
+  selectedJobTitle?: string,
+  selectedJobDepartment?: string,
+  selectedJobDescription?: string,
+  selectedJobRequirements?: string[],
+  returnedFromJobDetail = false,
+) {
+  if (page === 'job-listings' && returnedFromJobDetail) {
+    return [
+      'Oh, looks like you would like to explore other opportunities.',
+      'Please review the other openings as well so we can help you find the best fit for you.',
+    ]
+  }
+
+  if (page === 'job-detail') {
+    return buildJobDetailCopy(
+      selectedJobTitle,
+      selectedJobDepartment,
+      selectedJobDescription,
+      selectedJobRequirements,
+    )
+  }
+
+  return GUIDE_COPY[page]
+}
+
 function buildSpokenMessage(page: GuidePage, title: string, tip: string) {
   return page === 'landing' ? `${title}. ${tip}` : tip
 }
@@ -123,7 +230,16 @@ function tuneGuideVoice(utterance: SpeechSynthesisUtterance, voices: SpeechSynth
   utterance.volume = 0.9
 }
 
-export default function AvatarGuide({ page, onBrowseAllOpenings, onMatchResult }: Props) {
+export default function AvatarGuide({
+  page,
+  selectedJobTitle,
+  selectedJobDepartment,
+  selectedJobDescription,
+  selectedJobRequirements,
+  returnedFromJobDetail,
+  onBrowseAllOpenings,
+  onMatchResult,
+}: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [speaking, setSpeaking] = useState(false)
   const [muted, setMuted] = useState(() => localStorage.getItem(RINA_MUTE_STORAGE_KEY) === '1')
@@ -133,7 +249,14 @@ export default function AvatarGuide({ page, onBrowseAllOpenings, onMatchResult }
   const fileInputRef = useRef<HTMLInputElement>(null)
   const lastSpokenRef = useRef('')
 
-  const tips = GUIDE_COPY[page]
+  const tips = buildGuideTips(
+    page,
+    selectedJobTitle,
+    selectedJobDepartment,
+    selectedJobDescription,
+    selectedJobRequirements,
+    returnedFromJobDetail,
+  )
   const title = LANDING_GREETING
   const showTitle = page === 'landing'
   const guideMessage = tips.join(' ')

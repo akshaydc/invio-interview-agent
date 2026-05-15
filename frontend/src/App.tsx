@@ -1,5 +1,4 @@
 ﻿import { useState } from 'react'
-import AstraIntro from './components/AstraIntro'
 import LandingPage from './pages/LandingPage'
 import JobListings, { type Job } from './pages/JobListings'
 import JobMatches, { type ResumeMatchResult, type JobMatch, type PrefillInfo } from './pages/JobMatches'
@@ -13,8 +12,6 @@ import CandidateInterview from './pages/CandidateInterview'
 import BookSlot from './pages/BookSlot'
 import AvatarGuide from './components/AvatarGuide'
 import './index.css'
-
-const ASTRA_INTRO_STORAGE_KEY = 'astra_intro_seen_enterprise_v2'
 
 export type AuthInfo = {
   token: string
@@ -55,10 +52,6 @@ type Page =
 
 
 function App() {
-  const [introSeen, setIntroSeen] = useState(() => {
-    const forceIntro = new URLSearchParams(window.location.search).get('intro') === '1'
-    return !forceIntro && localStorage.getItem(ASTRA_INTRO_STORAGE_KEY) === '1'
-  })
   const [page, setPage] = useState<Page>(() =>
     window.location.pathname === '/book-slot' ? 'book-slot' : 'landing'
   )
@@ -68,29 +61,35 @@ function App() {
   const [resumeMatch, setResumeMatch] = useState<ResumeMatchResult | null>(null)
   const [applicationPrefill, setApplicationPrefill] = useState<ApplicationPrefill | null>(null)
   const [appliedJobIds, setAppliedJobIds] = useState<string[]>([])
+  const [returnedFromJobDetail, setReturnedFromJobDetail] = useState(false)
 
   function handleLogin(info: AuthInfo) {
     setAuth(info)
+    setReturnedFromJobDetail(false)
     setPage(info.role === 'recruiter' ? 'recruiter-dashboard' : 'candidate-interview')
   }
 
   function handleLogout() {
     setAuth(null)
+    setReturnedFromJobDetail(false)
     setPage('landing')
   }
 
   function handleViewScorecard(ctNumber: string) {
     setScorecardCt(ctNumber)
+    setReturnedFromJobDetail(false)
     setPage('recruiter-scorecard')
   }
 
   function handleSelectJob(job: Job) {
     setSelectedJob(job)
+    setReturnedFromJobDetail(false)
     setPage('job-detail')
   }
 
   function handleMatchResult(result: ResumeMatchResult) {
     setResumeMatch(result)
+    setReturnedFromJobDetail(false)
     setPage('job-matches')
   }
 
@@ -111,28 +110,39 @@ function App() {
   }
 
   return (
-    <>
-      {!introSeen && (
-        <AstraIntro onComplete={() => {
-          localStorage.removeItem('astra_intro_seen')
-          localStorage.setItem(ASTRA_INTRO_STORAGE_KEY, '1')
-          setIntroSeen(true)
-        }} />
-      )}
-      <div className="app">
+    <div className="app">
       {page === 'landing' && (
-        <LandingPage          onBrowseAll={() => setPage('job-listings')}
-          onCandidateLoginClick={() => setPage('candidate-login')}
-          onRecruiterLoginClick={() => setPage('recruiter-login')}
+        <LandingPage
+          onBrowseAll={() => {
+            setReturnedFromJobDetail(false)
+            setPage('job-listings')
+          }}
+          onCandidateLoginClick={() => {
+            setReturnedFromJobDetail(false)
+            setPage('candidate-login')
+          }}
+          onRecruiterLoginClick={() => {
+            setReturnedFromJobDetail(false)
+            setPage('recruiter-login')
+          }}
         />
       )}
 
       {page === 'job-listings' && (
         <JobListings
           onSelectJob={handleSelectJob}
-          onCandidateLoginClick={() => setPage('candidate-login')}
-          onRecruiterLoginClick={() => setPage('recruiter-login')}
-          onHome={() => setPage('landing')}
+          onCandidateLoginClick={() => {
+            setReturnedFromJobDetail(false)
+            setPage('candidate-login')
+          }}
+          onRecruiterLoginClick={() => {
+            setReturnedFromJobDetail(false)
+            setPage('recruiter-login')
+          }}
+          onHome={() => {
+            setReturnedFromJobDetail(false)
+            setPage('landing')
+          }}
         />
       )}
 
@@ -141,10 +151,22 @@ function App() {
           matchResult={resumeMatch}
           appliedJobIds={appliedJobIds}
           onApply={handleApplyFromMatch}
-          onBrowseAll={() => setPage('job-listings')}
-          onCandidateLoginClick={() => setPage('candidate-login')}
-          onRecruiterLoginClick={() => setPage('recruiter-login')}
-          onHome={() => setPage('landing')}
+          onBrowseAll={() => {
+            setReturnedFromJobDetail(false)
+            setPage('job-listings')
+          }}
+          onCandidateLoginClick={() => {
+            setReturnedFromJobDetail(false)
+            setPage('candidate-login')
+          }}
+          onRecruiterLoginClick={() => {
+            setReturnedFromJobDetail(false)
+            setPage('recruiter-login')
+          }}
+          onHome={() => {
+            setReturnedFromJobDetail(false)
+            setPage('landing')
+          }}
         />
       )}
 
@@ -152,8 +174,14 @@ function App() {
         <JobDetail
           job={selectedJob}
           onApply={() => setPage('application-form')}
-          onBack={() => setPage('job-listings')}
-          onHome={() => setPage('landing')}
+          onBack={() => {
+            setReturnedFromJobDetail(true)
+            setPage('job-listings')
+          }}
+          onHome={() => {
+            setReturnedFromJobDetail(false)
+            setPage('landing')
+          }}
         />
       )}
 
@@ -174,6 +202,7 @@ function App() {
               setPage('job-matches')
             } else {
               setResumeMatch(null)
+              setReturnedFromJobDetail(false)
               setPage('job-listings')
             }
           }}
@@ -235,17 +264,21 @@ function App() {
         />
       )}
 
-      {introSeen && (
-        <AvatarGuide
-          page={page}
-          auth={auth}
-          selectedJobTitle={selectedJob?.title}
-          onBrowseAllOpenings={() => setPage('job-listings')}
-          onMatchResult={handleMatchResult}
-        />
-      )}
+      <AvatarGuide
+        page={page}
+        auth={auth}
+        selectedJobTitle={selectedJob?.title}
+        selectedJobDepartment={selectedJob?.department}
+        selectedJobDescription={selectedJob?.description}
+        selectedJobRequirements={selectedJob?.requirements}
+        returnedFromJobDetail={returnedFromJobDetail}
+        onBrowseAllOpenings={() => {
+          setReturnedFromJobDetail(false)
+          setPage('job-listings')
+        }}
+        onMatchResult={handleMatchResult}
+      />
     </div>
-    </>
   )
 }
 
