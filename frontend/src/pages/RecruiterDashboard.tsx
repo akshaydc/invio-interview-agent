@@ -190,6 +190,10 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     emailSent: boolean
     emailTo: string | null
     slotBookingUrl: string
+    callMade: boolean
+    callSid: string
+    callError: string
+    candidatePhone: string
   }
   const [shortlistConfirm, setShortlistConfirm] = useState<ShortlistConfirm | null>(null)
   const [toast, setToast] = useState<string | null>(null)
@@ -325,6 +329,9 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
         email_sent: boolean
         email_to: string | null
         slot_booking_url: string
+        call_made: boolean
+        call_sid: string
+        call_result: { success: boolean; error?: string }
         message: string
       }>(`${API}/recruiter/candidates/${ct}/shortlist`, {}, { headers })
       const cand = candidates.find(c => c.ct_number === ct)
@@ -336,6 +343,10 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
         emailSent: res.data.email_sent,
         emailTo: res.data.email_to,
         slotBookingUrl: res.data.slot_booking_url,
+        callMade: res.data.call_made ?? false,
+        callSid: res.data.call_sid ?? '',
+        callError: res.data.call_result?.error ?? '',
+        candidatePhone: cand?.phone ?? '',
       })
       showToast(`${cand?.name ?? ct} shortlisted. ${res.data.email_sent ? 'Email sent.' : 'Email not configured.'}`)
       fetchAnalytics()
@@ -670,12 +681,42 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                   <span style={{ fontSize: '1.1rem' }}>📞</span>
                   <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' }}>AI Call</span>
                 </div>
-                <p style={{ margin: 0, fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' }}>
-                  Rina will call the candidate now
-                </p>
-                <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>
-                  {shortlistConfirm.name}&apos;s number on file will be contacted shortly
-                </p>
+                {shortlistConfirm.callMade ? (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: '1rem' }}>✅</span>
+                      <span style={{ fontWeight: 600, color: '#16A34A', fontSize: '0.9rem' }}>Call Initiated Successfully</span>
+                    </div>
+                    <p style={{ margin: 0, color: 'var(--text)', fontSize: '0.85rem' }}>
+                      Rina is calling {shortlistConfirm.name} now
+                    </p>
+                    <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.82rem' }}>
+                      The candidate will receive an automated voice message about their shortlisting.
+                    </p>
+                    {shortlistConfirm.callSid && (
+                      <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                        Call ID: {shortlistConfirm.callSid}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: '1rem' }}>⚠️</span>
+                      <span style={{ fontWeight: 600, color: '#B45309', fontSize: '0.9rem' }}>Call Could Not Be Made</span>
+                      <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: '#FEF3C7', color: '#92400E', fontWeight: 500 }}>Simulation Mode</span>
+                    </div>
+                    {shortlistConfirm.callError && (
+                      <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>{shortlistConfirm.callError}</p>
+                    )}
+                    {shortlistConfirm.candidatePhone && (
+                      <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>
+                        Please contact the candidate directly on{' '}
+                        <strong style={{ color: 'var(--text)' }}>{shortlistConfirm.candidatePhone}</strong>
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
 
               <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
