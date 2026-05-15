@@ -3,7 +3,8 @@ import axios from 'axios'
 import type { AuthInfo } from '../App'
 import type { ResumeMatchResult } from '../pages/JobMatches'
 import { API_BASE_URL as API } from '../config'
-import rinaAvatar from '../assets/rina-avatar.png'
+
+const rinaAvatar = '/rina-avatar.webp'
 
 type GuidePage =
   | 'landing'
