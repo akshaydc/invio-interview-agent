@@ -18,7 +18,7 @@ import anthropic
 import httpx
 import openai
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -40,6 +40,7 @@ SLOTS_FILE = DATA_DIR / "slots.json"
 
 app = FastAPI(title="AI Interview Agent")
 active_sessions: dict = {}
+active_calls: dict = {}  # call_sid -> call context data
 
 app.add_middleware(
     CORSMiddleware,
@@ -571,35 +572,165 @@ def send_email_sync(to_email: str, subject: str, html_body: str) -> bool:
 
 def make_twilio_call(to_phone: str, candidate_name: str, job_title: str, booking_url: str) -> dict:
     if not all([TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER]):
-        print("Twilio not configured")
         return {"success": False, "error": "Twilio not configured"}
     try:
         from twilio.rest import Client
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-        twiml = (
-            '<?xml version="1.0" encoding="UTF-8"?>'
-            "<Response>"
-            '<Pause length="1"/>'
-            '<Say voice="Polly.Joanna" rate="90%">'
-            f"Hello! This is a demo call from ASTRA Recruitment. "
-            f"This call was intended for {candidate_name} "
-            f"regarding the position of {job_title}. "
-            "They have been shortlisted and will receive an email to book their interview slot. "
-            "Thank you!"
-            "</Say>"
-            "</Response>"
-        )
+
         # Demo mode — all calls redirected to fixed number
-        DEMO_PHONE = "+916366138710"  # Replace with your verified number
+        DEMO_PHONE = "+916366138710"
         actual_phone = DEMO_PHONE
         print(f"Demo mode: redirecting call from {to_phone} to {actual_phone}")
-        call = client.calls.create(twiml=twiml, to=actual_phone, from_=TWILIO_PHONE_NUMBER)
-        print(f"Twilio call initiated: {call.sid} to {actual_phone}")
+
+        backend_url = os.getenv(
+            "RAILWAY_PUBLIC_DOMAIN",
+            "invio-interview-agent-production.up.railway.app",
+        )
+        if not backend_url.startswith("http"):
+            backend_url = f"https://{backend_url}"
+
+        call = client.calls.create(
+            to=actual_phone,
+            from_=TWILIO_PHONE_NUMBER,
+            url=f"{backend_url}/twilio/outbound-call",
+            status_callback=f"{backend_url}/twilio/call-status",
+            status_callback_method="POST",
+            method="POST",
+        )
+
+        active_calls[call.sid] = {
+            "candidate_name": candidate_name,
+            "job_title": job_title,
+            "booking_url": booking_url,
+            "history": [],
+            "turn": 0,
+        }
+
+        print(f"Twilio call created: {call.sid}")
         return {"success": True, "call_sid": call.sid, "status": call.status, "to": actual_phone}
     except Exception as e:
         print(f"Twilio error: {type(e).__name__}: {e}")
         traceback.print_exc()
         return {"success": False, "error": str(e)}
+
+
+@app.post("/twilio/outbound-call")
+async def twilio_outbound_call(request: Request) -> Response:
+    """Initial TwiML when the outbound call connects."""
+    form = await request.form()
+    call_sid = form.get("CallSid", "")
+    call_data = active_calls.get(call_sid, {})
+    candidate_name = call_data.get("candidate_name", "there")
+    first_name = candidate_name.split()[0]
+    twiml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        "<Response>"
+        '<Pause length="1"/>'
+        f'<Say voice="Polly.Joanna" rate="85%">Hello, am I speaking with {first_name}?</Say>'
+        '<Gather input="speech" action="/twilio/handle-response" method="POST" speechTimeout="3" timeout="8" language="en-IN">'
+        '<Say voice="Polly.Joanna" rate="85%">Please say yes to continue or no to reschedule this call.</Say>'
+        "</Gather>"
+        '<Say voice="Polly.Joanna" rate="85%">I did not catch that. I will try again shortly. Goodbye!</Say>'
+        "</Response>"
+    )
+    return Response(content=twiml, media_type="application/xml")
+
+
+@app.post("/twilio/handle-response")
+async def twilio_handle_response(request: Request) -> Response:
+    """Handle candidate spoken responses — drives conversation via Claude."""
+    form = await request.form()
+    call_sid = form.get("CallSid", "")
+    speech_result = str(form.get("SpeechResult", "")).lower()
+
+    call_data = active_calls.get(call_sid, {})
+    candidate_name = call_data.get("candidate_name", "")
+    job_title = call_data.get("job_title", "")
+    first_name = candidate_name.split()[0] if candidate_name else "there"
+    history: list = call_data.get("history", [])
+    turn: int = call_data.get("turn", 0)
+
+    history.append({"role": "user", "content": speech_result or "no response"})
+
+    system_prompt = (
+        f"You are Rina, a warm and professional AI recruitment assistant making a phone call "
+        f"on behalf of ASTRA Recruitment.\n\n"
+        f"You are speaking with {candidate_name}.\n"
+        f"They have been shortlisted for: {job_title}\n\n"
+        "Call objectives (complete in order):\n"
+        "1. Confirm you are speaking with the right person and ask if it is a good time\n"
+        "2. Congratulate them on being shortlisted\n"
+        "3. Explain an AI agent will conduct the interview\n"
+        "4. Tell them a slot booking link will be sent to their email\n"
+        "5. Ask if they have any questions, then wish them well and end\n\n"
+        "Rules:\n"
+        "- Speak slowly, warmly, and clearly\n"
+        "- Keep each response to 2-3 sentences maximum\n"
+        "- Be conversational — respond naturally to what they say\n"
+        "- If they say they are busy, offer to call back later\n"
+        "- If they have questions you cannot answer, say the recruiter will follow up\n"
+        "- When all objectives are covered, end the call warmly\n"
+        "- Never use markdown or special characters\n"
+        f"- Current turn number: {turn}\n"
+        "- If turn >= 5, wrap up the call gracefully"
+    )
+
+    ai_response = "Thank you for your time. We will be in touch. Have a great day!"
+    if ANTHROPIC_API_KEY:
+        try:
+            claude = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+            messages = history if history else [{"role": "user", "content": "call started"}]
+            result = await claude.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=150,
+                system=system_prompt,
+                messages=messages,
+            )
+            ai_response = result.content[0].text.strip()
+        except Exception as e:
+            print(f"Claude error in call: {e}")
+
+    history.append({"role": "assistant", "content": ai_response})
+    call_data["history"] = history
+    call_data["turn"] = turn + 1
+    active_calls[call_sid] = call_data
+
+    end_phrases = ["have a great day", "goodbye", "take care", "good luck", "all the best"]
+    should_end = turn >= 5 or any(p in ai_response.lower() for p in end_phrases)
+
+    if should_end:
+        twiml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            "<Response>"
+            f'<Say voice="Polly.Joanna" rate="85%">{ai_response}</Say>'
+            '<Pause length="1"/>'
+            "<Hangup/>"
+            "</Response>"
+        )
+    else:
+        twiml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            "<Response>"
+            f'<Say voice="Polly.Joanna" rate="85%">{ai_response}</Say>'
+            '<Gather input="speech" action="/twilio/handle-response" method="POST" speechTimeout="3" timeout="8" language="en-IN">'
+            "</Gather>"
+            '<Say voice="Polly.Joanna" rate="85%">I did not hear a response. Thank you for your time. Have a great day!</Say>'
+            "<Hangup/>"
+            "</Response>"
+        )
+    return Response(content=twiml, media_type="application/xml")
+
+
+@app.post("/twilio/call-status")
+async def twilio_call_status(request: Request) -> Response:
+    """Receive call status callbacks from Twilio and clean up finished calls."""
+    form = await request.form()
+    call_sid = form.get("CallSid", "")
+    status = form.get("CallStatus", "")
+    print(f"Call {call_sid} status: {status}")
+    if status in ("completed", "failed", "busy", "no-answer"):
+        active_calls.pop(call_sid, None)
+    return Response(content="OK", media_type="text/plain")
 
 
 async def send_scorecard_email(scorecard: dict, job_role: str, session_id: str, candidate_name: str = "") -> None:
