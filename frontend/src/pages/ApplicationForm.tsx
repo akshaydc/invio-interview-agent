@@ -27,7 +27,7 @@ type Props = {
   jobId: string
   jobTitle: string
   onBack: () => void
-  onApplied: () => void
+  onApplied: (ctNumber?: string, jobTitle?: string) => void
   prefill?: PrefillData
 }
 
@@ -70,6 +70,25 @@ function ctcWarning(currentCtc: string, expectedCtc: string): string {
   return ''
 }
 
+const TERMS_TEXT = `By proceeding with this application, you agree to:
+
+1. Communication Consent
+You consent to receive calls, SMS, and emails from ASTRA Recruitment and its representatives to the phone number and email address provided in this application. This includes automated AI-generated calls for interview scheduling and notifications.
+
+2. Interview Recording & Analysis
+If selected for an AI-powered interview, you consent to the recording, analysis, and storage of your interview session including audio, video (if applicable), and transcript data. This data will be used solely for recruitment evaluation purposes.
+
+3. Data Storage
+Your personal information, resume, interview transcript, and AI-generated assessment scores will be securely stored and used only for the purpose of evaluating your application for the role you have applied for.
+
+4. Data Retention
+Your data will be retained for a maximum of 12 months from the date of application, after which it will be permanently deleted unless you are offered and accept employment.
+
+5. Third Party AI Processing
+Your interview responses will be processed by AI systems (including but not limited to Anthropic Claude) to generate objective assessment scores. No human will have access to your raw interview recording without your explicit consent.
+
+By checking this box, you confirm you have read and agree to these terms.`
+
 export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, prefill }: Props) {
   const [name, setName] = useState(prefill?.name ?? '')
   const [email, setEmail] = useState(prefill?.email ?? '')
@@ -81,6 +100,9 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
   const [expectedCtc, setExpectedCtc] = useState('')
   const [noticePeriod, setNoticePeriod] = useState('30 days')
   const [resumeFile, setResumeFile] = useState<File | null>(prefill?.resumeFile ?? null)
+  const [additionalComments, setAdditionalComments] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [showTermsModal, setShowTermsModal] = useState(false)
   const resumePreloaded = !!prefill?.resumeFile
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -92,7 +114,6 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
 
   useEffect(() => {
     if (!prefill) return
-    console.log('Setting prefill:', prefill)
     if (prefill.name) setName(prefill.name)
     if (prefill.email) setEmail(prefill.email)
     if (prefill.phone) setPhone(prefill.phone)
@@ -103,7 +124,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
 
   useEffect(() => {
     if (!ctNumber) return
-    const timer = setTimeout(() => onApplied(), 4000)
+    const timer = setTimeout(() => onApplied(ctNumber, jobTitle), 4000)
     return () => clearTimeout(timer)
   }, [ctNumber])
 
@@ -123,6 +144,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
     const allTouched: Touched = { name: true, email: true, phone: true, location: true, currentRole: true, currentCtc: true, expectedCtc: true, resumeFile: true }
     setTouched(allTouched)
     if (!isValid) return
+    if (!termsAccepted) return
 
     setSubmitError('')
     setLoading(true)
@@ -137,6 +159,8 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
       fd.append('current_ctc', currentCtc.trim())
       fd.append('expected_ctc', expectedCtc.trim())
       fd.append('notice_period', noticePeriod)
+      fd.append('additional_comments', additionalComments.trim())
+      fd.append('terms_accepted', 'true')
       if (resumeFile) fd.append('resume', resumeFile)
       if (prefill?.matchData) fd.append('match_data', JSON.stringify(prefill.matchData))
 
@@ -145,6 +169,21 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
         fd,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       )
+
+      // Save to localStorage for applied jobs widget
+      try {
+        const stored = JSON.parse(localStorage.getItem('astra_applied_jobs') ?? '[]')
+        stored.push({
+          job_id: jobId,
+          job_title: jobTitle,
+          ct_number: res.data.ct_number,
+          applied_at: new Date().toISOString(),
+        })
+        localStorage.setItem('astra_applied_jobs', JSON.stringify(stored))
+      } catch {
+        // localStorage unavailable — skip silently
+      }
+
       setCtNumber(res.data.ct_number)
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
@@ -177,7 +216,7 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
           </p>
           <p className="muted" style={{ fontSize: '0.8rem' }}>Redirecting to jobs in 4 seconds…</p>
           <hr className="thankyou-divider" />
-          <button className="btn btn-secondary thankyou-btn" onClick={onApplied}>
+          <button className="btn btn-secondary thankyou-btn" onClick={() => onApplied(ctNumber, jobTitle)}>
             Back to Jobs
           </button>
         </div>
@@ -383,6 +422,45 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
             )}
           </div>
 
+          <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
+            <label className="role-label">Additional Comments (optional)</label>
+            <textarea
+              className="role-textarea"
+              rows={4}
+              placeholder="Any additional information you'd like to share with the recruiter..."
+              value={additionalComments}
+              onChange={e => setAdditionalComments(e.target.value)}
+              style={{ resize: 'vertical', minHeight: 80 }}
+            />
+          </div>
+
+        </div>
+
+        {/* Terms & Conditions */}
+        <div style={{ marginTop: 20, padding: '14px 16px', background: 'var(--surface-2, #F8FAFC)', borderRadius: 8, border: '1px solid var(--border)' }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.5 }}>
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={e => setTermsAccepted(e.target.checked)}
+              style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--primary)' }}
+            />
+            <span>
+              I acknowledge and agree to the{' '}
+              <button
+                type="button"
+                style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: 0, fontWeight: 600, fontSize: '0.9rem', textDecoration: 'underline' }}
+                onClick={() => setShowTermsModal(true)}
+              >
+                Terms &amp; Conditions
+              </button>
+            </span>
+          </label>
+          {!termsAccepted && touched.name && (
+            <p style={{ margin: '6px 0 0 26px', color: 'var(--red, #A32D2D)', fontSize: '0.82rem' }}>
+              You must accept the Terms &amp; Conditions to submit.
+            </p>
+          )}
         </div>
 
         {submitError && <p className="error-text" style={{ marginTop: 12 }}>{submitError}</p>}
@@ -391,12 +469,43 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
           className="btn btn-primary"
           style={{ marginTop: 20 }}
           onClick={handleSubmit}
-          disabled={loading || !isValid || !!duplicateError}
-          title={!isValid ? 'Please fill in all required fields correctly' : undefined}
+          disabled={loading || !isValid || !!duplicateError || !termsAccepted}
+          title={!termsAccepted ? 'Please accept the Terms & Conditions' : !isValid ? 'Please fill in all required fields correctly' : undefined}
         >
           {loading ? 'Submitting...' : 'Submit Application'}
         </button>
       </div>
+
+      {/* Terms & Conditions Modal */}
+      {showTermsModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={() => setShowTermsModal(false)}
+        >
+          <div
+            style={{ background: '#fff', borderRadius: 12, maxWidth: 560, width: '100%', maxHeight: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0' }}>
+              <h3 style={{ margin: 0, color: '#042C53', fontSize: '1rem' }}>Terms &amp; Conditions — ASTRA Recruitment</h3>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
+              <pre style={{ margin: 0, fontFamily: 'inherit', fontSize: '0.875rem', lineHeight: 1.7, color: '#374151', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {TERMS_TEXT}
+              </pre>
+            </div>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0' }}>
+              <button
+                className="btn btn-primary"
+                style={{ width: '100%' }}
+                onClick={() => { setTermsAccepted(true); setShowTermsModal(false) }}
+              >
+                I Understand, Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageLayout>
   )
 }

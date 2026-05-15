@@ -3,8 +3,17 @@ import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
 import Navbar from '../components/Navbar'
 
-type SlotOption = { slot: string; display: string }
+type SlotOption = { slot: string; display: string; available?: boolean; booked_by?: string | null }
 type DateOption = { date: string; display: string; slot_count: number; slots: SlotOption[] }
+
+const TIMEZONE_OPTIONS = [
+  { value: 'Asia/Kolkata', label: 'Asia/Kolkata (IST)', sub: 'UTC+5:30' },
+  { value: 'Asia/Dubai', label: 'Asia/Dubai (GST)', sub: 'UTC+4:00' },
+  { value: 'Europe/London', label: 'Europe/London (GMT)', sub: 'UTC+0:00' },
+  { value: 'America/New_York', label: 'America/New_York (EST)', sub: 'UTC-5:00' },
+  { value: 'America/Los_Angeles', label: 'America/Los_Angeles (PST)', sub: 'UTC-8:00' },
+  { value: 'Asia/Singapore', label: 'Asia/Singapore (SGT)', sub: 'UTC+8:00' },
+]
 
 export default function BookSlot() {
   const params = new URLSearchParams(window.location.search)
@@ -16,11 +25,16 @@ export default function BookSlot() {
   const [availableDates, setAvailableDates] = useState<DateOption[]>([])
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedSlot, setSelectedSlot] = useState('')
+  const [timezone, setTimezone] = useState('Asia/Kolkata')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [confirming, setConfirming] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [confirmedSlotDisplay, setConfirmedSlotDisplay] = useState('')
+
+  function buildUrl() {
+    return `${API}/book-slot/available?token=${encodeURIComponent(token)}&ct=${encodeURIComponent(ct)}&timezone=${encodeURIComponent(timezone)}`
+  }
 
   useEffect(() => {
     if (!token || !ct) {
@@ -28,10 +42,10 @@ export default function BookSlot() {
       setLoading(false)
       return
     }
+    setLoading(true)
+    setSelectedSlot('')
     axios
-      .get<{ name: string; job_title: string; available_dates: DateOption[] }>(
-        `${API}/book-slot/available?token=${encodeURIComponent(token)}&ct=${encodeURIComponent(ct)}`
-      )
+      .get<{ name: string; job_title: string; available_dates: DateOption[] }>(buildUrl())
       .then(res => {
         setName(res.data.name)
         setJobTitle(res.data.job_title)
@@ -42,9 +56,21 @@ export default function BookSlot() {
       })
       .catch(() => setError('This link is invalid or has expired.'))
       .finally(() => setLoading(false))
-  }, [token, ct])
+  }, [token, ct, timezone])
 
   const currentDateData = availableDates.find(d => d.date === selectedDate)
+
+  // First 3 available slots are "popular"
+  const popularSlots = new Set<string>()
+  if (currentDateData) {
+    let count = 0
+    for (const s of currentDateData.slots) {
+      if (s.available !== false && count < 3) {
+        popularSlots.add(s.slot)
+        count++
+      }
+    }
+  }
 
   async function handleConfirm() {
     if (!selectedSlot) return
@@ -133,6 +159,24 @@ export default function BookSlot() {
         </div>
 
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* Timezone selector */}
+          <div>
+            <label className="role-label" style={{ marginBottom: 6, display: 'block' }}>Timezone</label>
+            <select
+              className="role-select"
+              value={timezone}
+              onChange={e => { setTimezone(e.target.value); setSelectedSlot('') }}
+              style={{ maxWidth: 320 }}
+            >
+              {TIMEZONE_OPTIONS.map(tz => (
+                <option key={tz.value} value={tz.value}>
+                  {tz.label} — {tz.sub}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {availableDates.length > 0 && (
             <div>
               <p className="role-label" style={{ marginBottom: 10 }}>Select a date</p>
@@ -154,7 +198,6 @@ export default function BookSlot() {
                     }}
                   >
                     {d.display}
-                    <span style={{ marginLeft: 6, fontSize: '0.75rem', opacity: 0.7 }}>{d.slot_count}</span>
                   </button>
                 ))}
               </div>
@@ -165,15 +208,72 @@ export default function BookSlot() {
             <div>
               <p className="role-label" style={{ marginBottom: 10 }}>Available time slots</p>
               <div className="slot-grid">
-                {currentDateData.slots.map(s => (
-                  <button
-                    key={s.slot}
-                    className={`slot-cell slot-cell--available${selectedSlot === s.slot ? ' slot-cell--selected' : ''}`}
-                    onClick={() => setSelectedSlot(s.slot)}
-                  >
-                    {s.display}
-                  </button>
-                ))}
+                {currentDateData.slots.map(s => {
+                  const isBooked = s.available === false || !!s.booked_by
+                  const isSelected = selectedSlot === s.slot
+                  const isPopular = !isBooked && popularSlots.has(s.slot)
+
+                  let bg = '#fff'
+                  let borderColor = '#0C447C'
+                  let color = '#0C447C'
+                  let cursor: React.CSSProperties['cursor'] = 'pointer'
+                  let textDecoration = 'none'
+
+                  if (isBooked) {
+                    bg = '#F8FAFC'
+                    borderColor = '#e2e8f0'
+                    color = '#94a3b8'
+                    cursor = 'not-allowed'
+                    textDecoration = 'line-through'
+                  } else if (isSelected) {
+                    bg = '#0C447C'
+                    borderColor = '#0C447C'
+                    color = '#fff'
+                  } else if (isPopular) {
+                    bg = '#E1F5EE'
+                    borderColor = '#0F6E56'
+                    color = '#0F6E56'
+                  }
+
+                  return (
+                    <div key={s.slot} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <button
+                        style={{
+                          padding: '8px 4px',
+                          borderRadius: 7,
+                          border: `1.5px solid ${borderColor}`,
+                          background: bg,
+                          color,
+                          cursor,
+                          fontSize: '0.82rem',
+                          fontWeight: isSelected ? 600 : 500,
+                          textDecoration,
+                          transition: 'all 0.15s',
+                        }}
+                        disabled={isBooked}
+                        onClick={() => !isBooked && setSelectedSlot(s.slot)}
+                        onMouseEnter={e => {
+                          if (!isBooked && !isSelected) {
+                            (e.target as HTMLButtonElement).style.background = '#EBF4FF'
+                          }
+                        }}
+                        onMouseLeave={e => {
+                          if (!isBooked && !isSelected) {
+                            (e.target as HTMLButtonElement).style.background = isPopular ? '#E1F5EE' : '#fff'
+                          }
+                        }}
+                      >
+                        {s.display}
+                      </button>
+                      {isBooked && (
+                        <span style={{ textAlign: 'center', fontSize: 10, color: '#94a3b8' }}>Booked</span>
+                      )}
+                      {isPopular && !isBooked && (
+                        <span style={{ textAlign: 'center', fontSize: 10, color: '#0F6E56', fontWeight: 500 }}>Popular</span>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
