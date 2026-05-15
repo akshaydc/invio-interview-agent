@@ -727,24 +727,6 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
         </div>
       </div>
 
-      {analyticsLoading ? (
-        <div style={{
-          background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
-          padding: '24px', display: 'flex', gap: 14,
-        }}>
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} style={{
-              flex: 1, height: 88, borderRadius: 10,
-              background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)',
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 1.4s infinite',
-            }} />
-          ))}
-        </div>
-      ) : analytics ? (
-        <PipelineWidget analytics={analytics} />
-      ) : null}
-
       <div className="tab-bar">
         <button className={`tab-btn${tab === 'candidates' ? ' tab-btn--active' : ''}`} onClick={() => setTab('candidates')}>
           Candidates
@@ -1075,6 +1057,8 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                 )}
               </div>
             </div>
+
+          {!analyticsLoading && analytics && <PipelineWidget analytics={analytics} />}
         </>
       )}
 
