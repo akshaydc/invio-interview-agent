@@ -819,6 +819,8 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
             </div>
           </div>
 
+          {!analyticsLoading && analytics && <PipelineWidget analytics={analytics} />}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1058,7 +1060,6 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
               </div>
             </div>
 
-          {!analyticsLoading && analytics && <PipelineWidget analytics={analytics} />}
         </>
       )}
 
