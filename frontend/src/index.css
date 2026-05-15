@@ -205,6 +205,11 @@ body {
   50%       { box-shadow: 0 0 0 6px rgba(15, 110, 86, 0.08); }
 }
 
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* â”€â”€ Transcript â”€â”€ */
 .transcript-card h3 {
   margin-bottom: 16px;
