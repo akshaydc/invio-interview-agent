@@ -1,4 +1,5 @@
 ﻿import { useState } from 'react'
+import AstraIntro from './components/AstraIntro'
 import LandingPage from './pages/LandingPage'
 import JobListings, { type Job } from './pages/JobListings'
 import JobMatches, { type ResumeMatchResult, type JobMatch, type PrefillInfo } from './pages/JobMatches'
@@ -12,6 +13,8 @@ import CandidateInterview from './pages/CandidateInterview'
 import BookSlot from './pages/BookSlot'
 import AvatarGuide from './components/AvatarGuide'
 import './index.css'
+
+const ASTRA_INTRO_STORAGE_KEY = 'astra_intro_seen_enterprise_v3'
 
 export type AuthInfo = {
   token: string
@@ -52,6 +55,10 @@ type Page =
 
 
 function App() {
+  const [introSeen, setIntroSeen] = useState(() => {
+    const forceIntro = new URLSearchParams(window.location.search).get('intro') === '1'
+    return !forceIntro && localStorage.getItem(ASTRA_INTRO_STORAGE_KEY) === '1'
+  })
   const [page, setPage] = useState<Page>(() =>
     window.location.pathname === '/book-slot' ? 'book-slot' : 'landing'
   )
@@ -110,7 +117,17 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <>
+      {!introSeen && (
+        <AstraIntro onComplete={() => {
+          localStorage.removeItem('astra_intro_seen')
+          localStorage.removeItem('astra_intro_seen_enterprise_v2')
+          localStorage.setItem(ASTRA_INTRO_STORAGE_KEY, '1')
+          setIntroSeen(true)
+        }} />
+      )}
+
+      <div className="app">
       {page === 'landing' && (
         <LandingPage
           onBrowseAll={() => {
@@ -264,21 +281,24 @@ function App() {
         />
       )}
 
-      <AvatarGuide
-        page={page}
-        auth={auth}
-        selectedJobTitle={selectedJob?.title}
-        selectedJobDepartment={selectedJob?.department}
-        selectedJobDescription={selectedJob?.description}
-        selectedJobRequirements={selectedJob?.requirements}
-        returnedFromJobDetail={returnedFromJobDetail}
-        onBrowseAllOpenings={() => {
-          setReturnedFromJobDetail(false)
-          setPage('job-listings')
-        }}
-        onMatchResult={handleMatchResult}
-      />
-    </div>
+        {introSeen && (
+          <AvatarGuide
+            page={page}
+            auth={auth}
+            selectedJobTitle={selectedJob?.title}
+            selectedJobDepartment={selectedJob?.department}
+            selectedJobDescription={selectedJob?.description}
+            selectedJobRequirements={selectedJob?.requirements}
+            returnedFromJobDetail={returnedFromJobDetail}
+            onBrowseAllOpenings={() => {
+              setReturnedFromJobDetail(false)
+              setPage('job-listings')
+            }}
+            onMatchResult={handleMatchResult}
+          />
+        )}
+      </div>
+    </>
   )
 }
 
