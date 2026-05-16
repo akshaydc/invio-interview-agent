@@ -29,6 +29,7 @@ type Props = {
   returnedFromJobDetail?: boolean
   onBrowseAllOpenings?: () => void
   onMatchResult?: (result: ResumeMatchResult) => void
+  openTick?: number
 }
 
 const GUIDE_COPY: Record<GuidePage, string[]> = {
@@ -244,6 +245,7 @@ export default function AvatarGuide({
   returnedFromJobDetail,
   onBrowseAllOpenings,
   onMatchResult,
+  openTick,
 }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [speaking, setSpeaking] = useState(false)
@@ -253,6 +255,10 @@ export default function AvatarGuide({
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const lastSpokenRef = useRef('')
+
+  useEffect(() => {
+    if (openTick && openTick > 0) setCollapsed(false)
+  }, [openTick])
 
   const tips = buildGuideTips(
     page,

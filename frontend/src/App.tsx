@@ -141,6 +141,7 @@ function App() {
             setReturnedFromJobDetail(false)
             setPage('job-listings')
           }}
+          onMatchResult={handleMatchResult}
           onCandidateLoginClick={() => {
             setReturnedFromJobDetail(false)
             setPage('candidate-login')
@@ -297,7 +298,7 @@ function App() {
         />
       )}
 
-        {introSeen && (
+        {introSeen && page !== 'landing' && (
           <AvatarGuide
             page={page}
             auth={auth}
