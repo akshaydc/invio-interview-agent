@@ -15,6 +15,7 @@ const FLOW_TILES = [
 export default function LandingPage({ onCandidateLoginClick, onRecruiterLoginClick }: Props) {
   return (
     <PageLayout
+      className="landing-page-main"
       navbar={{
         showLoginButtons: true,
         onCandidateLogin: onCandidateLoginClick,
