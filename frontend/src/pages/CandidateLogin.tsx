@@ -29,6 +29,7 @@ export default function CandidateLogin({ onLogin, onBack }: Props) {
         job_role: string
         job_description: string
         status: string
+        interview_slot?: string
       }>(`${API}/auth/candidate/login`, { ct_number: ctNumber.trim() })
       onLogin({
         token: res.data.token,
@@ -38,6 +39,7 @@ export default function CandidateLogin({ onLogin, onBack }: Props) {
         jobRole: res.data.job_role,
         jobDescription: res.data.job_description,
         status: res.data.status,
+        interviewSlot: res.data.interview_slot ?? undefined,
       })
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Login failed.' : 'Login failed.'
@@ -53,23 +55,54 @@ export default function CandidateLogin({ onLogin, onBack }: Props) {
         <button className="btn-back-login" onClick={onBack}>
           &#8592; Back to Job Listings
         </button>
-        <div className="login-card">
-        <h1 className="login-title">Invio</h1>
-        <p className="login-subtitle">Candidate Login</p>
-        <div className="login-fields">
-          <input
-            className="role-input"
-            type="text"
-            placeholder="CT Number (e.g. CT20260042)"
-            value={ctNumber}
-            onChange={e => setCtNumber(e.target.value.toUpperCase())}
-            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-          />
-        </div>
-        {error && <p className="error-text">{error}</p>}
-        <button className="btn btn-primary login-btn" onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign In'}
-        </button>
+
+        <div className="login-split">
+          <section className="login-context" aria-label="Candidate access">
+            <div>
+              <p className="login-eyebrow">Candidate Portal</p>
+              <h2>Return to your interview journey.</h2>
+              <p>
+                Use your CT number to check the role, schedule status, and enter the interview room when it is time.
+              </p>
+            </div>
+
+            <div className="login-tile-grid">
+              <div className="login-info-tile">
+                <span>01</span>
+                <strong>Status</strong>
+                <small>See where your application stands.</small>
+              </div>
+              <div className="login-info-tile">
+                <span>02</span>
+                <strong>Schedule</strong>
+                <small>Review confirmed interview timing.</small>
+              </div>
+              <div className="login-info-tile login-info-tile--wide">
+                <span>03</span>
+                <strong>Interview</strong>
+                <small>Join the guided interview experience from one place.</small>
+              </div>
+            </div>
+          </section>
+
+          <div className="login-card">
+            <h1 className="login-title" style={{ fontFamily: 'var(--font-display)' }}>ASTRA</h1>
+            <p className="login-subtitle">Candidate Login</p>
+            <div className="login-fields">
+              <input
+                className="role-input"
+                type="text"
+                placeholder="CT Number (e.g. CT20260042)"
+                value={ctNumber}
+                onChange={e => setCtNumber(e.target.value.toUpperCase())}
+                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              />
+            </div>
+            {error && <p className="error-text">{error}</p>}
+            <button className="btn btn-primary login-btn" onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

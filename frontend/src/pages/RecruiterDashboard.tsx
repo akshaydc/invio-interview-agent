@@ -1,19 +1,31 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
+import Navbar from '../components/Navbar'
+import PipelineWidget, { type Analytics } from '../components/PipelineWidget'
 
-const JOB_ROLES = [
-  'Software Engineer',
-  'Frontend Developer',
-  'Backend Developer',
-  'Full Stack Developer',
-  'Salesforce Administrator',
-  'Product Manager',
-  'Salesforce Developer',
-  'QA Engineer',
+const TIMEZONE_OPTIONS = [
+  { value: 'Asia/Kolkata', label: 'Asia/Kolkata (IST)', sub: 'UTC+5:30' },
+  { value: 'Asia/Dubai', label: 'Asia/Dubai (GST)', sub: 'UTC+4:00' },
+  { value: 'Europe/London', label: 'Europe/London (GMT)', sub: 'UTC+0:00' },
+  { value: 'America/New_York', label: 'America/New_York (EST)', sub: 'UTC-5:00' },
+  { value: 'America/Los_Angeles', label: 'America/Los_Angeles (PST)', sub: 'UTC-8:00' },
+  { value: 'Asia/Singapore', label: 'Asia/Singapore (SGT)', sub: 'UTC+8:00' },
 ]
 
-type CandidateStatus = 'not_started' | 'applied' | 'interview_scheduled' | 'interview_complete' | 'rejected'
+type CandidateStatus = 'not_started' | 'applied' | 'shortlisted' | 'interview_scheduled' | 'interview_complete' | 'rejected'
+
+type CallStatus = {
+  call_made: boolean
+  call_made_at: string | null
+  call_answered: boolean
+  call_answered_at: string | null
+  call_complete: boolean
+  call_complete_at: string | null
+  message_delivered: boolean
+  call_sid: string
+  note?: string
+}
 
 type Candidate = {
   name: string
@@ -39,7 +51,11 @@ type Candidate = {
   notice_fit?: string
   recommendation?: string
   applied_at?: string
+  interview_slot?: string
+  call_status?: CallStatus
 }
+
+type SlotInfo = { slot: string; display: string; available: boolean; booked_by: string | null }
 
 type Job = {
   id: string
@@ -65,14 +81,16 @@ type Props = {
 const STATUS_LABELS: Record<string, string> = {
   not_started: 'Not Started',
   applied: 'Applied',
-  interview_scheduled: 'Scheduled',
-  interview_complete: 'Completed',
+  shortlisted: 'Shortlisted',
+  interview_scheduled: 'Interview Scheduled',
+  interview_complete: 'Interview Completed',
   rejected: 'Rejected',
 }
 
 const STATUS_CLASSES: Record<string, string> = {
   not_started: 'badge badge--muted',
   applied: 'badge badge--muted',
+  shortlisted: 'badge badge--purple',
   interview_scheduled: 'badge badge--blue',
   interview_complete: 'badge badge--green',
   rejected: 'badge badge--red',
@@ -90,6 +108,22 @@ function matchBadge(pct: number | null | undefined) {
   return <span className={cls}>{pct}%</span>
 }
 
+function formatSlotDisplay(slot: string): string {
+  try {
+    const [datePart, timePart] = slot.split(' ')
+    const [year, month, day] = datePart.split('-').map(Number)
+    const [hour, minute] = timePart.split(':').map(Number)
+    const dt = new Date(year, month - 1, day, hour, minute)
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const amPm = hour < 12 ? 'AM' : 'PM'
+    const displayHour = hour % 12 || 12
+    return `${dayNames[dt.getDay()]}, ${day} ${monthNames[dt.getMonth()]} ${year} · ${displayHour}:${String(minute).padStart(2, '0')} ${amPm}`
+  } catch {
+    return slot
+  }
+}
+
 type Tab = 'candidates' | 'jobs'
 
 export default function RecruiterDashboard({ token, onLogout, onViewScorecard }: Props) {
@@ -102,11 +136,20 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [candidateFormError, setCandidateFormError] = useState('')
   const [candidateFormLoading, setCandidateFormLoading] = useState(false)
   const [actionCt, setActionCt] = useState<string | null>(null)
-  const [name, setName] = useState('')
-  const [ctNumber, setCtNumber] = useState('')
-  const [jobRole, setJobRole] = useState('Software Engineer')
-  const [customRole, setCustomRole] = useState('')
-  const [jobDescription, setJobDescription] = useState('')
+  const [acFullName, setAcFullName] = useState('')
+  const [acEmail, setAcEmail] = useState('')
+  const [acLinkedin, setAcLinkedin] = useState('')
+  const [acPhone, setAcPhone] = useState('')
+  const [acLocation, setAcLocation] = useState('')
+  const [acCurrentRole, setAcCurrentRole] = useState('')
+  const [acCurrentCtc, setAcCurrentCtc] = useState('')
+  const [acExpectedCtc, setAcExpectedCtc] = useState('')
+  const [acNoticePeriod, setAcNoticePeriod] = useState('Immediate')
+  const [acResume, setAcResume] = useState<File | null>(null)
+  const [acAdditionalComments, setAcAdditionalComments] = useState('')
+  const [acJobId, setAcJobId] = useState('')
+  const acResumeRef = useRef<HTMLInputElement>(null)
+  const [openJobs, setOpenJobs] = useState<Job[]>([])
 
   const [jobs, setJobs] = useState<Job[]>([])
   const [jobsLoading, setJobsLoading] = useState(true)
@@ -139,12 +182,55 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [editFormError, setEditFormError] = useState('')
   const [editSuccessMsg, setEditSuccessMsg] = useState('')
 
+  const [resumeModal, setResumeModal] = useState<{ name: string; text: string; filename: string } | null>(null)
+
   const [filterRole, setFilterRole] = useState('')
   const [filterSkill, setFilterSkill] = useState('')
   const [filterLocation, setFilterLocation] = useState('')
   const [filterMinMatch, setFilterMinMatch] = useState(0)
   const [filterRecommendation, setFilterRecommendation] = useState('All')
   const [filterStatus, setFilterStatus] = useState('All')
+
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [scheduleModalCt, setScheduleModalCt] = useState('')
+  const [slots, setSlots] = useState<SlotInfo[]>([])
+  const [slotsLoading, setSlotsLoading] = useState(false)
+  const [selectedSlot, setSelectedSlot] = useState('')
+  const [bookingLoading, setBookingLoading] = useState(false)
+  const [bookSlotError, setBookSlotError] = useState('')
+  const [availableDates, setAvailableDates] = useState<{ date: string; display: string }[]>([])
+  const [scheduleDateSelected, setScheduleDateSelected] = useState('')
+  const [scheduleTimezone, setScheduleTimezone] = useState('Asia/Kolkata')
+  const [shortlistingCt, setShortlistingCt] = useState<string | null>(null)
+
+  const [analytics, setAnalytics] = useState<Analytics | null>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(true)
+
+  type ShortlistConfirm = {
+    name: string
+    emailSent: boolean
+    emailTo: string | null
+    slotBookingUrl: string
+    callMade: boolean
+    callSid: string
+    callError: string
+    candidatePhone: string
+  }
+  const [shortlistConfirm, setShortlistConfirm] = useState<ShortlistConfirm | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const schedulePopularSlots = useMemo(() => {
+    const popular = new Set<string>()
+    let count = 0
+    for (const s of slots) {
+      if (s.available && count < 3) {
+        popular.add(s.slot)
+        count++
+      }
+    }
+    return popular
+  }, [slots])
 
   const filteredCandidates = useMemo(() => {
     let result = [...candidates].sort((a, b) => {
@@ -176,6 +262,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     if (filterStatus !== 'All') {
       const statusMap: Record<string, string> = {
         'Applied': 'applied',
+        'Shortlisted': 'shortlisted',
         'Interview Scheduled': 'interview_scheduled',
         'Interview Complete': 'interview_complete',
         'Rejected': 'rejected',
@@ -186,6 +273,18 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   }, [candidates, filterRole, filterSkill, filterLocation, filterMinMatch, filterRecommendation, filterStatus])
 
   const headers = { 'X-Auth-Token': token }
+
+  async function fetchAnalytics() {
+    setAnalyticsLoading(true)
+    try {
+      const res = await axios.get<Analytics>(`${API}/recruiter/analytics`, { headers })
+      setAnalytics(res.data)
+    } catch {
+      // silent
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }
 
   async function fetchCandidates() {
     setCandidatesLoading(true)
@@ -211,21 +310,108 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     }
   }
 
-  useEffect(() => { fetchCandidates() }, [])
+  useEffect(() => { fetchCandidates(); fetchAnalytics() }, [])
   useEffect(() => { if (tab === 'jobs') fetchJobs() }, [tab])
+  useEffect(() => {
+    axios.get<Job[]>(`${API}/jobs`).then(res => setOpenJobs(res.data.filter(j => j.status === 'open'))).catch(() => {})
+  }, [])
 
   function toggleExpand(ct: string) {
     setExpandedCt(prev => prev === ct ? null : ct)
   }
 
-  async function handleSchedule(ct: string) {
-    setActionCt(ct)
+  function openScheduleModal(ct: string) {
+    setScheduleModalCt(ct)
+    setShowScheduleModal(true)
+    setSlots([])
+    setSelectedSlot('')
+    setBookSlotError('')
+    setAvailableDates([])
+    setScheduleTimezone('Asia/Kolkata')
+    const today = new Date().toISOString().split('T')[0]
+    setScheduleDateSelected(today)
+    fetchSlots(today, 'Asia/Kolkata')
+  }
+
+  function closeScheduleModal() {
+    setShowScheduleModal(false)
+    setScheduleModalCt('')
+  }
+
+  async function fetchSlots(date?: string, tz?: string) {
+    setSlotsLoading(true)
+    const timezone = tz ?? scheduleTimezone
     try {
-      await axios.post(`${API}/recruiter/candidates/${ct}/schedule`, {}, { headers })
+      let url = `${API}/recruiter/slots?timezone=${encodeURIComponent(timezone)}`
+      if (date) url += `&date=${date}`
+      const res = await axios.get<{ slots: SlotInfo[]; available_dates: { date: string; display: string }[] }>(url, { headers })
+      setSlots(res.data.slots ?? [])
+      if (res.data.available_dates?.length) setAvailableDates(res.data.available_dates)
+    } catch {
+      // silent
+    } finally {
+      setSlotsLoading(false)
+    }
+  }
+
+  function showToast(message: string) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    setToast(message)
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+  }
+
+  async function handleShortlist(ct: string) {
+    setShortlistingCt(ct)
+    try {
+      const res = await axios.post<{
+        success: boolean
+        email_sent: boolean
+        email_to: string | null
+        slot_booking_url: string
+        call_made: boolean
+        call_sid: string
+        call_result: { success: boolean; error?: string }
+        message: string
+      }>(`${API}/recruiter/candidates/${ct}/shortlist`, {}, { headers })
+      const cand = candidates.find(c => c.ct_number === ct)
       setCandidates(prev =>
-        prev.map(c => c.ct_number === ct ? { ...c, status: 'interview_scheduled' as CandidateStatus } : c)
+        prev.map(c => c.ct_number === ct ? { ...c, status: 'shortlisted' as CandidateStatus } : c)
       )
-    } catch { /* silent */ } finally { setActionCt(null) }
+      setShortlistConfirm({
+        name: cand?.name ?? ct,
+        emailSent: res.data.email_sent,
+        emailTo: res.data.email_to,
+        slotBookingUrl: res.data.slot_booking_url,
+        callMade: res.data.call_made ?? false,
+        callSid: res.data.call_sid ?? '',
+        callError: res.data.call_result?.error ?? '',
+        candidatePhone: cand?.phone ?? '',
+      })
+      showToast(`${cand?.name ?? ct} shortlisted. ${res.data.email_sent ? 'Email sent.' : 'Email not configured.'}`)
+      fetchAnalytics()
+    } catch { /* silent */ } finally { setShortlistingCt(null) }
+  }
+
+  async function handleBookSlot() {
+    if (!selectedSlot) return
+    setBookingLoading(true)
+    setBookSlotError('')
+    try {
+      await axios.post(`${API}/recruiter/candidates/${scheduleModalCt}/book-slot`, { slot: selectedSlot }, { headers })
+      setCandidates(prev =>
+        prev.map(c => c.ct_number === scheduleModalCt
+          ? { ...c, status: 'interview_scheduled' as CandidateStatus, interview_slot: selectedSlot }
+          : c
+        )
+      )
+      closeScheduleModal()
+      fetchAnalytics()
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Booking failed.' : 'Booking failed.'
+      setBookSlotError(String(msg))
+    } finally {
+      setBookingLoading(false)
+    }
   }
 
   async function handleReject(ct: string) {
@@ -235,43 +421,49 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
       setCandidates(prev =>
         prev.map(c => c.ct_number === ct ? { ...c, status: 'rejected' as CandidateStatus } : c)
       )
-    } catch { /* silent */ } finally { setActionCt(null) }
-  }
-
-  async function handleCancelSchedule(ct: string) {
-    setActionCt(ct)
-    try {
-      await axios.post(`${API}/recruiter/candidates/${ct}/cancel-schedule`, {}, { headers })
-      setCandidates(prev =>
-        prev.map(c => c.ct_number === ct ? { ...c, status: 'applied' as CandidateStatus } : c)
-      )
+      fetchAnalytics()
     } catch { /* silent */ } finally { setActionCt(null) }
   }
 
   async function handleCreateCandidate() {
     setCandidateFormError('')
-    if (!name.trim() || !ctNumber.trim()) {
-      setCandidateFormError('Name and CT Number are required.')
+    if (!acFullName.trim() || !acEmail.trim() || !acPhone.trim() || !acLocation.trim() || !acCurrentRole.trim() || !acCurrentCtc.trim() || !acExpectedCtc.trim()) {
+      setCandidateFormError('Please fill in all required fields.')
+      return
+    }
+    if (!acJobId) {
+      setCandidateFormError('Please select a job role.')
+      return
+    }
+    if (!acResume) {
+      setCandidateFormError('Please upload a resume.')
       return
     }
     setCandidateFormLoading(true)
     try {
-      await axios.post(
-        `${API}/recruiter/candidates`,
-        {
-          name: name.trim(),
-          ct_number: ctNumber.trim().toUpperCase(),
-          job_role: customRole.trim() || jobRole,
-          job_description: jobDescription,
-        },
-        { headers }
-      )
-      setName(''); setCtNumber(''); setJobRole('Software Engineer')
-      setCustomRole(''); setJobDescription('')
+      const fd = new FormData()
+      fd.append('name', acFullName.trim())
+      fd.append('email', acEmail.trim())
+      fd.append('linkedin_url', acLinkedin.trim())
+      fd.append('phone', acPhone.trim())
+      fd.append('location', acLocation.trim())
+      fd.append('current_role', acCurrentRole.trim())
+      fd.append('current_ctc', acCurrentCtc.trim())
+      fd.append('expected_ctc', acExpectedCtc.trim())
+      fd.append('notice_period', acNoticePeriod)
+      fd.append('resume', acResume)
+      fd.append('additional_comments', acAdditionalComments.trim())
+      fd.append('terms_accepted', 'true')
+      await axios.post(`${API}/jobs/${acJobId}/apply`, fd)
+      setAcFullName(''); setAcEmail(''); setAcLinkedin(''); setAcPhone('')
+      setAcLocation(''); setAcCurrentRole(''); setAcCurrentCtc(''); setAcExpectedCtc('')
+      setAcNoticePeriod('Immediate'); setAcResume(null); setAcAdditionalComments(''); setAcJobId('')
+      if (acResumeRef.current) acResumeRef.current.value = ''
       setShowCandidateForm(false)
       await fetchCandidates()
+      await fetchAnalytics()
     } catch (err: unknown) {
-      const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Failed to create.' : 'Failed to create.'
+      const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Failed to add candidate.' : 'Failed to add candidate.'
       setCandidateFormError(String(msg))
     } finally {
       setCandidateFormLoading(false)
@@ -394,17 +586,287 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     }
   }
 
+  function handleViewResume(c: Candidate) {
+    if (c.resume_text) {
+      setResumeModal({ name: c.name, text: c.resume_text, filename: '' })
+    }
+  }
+
   return (
-    <div className="page">
-      <div className="dash-header">
-        <div>
-          <h1 className="title" style={{ fontSize: '1.6rem' }}>Recruiter Dashboard</h1>
-          <p className="muted" style={{ marginTop: 2 }}>Invio · AI Interview Portal</p>
+    <div>
+      <Navbar
+        rightContent={<button className="btn btn-secondary" onClick={onLogout}>Logout</button>}
+      />
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {resumeModal && (
+        <div className="modal-overlay" onClick={() => setResumeModal(null)}>
+          <div
+            className="card"
+            style={{ maxWidth: 680, width: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: 'var(--primary)', borderRadius: '12px 12px 0 0' }}>
+              <div>
+                <div style={{ color: '#fff', fontWeight: 600, fontSize: '1rem' }}>{resumeModal.name}</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>Resume</div>
+              </div>
+              <button
+                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontWeight: 600 }}
+                onClick={() => setResumeModal(null)}
+              >
+                Close
+              </button>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
+              <pre style={{ fontFamily: 'monospace', fontSize: '0.82rem', lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0 }}>
+                {resumeModal.text}
+              </pre>
+            </div>
+          </div>
         </div>
+      )}
+      {showScheduleModal && (() => {
+        const schedCand = candidates.find(c => c.ct_number === scheduleModalCt)
+        return (
+          <div className="modal-overlay" onClick={closeScheduleModal}>
+            <div className="card schedule-modal" onClick={e => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h3 style={{ margin: 0 }}>Schedule Interview{schedCand ? ` — ${schedCand.name}` : ''}</h3>
+                <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.5rem', lineHeight: 1 }} onClick={closeScheduleModal}>×</button>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label className="role-label" style={{ marginBottom: 6, display: 'block' }}>Timezone</label>
+                <select
+                  className="role-select"
+                  value={scheduleTimezone}
+                  onChange={e => { setScheduleTimezone(e.target.value); setSelectedSlot(''); fetchSlots(scheduleDateSelected, e.target.value) }}
+                  style={{ maxWidth: 300 }}
+                >
+                  {TIMEZONE_OPTIONS.map(tz => (
+                    <option key={tz.value} value={tz.value}>{tz.label} — {tz.sub}</option>
+                  ))}
+                </select>
+              </div>
+
+              {availableDates.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <p className="role-label" style={{ marginBottom: 8 }}>Select a date</p>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {availableDates.map(d => (
+                      <button
+                        key={d.date}
+                        onClick={() => { setScheduleDateSelected(d.date); setSelectedSlot(''); fetchSlots(d.date) }}
+                        style={{
+                          padding: '7px 14px',
+                          borderRadius: 20,
+                          border: '1.5px solid',
+                          borderColor: scheduleDateSelected === d.date ? 'var(--primary)' : 'var(--border)',
+                          background: scheduleDateSelected === d.date ? 'var(--primary)' : 'transparent',
+                          color: scheduleDateSelected === d.date ? '#fff' : 'var(--text)',
+                          cursor: 'pointer',
+                          fontSize: '0.82rem',
+                          fontWeight: scheduleDateSelected === d.date ? 600 : 400,
+                        }}
+                      >
+                        {d.display}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {slotsLoading && <p className="muted">Loading available slots...</p>}
+                {!slotsLoading && slots.length === 0 && <p className="muted">No available slots for this date.</p>}
+                {!slotsLoading && slots.length > 0 && (
+                  <div className="slot-grid">
+                    {slots.map(s => {
+                      const isBooked = !s.available
+                      const isSelected = selectedSlot === s.slot
+                      const isPopular = !isBooked && schedulePopularSlots.has(s.slot)
+
+                      let bg = '#fff'
+                      let borderColor = '#0C447C'
+                      let color = '#0C447C'
+                      let cursor: React.CSSProperties['cursor'] = 'pointer'
+                      let textDecoration = 'none'
+
+                      if (isBooked) {
+                        bg = '#F8FAFC'; borderColor = '#e2e8f0'; color = '#94a3b8'
+                        cursor = 'not-allowed'; textDecoration = 'line-through'
+                      } else if (isSelected) {
+                        bg = '#0C447C'; borderColor = '#0C447C'; color = '#fff'
+                      } else if (isPopular) {
+                        bg = '#E1F5EE'; borderColor = '#0F6E56'; color = '#0F6E56'
+                      }
+
+                      return (
+                        <div key={s.slot} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <button
+                            style={{
+                              padding: '8px 4px',
+                              borderRadius: 7,
+                              border: `1.5px solid ${borderColor}`,
+                              background: bg,
+                              color,
+                              cursor,
+                              fontSize: '0.82rem',
+                              fontWeight: isSelected ? 600 : 500,
+                              textDecoration,
+                              transition: 'all 0.15s',
+                            }}
+                            disabled={isBooked}
+                            onClick={() => !isBooked && setSelectedSlot(s.slot)}
+                            onMouseEnter={e => {
+                              if (!isBooked && !isSelected)
+                                (e.target as HTMLButtonElement).style.background = '#EBF4FF'
+                            }}
+                            onMouseLeave={e => {
+                              if (!isBooked && !isSelected)
+                                (e.target as HTMLButtonElement).style.background = isPopular ? '#E1F5EE' : '#fff'
+                            }}
+                          >
+                            {s.display}
+                          </button>
+                          {isBooked && (
+                            <span style={{ textAlign: 'center', fontSize: 10, color: '#94a3b8' }}>Booked</span>
+                          )}
+                          {isPopular && !isBooked && (
+                            <span style={{ textAlign: 'center', fontSize: 10, color: '#0F6E56', fontWeight: 500 }}>Popular</span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+                {bookSlotError && <p className="error-text">{bookSlotError}</p>}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button className="btn btn-primary" onClick={handleBookSlot} disabled={!selectedSlot || bookingLoading}>
+                    {bookingLoading ? 'Booking...' : 'Confirm Slot'}
+                  </button>
+                  <button className="btn btn-secondary" onClick={closeScheduleModal}>Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+      {shortlistConfirm && (
+        <div className="modal-overlay" onClick={() => setShortlistConfirm(null)}>
+          <div
+            className="card"
+            style={{ maxWidth: 520, width: '100%', padding: 0, overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: '#5B21B6', borderRadius: '12px 12px 0 0' }}>
+              <div>
+                <div style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>Candidate Shortlisted</div>
+                <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.82rem' }}>{shortlistConfirm.name}</div>
+              </div>
+              <button
+                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontWeight: 600 }}
+                onClick={() => setShortlistConfirm(null)}
+              >
+                Close
+              </button>
+            </div>
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.1rem' }}>{shortlistConfirm.emailSent ? '✅' : '⚠️'}</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' }}>
+                    {shortlistConfirm.emailSent ? 'Slot booking email sent' : 'Email not sent'}
+                  </span>
+                </div>
+                {shortlistConfirm.emailTo && (
+                  <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>
+                    Sent to: <strong style={{ color: 'var(--text)' }}>{shortlistConfirm.emailTo}</strong>
+                  </p>
+                )}
+                {!shortlistConfirm.emailSent && (
+                  <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.82rem' }}>
+                    RESEND_API_KEY may not be configured. Share the slot booking link manually.
+                  </p>
+                )}
+              </div>
+
+              <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.1rem' }}>📞</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' }}>AI Call</span>
+                </div>
+                {shortlistConfirm.callMade ? (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: '1rem' }}>✅</span>
+                      <span style={{ fontWeight: 600, color: '#16A34A', fontSize: '0.9rem' }}>Call Initiated Successfully</span>
+                    </div>
+                    <p style={{ margin: 0, color: 'var(--text)', fontSize: '0.85rem' }}>
+                      Rina is calling {shortlistConfirm.name} now
+                    </p>
+                    <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.82rem' }}>
+                      The candidate will receive an automated voice message about their shortlisting.
+                    </p>
+                    {shortlistConfirm.callSid && (
+                      <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                        Call ID: {shortlistConfirm.callSid}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: '1rem' }}>⚠️</span>
+                      <span style={{ fontWeight: 600, color: '#B45309', fontSize: '0.9rem' }}>Call Could Not Be Made</span>
+                      <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: '#FEF3C7', color: '#92400E', fontWeight: 500 }}>Simulation Mode</span>
+                    </div>
+                    {shortlistConfirm.callError && (
+                      <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>{shortlistConfirm.callError}</p>
+                    )}
+                    {shortlistConfirm.candidatePhone && (
+                      <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>
+                        Please contact the candidate directly on{' '}
+                        <strong style={{ color: 'var(--text)' }}>{shortlistConfirm.candidatePhone}</strong>
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '1.1rem' }}>🔗</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.9rem' }}>Slot Booking Link</span>
+                </div>
+                <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.82rem' }}>Share this link with the candidate to let them pick an interview slot.</p>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    readOnly
+                    value={shortlistConfirm.slotBookingUrl}
+                    style={{ flex: 1, fontSize: '0.78rem', padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)', fontFamily: 'monospace' }}
+                    onClick={e => (e.target as HTMLInputElement).select()}
+                  />
+                  <button
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.8rem', padding: '6px 12px', whiteSpace: 'nowrap' }}
+                    onClick={() => navigator.clipboard.writeText(shortlistConfirm.slotBookingUrl)}
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="dash-subheader">
+        <h1 className="title" style={{ fontSize: '1.6rem' }}>Recruiter Dashboard</h1>
         <div className="dash-header-actions">
           {tab === 'candidates' && (
             <>
-              <button className="btn btn-secondary" onClick={fetchCandidates}>Refresh</button>
+              <button className="btn btn-secondary" onClick={() => { fetchCandidates(); fetchAnalytics() }}>Refresh</button>
               <button className="btn btn-primary" onClick={() => setShowCandidateForm(!showCandidateForm)}>
                 {showCandidateForm ? 'Cancel' : '+ Add Candidate'}
               </button>
@@ -418,7 +880,6 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
               </button>
             </>
           )}
-          <button className="btn btn-secondary" onClick={onLogout}>Logout</button>
         </div>
       </div>
 
@@ -435,88 +896,158 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
         <>
           {showCandidateForm && (
             <div className="card">
-              <h3 style={{ marginBottom: 16, color: 'var(--text)' }}>New Candidate</h3>
+              <h3 style={{ marginBottom: 16, color: 'var(--text)' }}>Add Candidate</h3>
               <div className="form-grid">
                 <div className="role-select-group">
-                  <label className="role-label">Full Name</label>
-                  <input className="role-input" placeholder="Jane Smith" value={name} onChange={e => setName(e.target.value)} />
+                  <label className="role-label">Full Name *</label>
+                  <input className="role-input" placeholder="Jane Smith" value={acFullName} onChange={e => setAcFullName(e.target.value)} />
                 </div>
                 <div className="role-select-group">
-                  <label className="role-label">CT Number</label>
-                  <input className="role-input" placeholder="CT001" value={ctNumber} onChange={e => setCtNumber(e.target.value.toUpperCase())} />
+                  <label className="role-label">Email *</label>
+                  <input className="role-input" type="email" placeholder="jane@example.com" value={acEmail} onChange={e => setAcEmail(e.target.value)} />
                 </div>
                 <div className="role-select-group">
-                  <label className="role-label">Job Role</label>
-                  <select className="role-select" value={jobRole} onChange={e => { setJobRole(e.target.value); setCustomRole('') }}>
-                    {JOB_ROLES.map(r => <option key={r}>{r}</option>)}
+                  <label className="role-label">LinkedIn Profile URL</label>
+                  <input className="role-input" placeholder="https://linkedin.com/in/..." value={acLinkedin} onChange={e => setAcLinkedin(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Phone *</label>
+                  <input className="role-input" placeholder="+91 98765 43210" value={acPhone} onChange={e => setAcPhone(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Current Location *</label>
+                  <input className="role-input" placeholder="e.g. Bangalore, India" value={acLocation} onChange={e => setAcLocation(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Current Role *</label>
+                  <input className="role-input" placeholder="e.g. Senior Software Engineer" value={acCurrentRole} onChange={e => setAcCurrentRole(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Current CTC *</label>
+                  <input className="role-input" placeholder="e.g. 12 LPA" value={acCurrentCtc} onChange={e => setAcCurrentCtc(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Expected CTC *</label>
+                  <input className="role-input" placeholder="e.g. 18 LPA" value={acExpectedCtc} onChange={e => setAcExpectedCtc(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Notice Period *</label>
+                  <select className="role-select" value={acNoticePeriod} onChange={e => setAcNoticePeriod(e.target.value)}>
+                    <option>Immediate</option>
+                    <option>Up to 15 days</option>
+                    <option>Up to 30 days</option>
+                    <option>Up to 60 days</option>
+                    <option>Up to 90 days</option>
+                    <option>Flexible</option>
                   </select>
-                  <label className="role-label" style={{ marginTop: 8 }}>Or custom role</label>
-                  <input className="role-input" placeholder="e.g. DevOps Engineer" value={customRole} onChange={e => setCustomRole(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label">Job Role *</label>
+                  <select className="role-select" value={acJobId} onChange={e => setAcJobId(e.target.value)}>
+                    <option value="">— Select a job —</option>
+                    {openJobs.map(j => (
+                      <option key={j.id} value={j.id}>{j.title}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="role-label">Job Description (optional)</label>
-                  <textarea className="role-textarea" placeholder="Paste job description..." value={jobDescription} onChange={e => setJobDescription(e.target.value)} />
+                  <label className="role-label">Resume (PDF or TXT) *</label>
+                  <div
+                    className="resume-upload-area"
+                    onClick={() => acResumeRef.current?.click()}
+                  >
+                    <input
+                      ref={acResumeRef}
+                      type="file"
+                      accept=".pdf,.txt"
+                      style={{ display: 'none' }}
+                      onChange={e => setAcResume(e.target.files?.[0] ?? null)}
+                    />
+                    {acResume ? (
+                      <span style={{ color: 'var(--text)' }}>{acResume.name}</span>
+                    ) : (
+                      <span style={{ color: 'var(--muted)' }}>Click to upload resume (PDF or TXT)&hellip;</span>
+                    )}
+                  </div>
+                  {acResume && (
+                    <button
+                      style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer', padding: 0, marginTop: 4, textAlign: 'left' }}
+                      onClick={() => { setAcResume(null); if (acResumeRef.current) acResumeRef.current.value = '' }}
+                    >
+                      Remove file
+                    </button>
+                  )}
+                </div>
+                <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="role-label">Additional Comments</label>
+                  <textarea
+                    className="role-textarea"
+                    rows={4}
+                    placeholder="Any additional information about the candidate (optional)..."
+                    value={acAdditionalComments}
+                    onChange={e => setAcAdditionalComments(e.target.value)}
+                  />
                 </div>
               </div>
               {candidateFormError && <p className="error-text" style={{ marginTop: 12 }}>{candidateFormError}</p>}
               <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={handleCreateCandidate} disabled={candidateFormLoading}>
-                {candidateFormLoading ? 'Creating...' : 'Create Candidate'}
+                {candidateFormLoading ? 'Adding...' : 'Add Candidate'}
               </button>
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-            <div className="filter-sidebar">
-              <h4 style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, marginBottom: 20, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Filter Candidates
-              </h4>
-
-              <div className="filter-group">
-                <label className="role-label">Role</label>
-                <input className="role-input" placeholder="e.g. Salesforce" value={filterRole} onChange={e => setFilterRole(e.target.value)} />
-              </div>
-              <div className="filter-group">
-                <label className="role-label">Skill</label>
-                <input className="role-input" placeholder="e.g. Apex, React" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} />
-              </div>
-              <div className="filter-group">
-                <label className="role-label">Location</label>
-                <input className="role-input" placeholder="e.g. Bangalore" value={filterLocation} onChange={e => setFilterLocation(e.target.value)} />
-              </div>
-              <div className="filter-group">
-                <label className="role-label">Min Match %: {filterMinMatch}%</label>
-                <input type="range" min={0} max={100} value={filterMinMatch} onChange={e => setFilterMinMatch(Number(e.target.value))} style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary)' }} />
-              </div>
-              <div className="filter-group">
-                <label className="role-label">Recommendation</label>
-                <select className="role-select" value={filterRecommendation} onChange={e => setFilterRecommendation(e.target.value)}>
-                  <option>All</option>
-                  <option>Strong Hire</option>
-                  <option>Hire</option>
-                  <option>Consider</option>
-                  <option>Reject</option>
-                </select>
-              </div>
-              <div className="filter-group">
-                <label className="role-label">Status</label>
-                <select className="role-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-                  <option>All</option>
-                  <option>Applied</option>
-                  <option>Interview Scheduled</option>
-                  <option>Interview Complete</option>
-                  <option>Rejected</option>
-                </select>
-              </div>
+          <div className="filter-bar">
+            <div className="filter-bar-item">
+              <label className="role-label">Role</label>
+              <input className="role-input" placeholder="e.g. Salesforce" value={filterRole} onChange={e => setFilterRole(e.target.value)} />
+            </div>
+            <div className="filter-bar-item">
+              <label className="role-label">Skill</label>
+              <input className="role-input" placeholder="e.g. Apex, React" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} />
+            </div>
+            <div className="filter-bar-item">
+              <label className="role-label">Location</label>
+              <input className="role-input" placeholder="e.g. Bangalore" value={filterLocation} onChange={e => setFilterLocation(e.target.value)} />
+            </div>
+            <div className="filter-bar-item filter-bar-item--range">
+              <label className="role-label">Min Match: {filterMinMatch}%</label>
+              <input type="range" min={0} max={100} value={filterMinMatch} onChange={e => setFilterMinMatch(Number(e.target.value))} style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary)', marginTop: 4 }} />
+            </div>
+            <div className="filter-bar-item">
+              <label className="role-label">Recommendation</label>
+              <select className="role-select" value={filterRecommendation} onChange={e => setFilterRecommendation(e.target.value)}>
+                <option>All</option>
+                <option>Strong Hire</option>
+                <option>Hire</option>
+                <option>Consider</option>
+                <option>Reject</option>
+              </select>
+            </div>
+            <div className="filter-bar-item">
+              <label className="role-label">Status</label>
+              <select className="role-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                <option>All</option>
+                <option>Applied</option>
+                <option>Shortlisted</option>
+                <option>Interview Scheduled</option>
+                <option>Interview Complete</option>
+                <option>Rejected</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
               <button
                 className="btn btn-secondary"
-                style={{ width: '100%', marginTop: 8, fontSize: '0.85rem', padding: '8px 0' }}
+                style={{ fontSize: '0.85rem', padding: '8px 16px', whiteSpace: 'nowrap' }}
                 onClick={() => { setFilterRole(''); setFilterSkill(''); setFilterLocation(''); setFilterMinMatch(0); setFilterRecommendation('All'); setFilterStatus('All') }}
               >
-                Clear Filters
+                Clear
               </button>
             </div>
+          </div>
 
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {!analyticsLoading && analytics && <PipelineWidget analytics={analytics} />}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3 style={{ color: 'var(--text)' }}>
@@ -566,41 +1097,27 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                 {c.status === 'applied' && (
                                   <div style={{ display: 'flex', gap: 6 }}>
                                     <button
-                                      className="btn btn-primary"
-                                      style={{ padding: '6px 12px', fontSize: '0.82rem' }}
-                                      disabled={actionCt === c.ct_number}
-                                      onClick={() => handleSchedule(c.ct_number)}
+                                      className="btn"
+                                      style={{ background: '#5B21B6', color: '#fff', padding: '6px 12px', fontSize: '0.82rem', borderRadius: 8, border: 'none', cursor: 'pointer' }}
+                                      disabled={shortlistingCt === c.ct_number}
+                                      onClick={() => handleShortlist(c.ct_number)}
                                     >
-                                      Schedule
+                                      {shortlistingCt === c.ct_number ? '...' : 'Shortlist'}
                                     </button>
-                                    <button
-                                      className="btn btn-danger"
-                                      style={{ padding: '6px 12px', fontSize: '0.82rem', alignSelf: 'unset' }}
-                                      disabled={actionCt === c.ct_number}
-                                      onClick={() => handleReject(c.ct_number)}
-                                    >
-                                      Reject
-                                    </button>
+                                    <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.82rem', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={() => handleReject(c.ct_number)}>Reject</button>
+                                  </div>
+                                )}
+                                {c.status === 'shortlisted' && (
+                                  <div style={{ display: 'flex', gap: 6 }}>
+                                    <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.82rem' }} onClick={() => openScheduleModal(c.ct_number)}>Schedule</button>
+                                    <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.82rem', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={() => handleReject(c.ct_number)}>Reject</button>
                                   </div>
                                 )}
                                 {c.status === 'interview_scheduled' && (
-                                  <button
-                                    className="btn btn-secondary"
-                                    style={{ padding: '6px 14px', fontSize: '0.82rem' }}
-                                    disabled={actionCt === c.ct_number}
-                                    onClick={() => handleCancelSchedule(c.ct_number)}
-                                  >
-                                    Cancel
-                                  </button>
+                                  <button className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.82rem' }} onClick={() => openScheduleModal(c.ct_number)}>Reschedule</button>
                                 )}
                                 {c.status === 'interview_complete' && (
-                                  <button
-                                    className="btn btn-secondary"
-                                    style={{ padding: '6px 14px', fontSize: '0.82rem' }}
-                                    onClick={() => onViewScorecard(c.ct_number)}
-                                  >
-                                    Scorecard
-                                  </button>
+                                  <button className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.82rem' }} onClick={() => onViewScorecard(c.ct_number)}>View Feedback</button>
                                 )}
                               </td>
                             </tr>
@@ -716,45 +1233,101 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                       </div>
                                     )}
 
+                                    {c.interview_slot && (
+                                      <div style={{ marginTop: 16 }}>
+                                        <p className="role-label" style={{ marginBottom: 6 }}>Scheduled Interview</p>
+                                        <span style={{ color: 'var(--primary-light)', fontWeight: 600, fontSize: '0.9rem' }}>
+                                          {formatSlotDisplay(c.interview_slot)}
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {c.call_status && (() => {
+                                      const cs = c.call_status
+                                      const steps = [
+                                        { label: 'Call Made', done: cs.call_made === true, ts: cs.call_made_at },
+                                        { label: 'Call Answered', done: cs.call_answered === true, ts: cs.call_answered_at },
+                                        { label: 'Call Complete', done: cs.call_complete === true && cs.call_answered === true, ts: cs.call_complete_at },
+                                      ]
+                                      return (
+                                        <div style={{ marginTop: 16, border: '1px solid #e2e8f0', borderRadius: 10, padding: '16px 18px', background: '#fff' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                                            <span style={{ fontSize: '0.95rem' }}>📞</span>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#042C53' }}>Call Status</span>
+                                          </div>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                                            {steps.map((step, i) => (
+                                              <>
+                                                <div key={step.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 80 }}>
+                                                  <div style={{
+                                                    width: 28, height: 28, borderRadius: '50%',
+                                                    background: step.done ? '#0F6E56' : 'transparent',
+                                                    border: step.done ? 'none' : '2px solid #cbd5e1',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    flexShrink: 0,
+                                                  }}>
+                                                    {step.done && <span style={{ color: '#fff', fontSize: 13, lineHeight: 1 }}>✓</span>}
+                                                  </div>
+                                                  <span style={{ fontSize: 11, fontWeight: step.done ? 600 : 400, color: step.done ? '#042C53' : '#94a3b8', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                                    {step.label}
+                                                  </span>
+                                                  {step.done && step.ts && (
+                                                    <span style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>
+                                                      {new Date(step.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                {i < steps.length - 1 && (
+                                                  <div key={`line-${i}`} style={{
+                                                    flex: 1, height: 2, marginBottom: 20,
+                                                    background: (step.done && steps[i + 1].done) ? '#0F6E56' : '#e2e8f0',
+                                                  }} />
+                                                )}
+                                              </>
+                                            ))}
+                                          </div>
+                                          {cs.note && !cs.call_answered && (
+                                            <div style={{ marginTop: 12, background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 7, padding: '8px 12px', fontSize: '0.8rem', color: '#92400E' }}>
+                                              Candidate did not answer. Email sent with slot booking link.
+                                            </div>
+                                          )}
+                                          {cs.message_delivered && (
+                                            <div style={{ marginTop: 12, background: '#E1F5EE', border: '1px solid #BBF7D0', borderRadius: 7, padding: '8px 12px', fontSize: '0.8rem', color: '#0F6E56', fontWeight: 500 }}>
+                                              Core message delivered successfully.
+                                            </div>
+                                          )}
+                                        </div>
+                                      )
+                                    })()}
+
                                     <div className="candidate-panel-actions">
                                       {c.status === 'applied' && (
                                         <>
                                           <button
-                                            className="btn btn-primary"
-                                            style={{ fontSize: '0.875rem', padding: '8px 20px' }}
-                                            disabled={actionCt === c.ct_number}
-                                            onClick={e => { e.stopPropagation(); handleSchedule(c.ct_number) }}
+                                            className="btn"
+                                            style={{ background: '#5B21B6', color: '#fff', fontSize: '0.875rem', padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer' }}
+                                            disabled={shortlistingCt === c.ct_number}
+                                            onClick={e => { e.stopPropagation(); handleShortlist(c.ct_number) }}
                                           >
-                                            {actionCt === c.ct_number ? 'Scheduling…' : 'Schedule Interview'}
+                                            {shortlistingCt === c.ct_number ? 'Shortlisting…' : 'Shortlist'}
                                           </button>
-                                          <button
-                                            className="btn btn-danger"
-                                            style={{ fontSize: '0.875rem', padding: '8px 20px', alignSelf: 'unset' }}
-                                            disabled={actionCt === c.ct_number}
-                                            onClick={e => { e.stopPropagation(); handleReject(c.ct_number) }}
-                                          >
-                                            Reject
-                                          </button>
+                                          <button className="btn btn-danger" style={{ fontSize: '0.875rem', padding: '8px 20px', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={e => { e.stopPropagation(); handleReject(c.ct_number) }}>Reject</button>
+                                        </>
+                                      )}
+                                      {c.status === 'shortlisted' && (
+                                        <>
+                                          <button className="btn btn-primary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); openScheduleModal(c.ct_number) }}>Schedule Interview</button>
+                                          <button className="btn btn-danger" style={{ fontSize: '0.875rem', padding: '8px 20px', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={e => { e.stopPropagation(); handleReject(c.ct_number) }}>Reject</button>
                                         </>
                                       )}
                                       {c.status === 'interview_scheduled' && (
-                                        <button
-                                          className="btn btn-secondary"
-                                          style={{ fontSize: '0.875rem', padding: '8px 20px' }}
-                                          disabled={actionCt === c.ct_number}
-                                          onClick={e => { e.stopPropagation(); handleCancelSchedule(c.ct_number) }}
-                                        >
-                                          {actionCt === c.ct_number ? 'Cancelling…' : 'Cancel Schedule'}
-                                        </button>
+                                        <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); openScheduleModal(c.ct_number) }}>Reschedule</button>
                                       )}
                                       {c.status === 'interview_complete' && (
-                                        <button
-                                          className="btn btn-secondary"
-                                          style={{ fontSize: '0.875rem', padding: '8px 20px' }}
-                                          onClick={e => { e.stopPropagation(); onViewScorecard(c.ct_number) }}
-                                        >
-                                          View Scorecard
-                                        </button>
+                                        <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); onViewScorecard(c.ct_number) }}>View Feedback</button>
+                                      )}
+                                      {c.resume_text && (
+                                        <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); handleViewResume(c) }}>View Resume</button>
                                       )}
                                     </div>
 
@@ -770,7 +1343,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                 )}
               </div>
             </div>
-          </div>
+
         </>
       )}
 
@@ -1001,6 +1574,30 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
             )}
           </div>
         </>
+      )}
+      </div>
+
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: 28,
+          right: 28,
+          background: '#16A34A',
+          color: '#fff',
+          padding: '12px 20px',
+          borderRadius: 10,
+          fontWeight: 500,
+          fontSize: '0.9rem',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          maxWidth: 360,
+          lineHeight: 1.4,
+        }}>
+          ✓ {toast}
+        </div>
       )}
     </div>
   )

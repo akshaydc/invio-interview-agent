@@ -1,0 +1,212 @@
+{
+  "session_id": "24a71143-c8a7-47cd-b058-7f4e5ff9a1a0",
+  "ct_number": "CT20260001",
+  "job_role": "Salesforce Administrator",
+  "job_description": "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform.",
+  "status": "complete",
+  "transcript": [
+    {
+      "q": "Tell me about your Salesforce experience and what you enjoy most about it.",
+      "a": "I have been working with Salesforce for over 4 years at TCS, primarily as a Salesforce Administrator. I have handled Sales Cloud and Service Cloud implementations, user management for teams of 200 plus users, and built complex Flow automations. What I enjoy most is solving business problems elegantly using declarative tools.",
+      "score": 9,
+      "confidence": 85,
+      "metrics": {
+        "volume": 0.78,
+        "consistency": 0.82,
+        "word_count": 68,
+        "hesitant_signals": 0,
+        "confident_signals": 4
+      }
+    },
+    {
+      "q": "Describe a challenging Salesforce project you led and its outcome.",
+      "a": "I led a full Sales Cloud implementation for a 150-person sales team. The challenge was migrating 5 years of legacy CRM data while keeping the team productive. I built a phased rollout plan, trained 8 super users, and we went live on time with 95 percent user adoption in the first month.",
+      "score": 9,
+      "confidence": 88,
+      "metrics": {
+        "volume": 0.81,
+        "consistency": 0.85,
+        "word_count": 72,
+        "hesitant_signals": 0,
+        "confident_signals": 5
+      }
+    },
+    {
+      "q": "How do you handle a situation where a business requirement conflicts with Salesforce best practices?",
+      "a": "I always start by understanding the underlying business need rather than just the stated requirement. Then I present two options \u2014 one that meets the requirement as stated and one aligned with best practices \u2014 with pros and cons for each. I have found that stakeholders almost always choose the better approach when they understand the long term implications.",
+      "score": 8,
+      "confidence": 82,
+      "metrics": {
+        "volume": 0.75,
+        "consistency": 0.79,
+        "word_count": 78,
+        "hesitant_signals": 1,
+        "confident_signals": 3
+      }
+    },
+    {
+      "q": "Where do you see yourself in 3 years within the Salesforce ecosystem?",
+      "a": "I am actively working towards my Salesforce Architect certification. In 3 years I see myself leading a Salesforce Centre of Excellence within an organisation, setting standards and mentoring junior admins and developers. I want to be the person who bridges business strategy and Salesforce capability.",
+      "score": 8,
+      "confidence": 79,
+      "metrics": {
+        "volume": 0.72,
+        "consistency": 0.76,
+        "word_count": 65,
+        "hesitant_signals": 1,
+        "confident_signals": 3
+      }
+    },
+    {
+      "q": "Do you have any questions for us about the role or the company?",
+      "a": "Yes, I would love to know more about the current Salesforce org setup \u2014 how many objects, integrations, and active users. Also what does success look like in the first 90 days for this role?",
+      "score": 9,
+      "confidence": 83,
+      "metrics": {
+        "volume": 0.76,
+        "consistency": 0.8,
+        "word_count": 48,
+        "hesitant_signals": 0,
+        "confident_signals": 2
+      }
+    }
+  ],
+  "violations": [],
+  "scorecard": {
+    "communication": 9,
+    "technical_depth": 8,
+    "problem_solving": 8,
+    "cultural_fit": 9,
+    "summary": "Priya demonstrated exceptional communication throughout the interview. Her answers were structured, confident, and backed by specific examples from her 4+ years at TCS. She showed deep Salesforce Admin knowledge and a clear passion for the role.",
+    "strengths": [
+      "Certified Salesforce Administrator with hands-on Sales Cloud and Service Cloud experience",
+      "Articulate and structured communication \u2014 used STAR method consistently",
+      "Strong cultural alignment \u2014 values collaboration and continuous learning"
+    ],
+    "red_flags": [
+      "Limited exposure to large-scale data migrations"
+    ],
+    "recommendation": "Strong Hire",
+    "transcript": [
+      {
+        "q": "Tell me about your Salesforce experience and what you enjoy most about it.",
+        "a": "I have been working with Salesforce for over 4 years at TCS, primarily as a Salesforce Administrator. I have handled Sales Cloud and Service Cloud implementations, user management for teams of 200 plus users, and built complex Flow automations. What I enjoy most is solving business problems elegantly using declarative tools.",
+        "score": 9,
+        "confidence": 85,
+        "metrics": {
+          "volume": 0.78,
+          "consistency": 0.82,
+          "word_count": 68,
+          "hesitant_signals": 0,
+          "confident_signals": 4
+        }
+      },
+      {
+        "q": "Describe a challenging Salesforce project you led and its outcome.",
+        "a": "I led a full Sales Cloud implementation for a 150-person sales team. The challenge was migrating 5 years of legacy CRM data while keeping the team productive. I built a phased rollout plan, trained 8 super users, and we went live on time with 95 percent user adoption in the first month.",
+        "score": 9,
+        "confidence": 88,
+        "metrics": {
+          "volume": 0.81,
+          "consistency": 0.85,
+          "word_count": 72,
+          "hesitant_signals": 0,
+          "confident_signals": 5
+        }
+      },
+      {
+        "q": "How do you handle a situation where a business requirement conflicts with Salesforce best practices?",
+        "a": "I always start by understanding the underlying business need rather than just the stated requirement. Then I present two options \u2014 one that meets the requirement as stated and one aligned with best practices \u2014 with pros and cons for each. I have found that stakeholders almost always choose the better approach when they understand the long term implications.",
+        "score": 8,
+        "confidence": 82,
+        "metrics": {
+          "volume": 0.75,
+          "consistency": 0.79,
+          "word_count": 78,
+          "hesitant_signals": 1,
+          "confident_signals": 3
+        }
+      },
+      {
+        "q": "Where do you see yourself in 3 years within the Salesforce ecosystem?",
+        "a": "I am actively working towards my Salesforce Architect certification. In 3 years I see myself leading a Salesforce Centre of Excellence within an organisation, setting standards and mentoring junior admins and developers. I want to be the person who bridges business strategy and Salesforce capability.",
+        "score": 8,
+        "confidence": 79,
+        "metrics": {
+          "volume": 0.72,
+          "consistency": 0.76,
+          "word_count": 65,
+          "hesitant_signals": 1,
+          "confident_signals": 3
+        }
+      },
+      {
+        "q": "Do you have any questions for us about the role or the company?",
+        "a": "Yes, I would love to know more about the current Salesforce org setup \u2014 how many objects, integrations, and active users. Also what does success look like in the first 90 days for this role?",
+        "score": 9,
+        "confidence": 83,
+        "metrics": {
+          "volume": 0.76,
+          "consistency": 0.8,
+          "word_count": 48,
+          "hesitant_signals": 0,
+          "confident_signals": 2
+        }
+      }
+    ],
+    "violations": [],
+    "confidence_analysis": {
+      "average_score": 83,
+      "label": "High Confidence",
+      "color": "#0F6E56",
+      "trend": "steady",
+      "peak_question": "Describe a challenging Salesforce project you led and its outcome.",
+      "peak_score": 88,
+      "lowest_question": "Where do you see yourself in 3 years within the Salesforce ecosystem?",
+      "lowest_score": 79,
+      "per_question": [
+        {
+          "question_num": 1,
+          "question": "Tell me about your Salesforce experience...",
+          "score": 85,
+          "word_count": 68,
+          "hesitant": 0,
+          "volume": 0.78
+        },
+        {
+          "question_num": 2,
+          "question": "Describe a challenging Salesforce project...",
+          "score": 88,
+          "word_count": 72,
+          "hesitant": 0,
+          "volume": 0.81
+        },
+        {
+          "question_num": 3,
+          "question": "How do you handle conflicting requirements...",
+          "score": 82,
+          "word_count": 78,
+          "hesitant": 1,
+          "volume": 0.75
+        },
+        {
+          "question_num": 4,
+          "question": "Where do you see yourself in 3 years...",
+          "score": 79,
+          "word_count": 65,
+          "hesitant": 1,
+          "volume": 0.72
+        },
+        {
+          "question_num": 5,
+          "question": "Do you have any questions for us...",
+          "score": 83,
+          "word_count": 48,
+          "hesitant": 0,
+          "volume": 0.76
+        }
+      ],
+      "total_words": 331
+    }
+  }
+}

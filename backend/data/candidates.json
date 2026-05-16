@@ -43,9 +43,20 @@
     ],
     "compensation_fit": "good",
     "notice_fit": "good",
-    "session_id": null,
+    "session_id": "24a71143-c8a7-47cd-b058-7f4e5ff9a1a0",
     "status": "interview_complete",
-    "applied_at": "2026-04-10T09:00:00+00:00"
+    "applied_at": "2026-04-10T09:00:00+00:00",
+    "call_status": {
+      "call_made": true,
+      "call_made_at": "2026-05-13T09:30:00+00:00",
+      "call_answered": true,
+      "call_answered_at": "2026-05-13T09:30:15+00:00",
+      "call_complete": true,
+      "call_complete_at": "2026-05-13T09:32:45+00:00",
+      "message_delivered": true,
+      "call_sid": "CAxxxx001",
+      "note": "Candidate confirmed receipt of email"
+    }
   },
   {
     "name": "Rahul Mehta",
@@ -76,9 +87,20 @@
     ],
     "compensation_fit": "good",
     "notice_fit": "good",
-    "session_id": null,
-    "status": "interview_scheduled",
-    "applied_at": "2026-04-11T10:30:00+00:00"
+    "session_id": "80ef549d-81e3-40a3-a6f3-10a1cf64bbb1",
+    "status": "interview_complete",
+    "applied_at": "2026-04-11T10:30:00+00:00",
+    "call_status": {
+      "call_made": true,
+      "call_made_at": "2026-05-13T10:00:00+00:00",
+      "call_answered": false,
+      "call_answered_at": null,
+      "call_complete": true,
+      "call_complete_at": "2026-05-13T10:00:45+00:00",
+      "message_delivered": false,
+      "call_sid": "CAxxxx002",
+      "note": "Candidate did not answer. Email sent."
+    }
   },
   {
     "name": "Sneha Patel",
@@ -410,5 +432,93 @@
     "session_id": null,
     "status": "applied",
     "applied_at": "2026-04-16T10:00:00+00:00"
+  },
+  {
+    "name": "Ananya Krishnan",
+    "ct_number": "CT20260013",
+    "email": "ananya.k@gmail.com",
+    "phone": "9812309876",
+    "location": "Chennai, Tamil Nadu",
+    "linkedin_url": "https://linkedin.com/in/ananyak",
+    "current_role": "Junior QA Analyst",
+    "current_ctc": "380000",
+    "expected_ctc": "620000",
+    "notice_period": "30 days",
+    "job_id": "d1e2f3a4-0003-0000-0000-000000000003",
+    "job_role": "QA Engineer",
+    "job_description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products.",
+    "resume_text": "",
+    "match_percentage": 48,
+    "recommendation": "Consider",
+    "match_summary": "Ananya has basic manual testing knowledge but lacks automation skills and technical depth required for the role.",
+    "match_strengths": [
+      "Enthusiastic learner",
+      "Basic manual testing"
+    ],
+    "match_gaps": [
+      "No automation experience",
+      "Limited API testing",
+      "Short answers"
+    ],
+    "compensation_fit": "good",
+    "notice_fit": "good",
+    "session_id": "0f6ef23e-0d3a-475b-b32c-2337bb2acba6",
+    "status": "interview_complete",
+    "applied_at": "2026-04-17T09:00:00+00:00",
+    "call_status": {
+      "call_made": true,
+      "call_made_at": "2026-05-13T11:15:00+00:00",
+      "call_answered": true,
+      "call_answered_at": "2026-05-13T11:15:08+00:00",
+      "call_complete": false,
+      "call_complete_at": null,
+      "message_delivered": false,
+      "call_sid": "CAxxxx003",
+      "note": "Call disconnected before message delivered"
+    }
+  },
+  {
+    "name": "Vikram Nair",
+    "ct_number": "CT20260014",
+    "email": "vikram.nair@gmail.com",
+    "phone": "9876540123",
+    "location": "Bangalore, Karnataka",
+    "linkedin_url": "https://linkedin.com/in/vikramnair",
+    "current_role": "Senior Salesforce Developer",
+    "current_ctc": "1400000",
+    "expected_ctc": "2000000",
+    "notice_period": "30 days",
+    "job_id": "d1e2f3a4-0002-0000-0000-000000000002",
+    "job_role": "Salesforce Developer",
+    "job_description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform.",
+    "resume_text": "",
+    "match_percentage": 79,
+    "recommendation": "Hire",
+    "match_summary": "Vikram is technically strong with real Apex and integration experience. Minor dip on system design questions but recovered well.",
+    "match_strengths": [
+      "Strong Apex",
+      "Platform events",
+      "CI/CD experience"
+    ],
+    "match_gaps": [
+      "Multi-org architecture gap",
+      "Could improve structured delivery"
+    ],
+    "compensation_fit": "partial",
+    "notice_fit": "good",
+    "session_id": "29a8a3eb-5e8e-4ca5-a506-7bbc60cc28fe",
+    "status": "interview_complete",
+    "applied_at": "2026-04-17T11:00:00+00:00",
+    "call_status": {
+      "call_made": true,
+      "call_made_at": "2026-05-13T14:00:00+00:00",
+      "call_answered": true,
+      "call_answered_at": "2026-05-13T14:00:12+00:00",
+      "call_complete": true,
+      "call_complete_at": "2026-05-13T14:03:22+00:00",
+      "message_delivered": true,
+      "call_sid": "CAxxxx004",
+      "note": "Candidate asked about interview format. Informed about AI interview."
+    }
   }
 ]

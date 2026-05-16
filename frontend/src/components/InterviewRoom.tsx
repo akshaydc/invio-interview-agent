@@ -29,6 +29,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
   const [cameraActive, setCameraActive] = useState(false)
   const [endLockout, setEndLockout] = useState(true)
   const [lockoutSecsLeft, setLockoutSecsLeft] = useState(END_LOCKOUT_MS / 1000)
+  const [autoEndMsg, setAutoEndMsg] = useState('')
 
   const sessionIdRef = useRef<string | null>(null)
   const audioCleanupRef = useRef<(() => void) | null>(null)
@@ -137,7 +138,8 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
       speakQuestion(nextQuestion)
 
       if (res.data.auto_end) {
-        setTimeout(() => endInterview(), 4000)
+        setAutoEndMsg('Interview complete. Thank you for your time.')
+        setTimeout(() => endInterview(), 3000)
       }
     } catch {
       setErrorMsg('Failed to process audio. Please try again.')
@@ -344,9 +346,22 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
       proctorIntervalRef.current = setInterval(captureProctorFrame, 3000)
       startLockoutCountdown()
       speakQuestion(res.data.first_question)
-    } catch {
+    } catch (err) {
+      console.log('Start error:', axios.isAxiosError(err) ? err.response?.data : err)
+      console.log('Start error status:', axios.isAxiosError(err) ? err.response?.status : 'N/A')
       cleanup()
-      setErrorMsg('Failed to start session. Please try again.')
+      if (axios.isAxiosError(err)) {
+        const detail = err.response?.data?.detail
+        if (detail && typeof detail === 'object' && detail.message === 'too_early') {
+          setErrorMsg(`Interview not open yet. Scheduled for ${detail.slot}. Try again in ${detail.minutes_remaining} minutes.`)
+        } else if (err.response?.status === 401) {
+          setErrorMsg('Session expired. Please log out and log in again.')
+        } else {
+          setErrorMsg(typeof detail === 'string' ? detail : 'Failed to start session. Please try again.')
+        }
+      } else {
+        setErrorMsg('Failed to start session. Please try again.')
+      }
       setStage('error')
     }
   }
@@ -424,11 +439,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
           </div>
         </div>
       )}
-
-      <div className="header">
-        <h1 className="title">Invio</h1>
-        <p className="subtitle">AI Interview Portal</p>
-      </div>
 
       {stage === 'ready' && (
         <div className="card center-card">
@@ -524,6 +534,11 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
           {proctorEndMsg && (
             <p style={{ color: 'var(--red)', fontSize: '0.9rem', textAlign: 'center', fontWeight: 500 }}>
               {proctorEndMsg}
+            </p>
+          )}
+          {autoEndMsg && (
+            <p style={{ color: 'var(--green)', fontSize: '1rem', textAlign: 'center', fontWeight: 600, padding: '12px 0' }}>
+              {autoEndMsg}
             </p>
           )}
           {errorMsg && <p className="interview-error">{errorMsg}</p>}

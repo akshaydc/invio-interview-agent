@@ -1,0 +1,250 @@
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import PageLayout from '../components/PageLayout'
+import { API_BASE_URL as API } from '../config'
+
+type SlotOption = { slot: string; display: string }
+type DateOption = { date: string; display: string }
+
+type Props = {
+  candidateName: string
+  interviewSlot: string
+  token: string
+  onStartInterview: () => void
+  onLogout: () => void
+}
+
+function formatFullSlot(slot: string): string {
+  try {
+    const [datePart, timePart] = slot.split(' ')
+    const [year, month, day] = datePart.split('-').map(Number)
+    const [hour, minute] = timePart.split(':').map(Number)
+    const dt = new Date(year, month - 1, day, hour, minute)
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const amPm = hour < 12 ? 'AM' : 'PM'
+    const displayHour = hour % 12 || 12
+    return `${dayNames[dt.getDay()]}, ${day} ${monthNames[dt.getMonth()]} ${year} · ${displayHour}:${String(minute).padStart(2, '0')} ${amPm}`
+  } catch {
+    return slot
+  }
+}
+
+function formatTimeOnly(slot: string): string {
+  try {
+    const [, timePart] = slot.split(' ')
+    const [hour, minute] = timePart.split(':').map(Number)
+    const amPm = hour < 12 ? 'AM' : 'PM'
+    const displayHour = hour % 12 || 12
+    return `${displayHour}:${String(minute).padStart(2, '0')} ${amPm}`
+  } catch {
+    return slot
+  }
+}
+
+function getSecondsUntilSlot(slot: string): number {
+  try {
+    const [datePart, timePart] = slot.split(' ')
+    const [year, month, day] = datePart.split('-').map(Number)
+    const [hour, minute] = timePart.split(':').map(Number)
+    return Math.floor((new Date(year, month - 1, day, hour, minute).getTime() - Date.now()) / 1000)
+  } catch {
+    return -1
+  }
+}
+
+export default function WaitingRoom({ candidateName, interviewSlot, token, onStartInterview, onLogout }: Props) {
+  const [secondsLeft, setSecondsLeft] = useState(() => getSecondsUntilSlot(interviewSlot))
+  const [showReschedule, setShowReschedule] = useState(false)
+  const [slots, setSlots] = useState<SlotOption[]>([])
+  const [slotsLoading, setSlotsLoading] = useState(false)
+  const [selectedSlot, setSelectedSlot] = useState('')
+  const [rescheduling, setRescheduling] = useState(false)
+  const [rescheduleError, setRescheduleError] = useState('')
+  const [rescheduleDate, setRescheduleDate] = useState('')
+  const [rescheduleDates, setRescheduleDates] = useState<DateOption[]>([])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSecondsLeft(getSecondsUntilSlot(interviewSlot))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [interviewSlot])
+
+  async function fetchSlotsForDate(date: string, updateDates = false) {
+    setSlotsLoading(true)
+    try {
+      const res = await axios.get<{ available_slots: SlotOption[]; available_dates: DateOption[] }>(
+        `${API}/candidate/slots?date=${date}`,
+        { headers: { 'X-Auth-Token': token } }
+      )
+      setSlots(res.data.available_slots.filter(s => s.slot !== interviewSlot))
+      if (updateDates && res.data.available_dates) {
+        setRescheduleDates(res.data.available_dates)
+      }
+    } catch {
+      // silent
+    } finally {
+      setSlotsLoading(false)
+    }
+  }
+
+  function handleOpenReschedule() {
+    setShowReschedule(true)
+    setSelectedSlot('')
+    setRescheduleError('')
+    const today = new Date().toISOString().split('T')[0]
+    setRescheduleDate(today)
+    fetchSlotsForDate(today, true)
+  }
+
+  async function handleReschedule() {
+    if (!selectedSlot) return
+    setRescheduling(true)
+    setRescheduleError('')
+    try {
+      await axios.post(`${API}/candidate/reschedule`, { new_slot: selectedSlot }, { headers: { 'X-Auth-Token': token } })
+      window.location.reload()
+    } catch {
+      setRescheduleError('Could not reschedule. Please try again.')
+      setRescheduling(false)
+    }
+  }
+
+  const canStart = secondsLeft <= 0
+  const rescheduleBlocked = secondsLeft <= 300
+  const absSeconds = Math.abs(secondsLeft)
+  const hours = Math.floor(absSeconds / 3600)
+  const minutes = Math.floor((absSeconds % 3600) / 60)
+  const seconds = absSeconds % 60
+  const countdownText = secondsLeft <= 0
+    ? '0:00'
+    : hours > 0
+    ? `${hours}h ${minutes}m`
+    : `${minutes}:${String(seconds).padStart(2, '0')}`
+
+  const navRight = (
+    <>
+      {candidateName && (
+        <span className="muted" style={{ fontSize: '0.875rem', paddingRight: 8 }}>{candidateName}</span>
+      )}
+      <button className="btn btn-secondary" onClick={onLogout}>Logout</button>
+    </>
+  )
+
+  return (
+    <PageLayout navbar={{ rightContent: navRight }} contentStyle={{ maxWidth: 600 }}>
+        <div className="card" style={{ textAlign: 'center', padding: '40px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div style={{ fontSize: '2.5rem' }}>🕐</div>
+          <h2 style={{ margin: 0 }}>Hi {candidateName}, your interview is scheduled</h2>
+          <div style={{
+            background: 'var(--primary-bg)',
+            border: '1px solid var(--primary-border)',
+            borderRadius: 10,
+            padding: '12px 24px',
+            color: 'var(--primary-light)',
+            fontWeight: 600,
+            fontSize: '1rem',
+          }}>
+            {formatFullSlot(interviewSlot)}
+          </div>
+          {!canStart && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <p className="muted" style={{ marginBottom: 4 }}>Interview starts in</p>
+              <div style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '2.5rem',
+                fontWeight: 700,
+                color: 'var(--primary)',
+                letterSpacing: '0.04em',
+              }}>
+                {countdownText}
+              </div>
+            </div>
+          )}
+          <button
+            className="btn btn-primary"
+            style={{ fontSize: '1rem', padding: '12px 32px', opacity: canStart ? 1 : 0.5, cursor: canStart ? 'pointer' : 'not-allowed' }}
+            onClick={canStart ? onStartInterview : undefined}
+            disabled={!canStart}
+          >
+            {canStart ? 'Start Interview →' : `Interview starts at ${formatTimeOnly(interviewSlot)}`}
+          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-secondary"
+              style={{ fontSize: '0.875rem', opacity: rescheduleBlocked ? 0.5 : 1, cursor: rescheduleBlocked ? 'not-allowed' : 'pointer' }}
+              onClick={rescheduleBlocked ? undefined : handleOpenReschedule}
+              disabled={rescheduleBlocked}
+              title={rescheduleBlocked ? 'Reschedule not available within 5 minutes of interview' : undefined}
+            >
+              Reschedule Interview
+            </button>
+            {rescheduleBlocked && (
+              <p className="muted" style={{ fontSize: '0.78rem', marginTop: 4 }}>Not available within 5 minutes of interview</p>
+            )}
+          </div>
+        </div>
+
+        {showReschedule && (
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h3 style={{ margin: 0 }}>Pick a new time slot</h3>
+
+            {rescheduleDates.length > 0 && (
+              <div>
+                <p className="role-label" style={{ marginBottom: 8 }}>Select a date</p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {rescheduleDates.map(d => (
+                    <button
+                      key={d.date}
+                      onClick={() => { setRescheduleDate(d.date); setSelectedSlot(''); fetchSlotsForDate(d.date) }}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: 20,
+                        border: '1.5px solid',
+                        borderColor: rescheduleDate === d.date ? 'var(--primary)' : 'var(--border)',
+                        background: rescheduleDate === d.date ? 'var(--primary)' : 'transparent',
+                        color: rescheduleDate === d.date ? '#fff' : 'var(--text)',
+                        cursor: 'pointer',
+                        fontSize: '0.82rem',
+                        fontWeight: rescheduleDate === d.date ? 600 : 400,
+                      }}
+                    >
+                      {d.display}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {slotsLoading && <p className="muted">Loading slots...</p>}
+            {!slotsLoading && slots.length === 0 && (
+              <p className="muted">No other slots available for this date.</p>
+            )}
+            {!slotsLoading && slots.length > 0 && (
+              <div className="slot-grid">
+                {slots.map(s => (
+                  <button
+                    key={s.slot}
+                    className={`slot-cell slot-cell--available${selectedSlot === s.slot ? ' slot-cell--selected' : ''}`}
+                    onClick={() => setSelectedSlot(s.slot)}
+                  >
+                    {s.display}
+                  </button>
+                ))}
+              </div>
+            )}
+            {rescheduleError && <p className="error-text">{rescheduleError}</p>}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn btn-primary" onClick={handleReschedule} disabled={!selectedSlot || rescheduling}>
+                {rescheduling ? 'Rescheduling...' : 'Confirm'}
+              </button>
+              <button className="btn btn-secondary" onClick={() => setShowReschedule(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+    </PageLayout>
+  )
+}

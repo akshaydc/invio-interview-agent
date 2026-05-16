@@ -1,0 +1,213 @@
+{
+  "session_id": "80ef549d-81e3-40a3-a6f3-10a1cf64bbb1",
+  "ct_number": "CT20260002",
+  "job_role": "Salesforce Administrator",
+  "job_description": "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform.",
+  "status": "complete",
+  "transcript": [
+    {
+      "q": "Walk me through your experience with Apex and Lightning Web Components.",
+      "a": "Um, so I have been working with Apex for about 2 years now. I have built triggers and batch classes. LWC I am still kind of learning but I have done a few components. I think I am getting better at it.",
+      "score": 6,
+      "confidence": 42,
+      "metrics": {
+        "volume": 0.45,
+        "consistency": 0.48,
+        "word_count": 45,
+        "hesitant_signals": 4,
+        "confident_signals": 0
+      }
+    },
+    {
+      "q": "Tell me about a bug you found and fixed in production.",
+      "a": "Yes so there was a governor limit issue in a trigger that was causing failures for bulk imports. I think it was maybe because of SOQL queries inside loops. I used debug logs to find it and refactored the code to use collections. It was quite a tricky one to be honest.",
+      "score": 7,
+      "confidence": 55,
+      "metrics": {
+        "volume": 0.55,
+        "consistency": 0.58,
+        "word_count": 58,
+        "hesitant_signals": 3,
+        "confident_signals": 1
+      }
+    },
+    {
+      "q": "How do you approach writing test classes in Salesforce?",
+      "a": "I always aim for at least 85 percent coverage but I focus on meaningful assertions rather than just hitting the coverage number. I write test data factories to keep things clean and I test both positive and negative scenarios. I have started using Test.startTest and stopTest properly to isolate governor limits.",
+      "score": 8,
+      "confidence": 71,
+      "metrics": {
+        "volume": 0.68,
+        "consistency": 0.72,
+        "word_count": 68,
+        "hesitant_signals": 0,
+        "confident_signals": 3
+      }
+    },
+    {
+      "q": "What is your experience with Salesforce integrations?",
+      "a": "I have built REST API integrations using Named Credentials and Connected Apps. I integrated Salesforce with an ERP system to sync order data in real time. The main challenges were handling error responses and building retry logic for failed callouts. I am now learning about platform events for event-driven integrations.",
+      "score": 8,
+      "confidence": 76,
+      "metrics": {
+        "volume": 0.72,
+        "consistency": 0.74,
+        "word_count": 72,
+        "hesitant_signals": 0,
+        "confident_signals": 3
+      }
+    },
+    {
+      "q": "Do you have any questions for us?",
+      "a": "Yes \u2014 what is the team structure like? And is there a mentoring programme for developers? I am keen to grow quickly and would love to know how the organisation supports that.",
+      "score": 8,
+      "confidence": 74,
+      "metrics": {
+        "volume": 0.7,
+        "consistency": 0.72,
+        "word_count": 40,
+        "hesitant_signals": 0,
+        "confident_signals": 2
+      }
+    }
+  ],
+  "violations": [],
+  "scorecard": {
+    "communication": 7,
+    "technical_depth": 7,
+    "problem_solving": 6,
+    "cultural_fit": 7,
+    "summary": "Rahul showed solid technical knowledge but struggled with confidence in the early questions. He visibly warmed up as the interview progressed and his later answers showed genuine depth. With some coaching he could be a strong performer.",
+    "strengths": [
+      "Good Salesforce Developer fundamentals \u2014 Apex and LWC knowledge confirmed",
+      "Honest and self-aware \u2014 acknowledged gaps openly and explained how he is addressing them",
+      "Improved significantly as interview progressed"
+    ],
+    "red_flags": [
+      "Hesitant in early answers \u2014 may struggle under pressure",
+      "Limited integration experience beyond REST APIs"
+    ],
+    "recommendation": "Hire",
+    "transcript": [
+      {
+        "q": "Walk me through your experience with Apex and Lightning Web Components.",
+        "a": "Um, so I have been working with Apex for about 2 years now. I have built triggers and batch classes. LWC I am still kind of learning but I have done a few components. I think I am getting better at it.",
+        "score": 6,
+        "confidence": 42,
+        "metrics": {
+          "volume": 0.45,
+          "consistency": 0.48,
+          "word_count": 45,
+          "hesitant_signals": 4,
+          "confident_signals": 0
+        }
+      },
+      {
+        "q": "Tell me about a bug you found and fixed in production.",
+        "a": "Yes so there was a governor limit issue in a trigger that was causing failures for bulk imports. I think it was maybe because of SOQL queries inside loops. I used debug logs to find it and refactored the code to use collections. It was quite a tricky one to be honest.",
+        "score": 7,
+        "confidence": 55,
+        "metrics": {
+          "volume": 0.55,
+          "consistency": 0.58,
+          "word_count": 58,
+          "hesitant_signals": 3,
+          "confident_signals": 1
+        }
+      },
+      {
+        "q": "How do you approach writing test classes in Salesforce?",
+        "a": "I always aim for at least 85 percent coverage but I focus on meaningful assertions rather than just hitting the coverage number. I write test data factories to keep things clean and I test both positive and negative scenarios. I have started using Test.startTest and stopTest properly to isolate governor limits.",
+        "score": 8,
+        "confidence": 71,
+        "metrics": {
+          "volume": 0.68,
+          "consistency": 0.72,
+          "word_count": 68,
+          "hesitant_signals": 0,
+          "confident_signals": 3
+        }
+      },
+      {
+        "q": "What is your experience with Salesforce integrations?",
+        "a": "I have built REST API integrations using Named Credentials and Connected Apps. I integrated Salesforce with an ERP system to sync order data in real time. The main challenges were handling error responses and building retry logic for failed callouts. I am now learning about platform events for event-driven integrations.",
+        "score": 8,
+        "confidence": 76,
+        "metrics": {
+          "volume": 0.72,
+          "consistency": 0.74,
+          "word_count": 72,
+          "hesitant_signals": 0,
+          "confident_signals": 3
+        }
+      },
+      {
+        "q": "Do you have any questions for us?",
+        "a": "Yes \u2014 what is the team structure like? And is there a mentoring programme for developers? I am keen to grow quickly and would love to know how the organisation supports that.",
+        "score": 8,
+        "confidence": 74,
+        "metrics": {
+          "volume": 0.7,
+          "consistency": 0.72,
+          "word_count": 40,
+          "hesitant_signals": 0,
+          "confident_signals": 2
+        }
+      }
+    ],
+    "violations": [],
+    "confidence_analysis": {
+      "average_score": 64,
+      "label": "Moderate Confidence",
+      "color": "#854F0B",
+      "trend": "improving",
+      "peak_question": "What is your experience with Salesforce integrations?",
+      "peak_score": 76,
+      "lowest_question": "Walk me through your experience with Apex and Lightning Web Components.",
+      "lowest_score": 42,
+      "per_question": [
+        {
+          "question_num": 1,
+          "question": "Walk me through your Apex and LWC experience...",
+          "score": 42,
+          "word_count": 45,
+          "hesitant": 4,
+          "volume": 0.45
+        },
+        {
+          "question_num": 2,
+          "question": "Tell me about a bug you found in production...",
+          "score": 55,
+          "word_count": 58,
+          "hesitant": 3,
+          "volume": 0.55
+        },
+        {
+          "question_num": 3,
+          "question": "How do you approach writing test classes...",
+          "score": 71,
+          "word_count": 68,
+          "hesitant": 0,
+          "volume": 0.68
+        },
+        {
+          "question_num": 4,
+          "question": "What is your experience with integrations...",
+          "score": 76,
+          "word_count": 72,
+          "hesitant": 0,
+          "volume": 0.72
+        },
+        {
+          "question_num": 5,
+          "question": "Do you have any questions for us...",
+          "score": 74,
+          "word_count": 40,
+          "hesitant": 0,
+          "volume": 0.7
+        }
+      ],
+      "total_words": 283
+    }
+  }
+}
