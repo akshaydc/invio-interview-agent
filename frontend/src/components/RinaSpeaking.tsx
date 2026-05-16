@@ -21,82 +21,35 @@ type Props = {
 export default function RinaSpeaking({ onMatchResult, onBrowseRoles }: Props) {
   const [currentLine, setCurrentLine] = useState(0)
   const [visible, setVisible] = useState(true)
-  const [isMuted, setIsMuted] = useState(() => localStorage.getItem('rina_muted') === 'true')
+  const [isMuted, setIsMuted] = useState(
+    localStorage.getItem('rina_muted') === 'true'
+  )
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const isMutedRef = useRef(isMuted)
-  const hasPlayedRef = useRef(false)
 
-  async function playLine(text: string) {
-    if (isMutedRef.current) return
-    try {
-      const response = await fetch(`${API}/rina/speak`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      })
-      if (!response.ok) throw new Error('TTS failed')
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-      const audio = new Audio(url)
-      audioRef.current = audio
-      audio.volume = isMutedRef.current ? 0 : 1
-      await audio.play()
-      audio.onended = () => URL.revokeObjectURL(url)
-    } catch {
-      if (!isMutedRef.current && window.speechSynthesis) {
-        const utterance = new SpeechSynthesisUtterance(text)
-        utterance.rate = 0.88
-        utterance.pitch = 1.1
-        window.speechSynthesis.speak(utterance)
-      }
-    }
-  }
-
-  // Play audio once on mount (line 1 immediately, line 2 after 4s)
+  // Text cycling — driven by 'rina-line' events dispatched from index.html script
   useEffect(() => {
-    if (isMutedRef.current || hasPlayedRef.current) return
-    hasPlayedRef.current = true
-    playLine(RINA_LINES[0])
-    const timer = setTimeout(() => {
-      playLine(RINA_LINES[1])
-    }, 4000)
-    return () => {
-      clearTimeout(timer)
-      if (audioRef.current) audioRef.current.pause()
-      window.speechSynthesis?.cancel()
-    }
-  }, []) // intentionally runs once
-
-  // Text cycling — continuous, for visual animation
-  useEffect(() => {
-    const interval = setInterval(() => {
+    const handler = (e: CustomEvent) => {
       setVisible(false)
       setTimeout(() => {
-        setCurrentLine(prev => (prev + 1) % 2)
+        setCurrentLine(e.detail.line)
         setVisible(true)
       }, 400)
-    }, 4500)
-    return () => clearInterval(interval)
+    }
+    window.addEventListener('rina-line', handler as EventListener)
+    return () => window.removeEventListener('rina-line', handler as EventListener)
   }, [])
 
   function toggleMute() {
-    const next = !isMuted
-    setIsMuted(next)
-    isMutedRef.current = next
-    localStorage.setItem('rina_muted', String(next))
-    if (next) {
-      if (audioRef.current) audioRef.current.volume = 0
-      window.speechSynthesis?.cancel()
+    const newMuted = !isMuted
+    setIsMuted(newMuted)
+    if (newMuted) {
+      window.speechSynthesis.cancel()
+      localStorage.setItem('rina_muted', 'true')
     } else {
-      if (audioRef.current) audioRef.current.volume = 1
+      localStorage.setItem('rina_muted', 'false')
     }
   }
 
@@ -154,21 +107,11 @@ export default function RinaSpeaking({ onMatchResult, onBrowseRoles }: Props) {
           justifyContent: 'center',
           zIndex: 2,
           padding: 0,
+          fontSize: 16,
+          lineHeight: 1,
         }}
       >
-        {isMuted ? (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-            <line x1="23" y1="9" x2="17" y2="15" />
-            <line x1="17" y1="9" x2="23" y2="15" />
-          </svg>
-        ) : (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0C447C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-          </svg>
-        )}
+        {isMuted ? '🔇' : '🔊'}
       </button>
 
       {/* Avatar */}
