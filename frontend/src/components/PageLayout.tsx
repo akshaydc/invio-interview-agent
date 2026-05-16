@@ -13,13 +13,15 @@ type Props = {
   children: ReactNode
   navbar?: NavbarOptions
   contentStyle?: CSSProperties
+  className?: string
 }
 
-export default function PageLayout({ children, navbar, contentStyle }: Props) {
+export default function PageLayout({ children, navbar, contentStyle, className }: Props) {
   return (
     <>
       {navbar && <Navbar {...navbar} />}
       <main
+        className={className}
         style={{
           maxWidth: 1280,
           margin: '0 auto',
