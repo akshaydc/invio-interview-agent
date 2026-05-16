@@ -185,11 +185,15 @@ function buildGuideTips(
 }
 
 function buildSpokenMessage(page: GuidePage, title: string, tip: string) {
-  return page === 'landing' ? `${title}. ${tip}` : tip
+  const message = page === 'landing' ? `${title}. ${tip}` : tip
+  return message.replace(/\bASTRA\b/g, 'Astra')
 }
+
+const PREFERRED_RINA_VOICE = /microsoft jenny|jenny/i
 
 function femaleVoiceScore(voice: SpeechSynthesisVoice) {
   const label = `${voice.name} ${voice.voiceURI}`.toLowerCase()
+  if (PREFERRED_RINA_VOICE.test(label)) return 6
   if (/male|david|mark|guy|daniel|george|alex|fred|ralph|bruce|tom|google uk english male/.test(label)) return -1
   if (/zira|aria|jenny|samantha|susan|victoria|karen|moira|tessa|serena|fiona|ava|allison|salli|joanna|kendra|kimberly|ivy/.test(label)) return 3
   if (/female|woman|girl|google uk english female/.test(label)) return 2
@@ -226,9 +230,9 @@ function tuneGuideVoice(utterance: SpeechSynthesisUtterance, voices: SpeechSynth
   const preferredVoice = getPreferredFemaleVoice(voices)
 
   if (preferredVoice) utterance.voice = preferredVoice
-  utterance.rate = 0.96
-  utterance.pitch = preferredVoice ? 1.12 : 1.34
-  utterance.volume = 0.9
+  utterance.rate = 0.88
+  utterance.pitch = preferredVoice ? 1.03 : 1.12
+  utterance.volume = 0.78
 }
 
 export default function AvatarGuide({
