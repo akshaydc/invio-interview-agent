@@ -45,10 +45,11 @@
 }
 
 body {
-  background:
-    linear-gradient(180deg, rgba(248, 250, 252, 0.46), rgba(248, 250, 252, 0.7)),
-    url('/interview-background.webp') center / cover fixed no-repeat,
-    var(--bg);
+  min-height: 100vh;
+  background-color: #E8F0FA;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400'%3E%3Cg stroke='%230C447C' stroke-opacity='0.12' fill='%230C447C' fill-opacity='0.12'%3E%3Cline x1='60' y1='80' x2='180' y2='40' stroke-width='1'/%3E%3Cline x1='180' y1='40' x2='320' y2='90' stroke-width='1'/%3E%3Cline x1='320' y1='90' x2='460' y2='30' stroke-width='1'/%3E%3Cline x1='460' y1='30' x2='560' y2='80' stroke-width='1'/%3E%3Cline x1='60' y1='80' x2='140' y2='160' stroke-width='1'/%3E%3Cline x1='180' y1='40' x2='260' y2='170' stroke-width='1'/%3E%3Cline x1='320' y1='90' x2='380' y2='180' stroke-width='1'/%3E%3Cline x1='460' y1='30' x2='520' y2='160' stroke-width='1'/%3E%3Cline x1='140' y1='160' x2='260' y2='170' stroke-width='1'/%3E%3Cline x1='260' y1='170' x2='380' y2='180' stroke-width='1'/%3E%3Cline x1='380' y1='180' x2='520' y2='160' stroke-width='1'/%3E%3Cline x1='100' y1='280' x2='240' y2='240' stroke-width='1'/%3E%3Cline x1='240' y1='240' x2='380' y2='300' stroke-width='1'/%3E%3Cline x1='380' y1='300' x2='500' y2='250' stroke-width='1'/%3E%3Cline x1='260' y1='170' x2='240' y2='240' stroke-width='1'/%3E%3Cline x1='380' y1='180' x2='380' y2='300' stroke-width='1'/%3E%3Cline x1='520' y1='160' x2='500' y2='250' stroke-width='1'/%3E%3Ccircle cx='60' cy='80' r='4'/%3E%3Ccircle cx='180' cy='40' r='5'/%3E%3Ccircle cx='320' cy='90' r='6'/%3E%3Ccircle cx='460' cy='30' r='4'/%3E%3Ccircle cx='560' cy='80' r='3'/%3E%3Ccircle cx='140' cy='160' r='4'/%3E%3Ccircle cx='260' cy='170' r='5'/%3E%3Ccircle cx='380' cy='180' r='6'/%3E%3Ccircle cx='520' cy='160' r='4'/%3E%3Ccircle cx='100' cy='280' r='3'/%3E%3Ccircle cx='240' cy='240' r='5'/%3E%3Ccircle cx='380' cy='300' r='4'/%3E%3Ccircle cx='500' cy='250' r='3'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 600px 400px;
+  background-repeat: repeat;
   color: var(--text);
   font-family: var(--font);
   font-size: 16px;
@@ -60,13 +61,12 @@ body {
 #root {
   width: 100%;
   min-height: 100vh;
+  background: transparent;
 }
 
 .app {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.34), transparent 34%),
-    linear-gradient(90deg, rgba(248, 250, 252, 0.36), rgba(248, 250, 252, 0.12));
+  background: transparent;
   width: 100%;
 }
 
@@ -351,12 +351,7 @@ body {
   justify-content: center;
   overflow: hidden;
   padding: 18px 24px;
-  background:
-    linear-gradient(135deg, rgba(235, 244, 255, 0.8), rgba(255, 255, 255, 0.72) 52%, rgba(225, 245, 238, 0.52)),
-    linear-gradient(90deg, rgba(181, 212, 244, 0.26) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(181, 212, 244, 0.24) 1px, transparent 1px),
-    url('/interview-background.webp') center / cover fixed no-repeat;
-  background-size: auto, 46px 46px, 46px 46px, cover;
+  background: transparent;
 }
 
 .login-wrapper {
@@ -1006,7 +1001,9 @@ body {
 
 /* â”€â”€ Shared Navbar â”€â”€ */
 .navbar {
-  background: var(--white);
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 0.5px solid var(--border);
   position: sticky;
   top: 0;
@@ -1068,10 +1065,14 @@ body {
   flex-wrap: wrap;
   gap: 12px;
   align-items: flex-end;
-  background: var(--surface-2);
+  background: white;
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
+}
+
+.pipeline-widget {
+  background: white;
 }
 
 .filter-bar-item {
@@ -1584,13 +1585,12 @@ body {
 .landing-shell::before {
   position: absolute;
   inset: 22px 24px;
-  border: 1px solid rgba(181, 212, 244, 0.6);
-  border-radius: 18px;
-  background:
-    linear-gradient(135deg, rgba(235, 244, 255, 0.94), rgba(255, 255, 255, 0.9)),
-    radial-gradient(circle at 86% 18%, rgba(15, 110, 86, 0.14), transparent 28%),
-    radial-gradient(circle at 12% 78%, rgba(133, 79, 11, 0.12), transparent 26%);
-  box-shadow: 0 24px 60px rgba(12, 68, 124, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(12, 68, 124, 0.08);
   content: '';
   z-index: 0;
 }
