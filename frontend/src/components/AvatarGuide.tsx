@@ -185,7 +185,8 @@ function buildGuideTips(
 }
 
 function buildSpokenMessage(page: GuidePage, title: string, tip: string) {
-  return page === 'landing' ? `${title}. ${tip}` : tip
+  const message = page === 'landing' ? `${title}. ${tip}` : tip
+  return message.replace(/\bASTRA\b/g, 'Astra')
 }
 
 const PREFERRED_RINA_VOICE = /microsoft jenny|jenny/i
