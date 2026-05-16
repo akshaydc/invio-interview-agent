@@ -597,7 +597,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
       <Navbar
         rightContent={<button className="btn btn-secondary" onClick={onLogout}>Logout</button>}
       />
-      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
       {resumeModal && (
         <div className="modal-overlay" onClick={() => setResumeModal(null)}>
           <div
@@ -996,6 +996,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
             </div>
           )}
 
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="filter-bar">
             <div className="filter-bar-item">
               <label className="role-label">Role</label>
@@ -1047,8 +1048,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
           {!analyticsLoading && analytics && <PipelineWidget analytics={analytics} />}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3 style={{ color: 'var(--text)' }}>
                     {filteredCandidates.length} candidate{filteredCandidates.length !== 1 ? 's' : ''} found
@@ -1342,7 +1342,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                   </div>
                 )}
               </div>
-            </div>
+          </div>
 
         </>
       )}
