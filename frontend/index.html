@@ -13,5 +13,75 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      var rinaSpoken = false;
+      var rinaLines = [
+        "Hi, I'm Rina — your AI assistant. Welcome to ASTRA.",
+        "Upload your resume, and let me do my magic to fetch you the right roles."
+      ];
+
+      function rinaSpeak(text, onEnd) {
+        window.speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.85;
+        u.pitch = 1;
+        u.volume = 1;
+
+        var voices = window.speechSynthesis.getVoices();
+        var femaleVoice = voices.find(function(v) {
+          return v.name === 'Google UK English Female';
+        }) || voices.find(function(v) {
+          return v.name === 'Microsoft Zira - English (United States)';
+        }) || voices.find(function(v) {
+          return v.name.toLowerCase().includes('female');
+        });
+
+        if (femaleVoice) u.voice = femaleVoice;
+
+        if (onEnd) u.onend = onEnd;
+        window.speechSynthesis.speak(u);
+      }
+
+      function startRina() {
+        if (rinaSpoken) return;
+        if (window.location.pathname !== '/') return;
+        if (localStorage.getItem('rina_muted') === 'true') return;
+        rinaSpoken = true;
+
+        function doSpeak() {
+          var voices = window.speechSynthesis.getVoices();
+          if (voices.length === 0) {
+            setTimeout(doSpeak, 100);
+            return;
+          }
+
+          // Delay 3 seconds after landing page loads
+          // so intro animation is fully done
+          setTimeout(function() {
+
+            // Signal React to show line 0
+            window.dispatchEvent(new CustomEvent('rina-line',
+              { detail: { line: 0 } }));
+
+            // Speak line 0, then on completion speak line 1
+            rinaSpeak(rinaLines[0], function() {
+              // Small pause between lines
+              setTimeout(function() {
+                // Signal React to show line 1
+                window.dispatchEvent(new CustomEvent('rina-line',
+                  { detail: { line: 1 } }));
+                rinaSpeak(rinaLines[1]);
+              }, 600);
+            });
+
+          }, 3000);
+        }
+        doSpeak();
+      }
+
+      document.addEventListener('mousemove', startRina, { once: true });
+      document.addEventListener('touchstart', startRina, { once: true });
+      document.addEventListener('keydown', startRina, { once: true });
+    </script>
   </body>
 </html>
