@@ -21,59 +21,65 @@ type Props = {
 export default function RinaSpeaking({ onMatchResult, onBrowseRoles }: Props) {
   const [currentLine, setCurrentLine] = useState(0)
   const [visible, setVisible] = useState(true)
+  const [voicesLoaded, setVoicesLoaded] = useState(false)
   const [isMuted, setIsMuted] = useState(() => localStorage.getItem('rina_muted') === 'true')
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const isMutedRef = useRef(isMuted)
-  const hasPlayedRef = useRef(false)
 
-  async function playLine(text: string) {
-    if (isMutedRef.current) return
-    try {
-      const response = await fetch(`${API}/rina/speak`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      })
-      if (!response.ok) throw new Error('TTS failed')
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-      const audio = new Audio(url)
-      audioRef.current = audio
-      audio.volume = isMutedRef.current ? 0 : 1
-      await audio.play()
-      audio.onended = () => URL.revokeObjectURL(url)
-    } catch {
-      if (!isMutedRef.current && window.speechSynthesis) {
-        const utterance = new SpeechSynthesisUtterance(text)
-        utterance.rate = 0.88
-        utterance.pitch = 1.1
-        window.speechSynthesis.speak(utterance)
-      }
+  function playLine(text: string) {
+    if (isMuted) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.rate = 0.85
+    utterance.pitch = 1.15
+    utterance.volume = 1
+    const voices = window.speechSynthesis.getVoices()
+    const preferred = [
+      'Samantha', 'Victoria', 'Karen', 'Moira',
+      'Tessa', 'Fiona', 'Microsoft Zira',
+      'Google UK English Female', 'Microsoft Hazel',
+    ]
+    let selectedVoice: SpeechSynthesisVoice | null = null
+    for (const name of preferred) {
+      const found = voices.find(v => v.name.includes(name))
+      if (found) { selectedVoice = found; break }
     }
+    if (!selectedVoice) {
+      selectedVoice = voices.find(v =>
+        v.lang.startsWith('en') &&
+        (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('woman'))
+      ) || voices.find(v => v.lang.startsWith('en')) || null
+    }
+    if (selectedVoice) utterance.voice = selectedVoice
+    window.speechSynthesis.speak(utterance)
   }
 
-  // Play audio once on mount (line 1 immediately, line 2 after 4s)
+  // Load voices — Chrome populates them asynchronously
   useEffect(() => {
-    if (isMutedRef.current || hasPlayedRef.current) return
-    hasPlayedRef.current = true
+    const loadVoices = () => {
+      if (window.speechSynthesis.getVoices().length > 0) setVoicesLoaded(true)
+    }
+    loadVoices()
+    window.speechSynthesis.onvoiceschanged = loadVoices
+    return () => { window.speechSynthesis.onvoiceschanged = null }
+  }, [])
+
+  // Play audio once after voices are ready
+  useEffect(() => {
+    if (!voicesLoaded || isMuted) return
     playLine(RINA_LINES[0])
+    setCurrentLine(0)
     const timer = setTimeout(() => {
+      setCurrentLine(1)
       playLine(RINA_LINES[1])
-    }, 4000)
+    }, 4500)
     return () => {
       clearTimeout(timer)
-      if (audioRef.current) audioRef.current.pause()
-      window.speechSynthesis?.cancel()
+      window.speechSynthesis.cancel()
     }
-  }, []) // intentionally runs once
+  }, [voicesLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Text cycling — continuous, for visual animation
   useEffect(() => {
@@ -90,14 +96,8 @@ export default function RinaSpeaking({ onMatchResult, onBrowseRoles }: Props) {
   function toggleMute() {
     const next = !isMuted
     setIsMuted(next)
-    isMutedRef.current = next
     localStorage.setItem('rina_muted', String(next))
-    if (next) {
-      if (audioRef.current) audioRef.current.volume = 0
-      window.speechSynthesis?.cancel()
-    } else {
-      if (audioRef.current) audioRef.current.volume = 1
-    }
+    if (next) window.speechSynthesis.cancel()
   }
 
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
