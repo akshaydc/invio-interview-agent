@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
-import type { AuthInfo } from '../App'
+import type { AuthInfo, Application } from '../App'
 import { API_BASE_URL as API } from '../config'
 
 type Tab = 'recruiter' | 'candidate'
@@ -36,16 +36,14 @@ export default function Login({ onLogin, onBack }: Props) {
           role: 'candidate'
           name: string
           ct_number: string
-          job_role: string
-          job_description: string
+          applications: Application[]
         }>(`${API}/auth/candidate/login`, { ct_number: ctNumber })
         onLogin({
           token: res.data.token,
           role: 'candidate',
           name: res.data.name,
           ctNumber: res.data.ct_number,
-          jobRole: res.data.job_role,
-          jobDescription: res.data.job_description,
+          applications: res.data.applications,
         })
       }
     } catch (err: unknown) {
