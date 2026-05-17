@@ -27,6 +27,7 @@ export default function RinaSpeaking({ onMatchResult, onBrowseRoles }: Props) {
   const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [uploadHovered, setUploadHovered] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Text cycling — driven by 'rina-line' events dispatched from index.html script
@@ -78,12 +79,6 @@ export default function RinaSpeaking({ onMatchResult, onBrowseRoles }: Props) {
       setLoading(false)
     }
   }
-
-  const uploadBorderColor = error
-    ? '#fca5a5'
-    : resumeFile && !loading
-      ? '#86efac'
-      : '#B5D4F4'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 16, position: 'relative' }}>
@@ -168,14 +163,21 @@ export default function RinaSpeaking({ onMatchResult, onBrowseRoles }: Props) {
       {/* Upload box */}
       <div
         onClick={() => !loading && fileInputRef.current?.click()}
+        onMouseEnter={() => setUploadHovered(true)}
+        onMouseLeave={() => setUploadHovered(false)}
         style={{
-          background: 'white',
-          borderRadius: 12,
-          padding: '16px 20px',
-          border: `1px solid ${uploadBorderColor}`,
-          boxShadow: '0 4px 20px rgba(12,68,124,0.08)',
+          background: uploadHovered && !loading
+            ? 'linear-gradient(135deg, #185FA5 0%, #378ADD 100%)'
+            : 'linear-gradient(135deg, #0C447C 0%, #185FA5 100%)',
+          borderRadius: 14,
+          padding: '20px 24px',
+          border: 'none',
+          boxShadow: uploadHovered && !loading
+            ? '0 12px 40px rgba(12, 68, 124, 0.35)'
+            : '0 8px 32px rgba(12, 68, 124, 0.25)',
           cursor: loading ? 'wait' : 'pointer',
-          transition: 'border-color 0.2s',
+          transform: uploadHovered && !loading ? 'translateY(-2px)' : 'none',
+          transition: 'all 0.2s ease',
           flexShrink: 0,
         }}
       >
@@ -188,22 +190,22 @@ export default function RinaSpeaking({ onMatchResult, onBrowseRoles }: Props) {
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {loading ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0C447C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}>
               <path d="M21 12a9 9 0 1 1-6.219-8.56" />
             </svg>
           ) : resumeFile ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <polyline points="20 6 9 17 4 12" />
             </svg>
           ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0C447C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="17 8 12 3 7 8" />
               <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
           )}
           <div>
-            <div style={{ fontSize: 14, color: loading ? '#64748b' : resumeFile ? '#0F6E56' : '#042C53', fontWeight: 500 }}>
+            <div style={{ fontSize: 15, color: 'white', fontWeight: 600 }}>
               {loading
                 ? 'Finding your matches...'
                 : resumeFile
@@ -211,14 +213,14 @@ export default function RinaSpeaking({ onMatchResult, onBrowseRoles }: Props) {
                   : 'Drop your resume here or click to upload'}
             </div>
             {!loading && (
-              <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>
                 PDF or TXT · AI matches you instantly
               </div>
             )}
           </div>
         </div>
         {error && (
-          <p style={{ fontSize: 12, color: '#A32D2D', marginTop: 8, marginBottom: 0 }}>{error}</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,200,200,0.9)', marginTop: 8, marginBottom: 0 }}>{error}</p>
         )}
       </div>
 
