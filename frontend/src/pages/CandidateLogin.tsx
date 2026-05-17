@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
-import type { AuthInfo } from '../App'
+import type { AuthInfo, Application } from '../App'
 import { API_BASE_URL as API } from '../config'
 
 type Props = {
@@ -26,20 +26,14 @@ export default function CandidateLogin({ onLogin, onBack }: Props) {
         role: 'candidate'
         name: string
         ct_number: string
-        job_role: string
-        job_description: string
-        status: string
-        interview_slot?: string
+        applications: Application[]
       }>(`${API}/auth/candidate/login`, { ct_number: ctNumber.trim() })
       onLogin({
         token: res.data.token,
         role: 'candidate',
         name: res.data.name,
         ctNumber: res.data.ct_number,
-        jobRole: res.data.job_role,
-        jobDescription: res.data.job_description,
-        status: res.data.status,
-        interviewSlot: res.data.interview_slot ?? undefined,
+        applications: res.data.applications,
       })
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Login failed.' : 'Login failed.'

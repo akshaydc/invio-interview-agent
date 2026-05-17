@@ -172,20 +172,6 @@ export default function ApplicationForm({ jobId, jobTitle, onBack, onApplied, pr
         { headers: { 'Content-Type': 'multipart/form-data' } }
       )
 
-      // Save to localStorage for applied jobs widget
-      try {
-        const stored = JSON.parse(localStorage.getItem('astra_applied_jobs') ?? '[]')
-        stored.push({
-          job_id: jobId,
-          job_title: jobTitle,
-          ct_number: res.data.ct_number,
-          applied_at: new Date().toISOString(),
-        })
-        localStorage.setItem('astra_applied_jobs', JSON.stringify(stored))
-      } catch {
-        // localStorage unavailable — skip silently
-      }
-
       setCtNumber(res.data.ct_number)
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {

@@ -53,7 +53,6 @@ export type ResumeMatchResult = {
 
 type Props = {
   matchResult: ResumeMatchResult
-  appliedJobIds: string[]
   onApply: (jobId: string, jobTitle: string, matchData: JobMatch, prefill: PrefillInfo) => void
   onBrowseAll: () => void
   onCandidateLoginClick: () => void
@@ -67,7 +66,7 @@ function pillStyle(pct: number): React.CSSProperties {
   return { background: '#FCEBEB', color: '#A32D2D' }
 }
 
-export default function JobMatches({ matchResult, appliedJobIds, onApply, onBrowseAll, onCandidateLoginClick, onRecruiterLoginClick, onHome }: Props) {
+export default function JobMatches({ matchResult, onApply, onBrowseAll, onCandidateLoginClick, onRecruiterLoginClick, onHome }: Props) {
   const { candidate_profile, matches } = matchResult
   const sortedMatches = [...matches].sort((a, b) => b.match_percentage - a.match_percentage)
 
@@ -142,86 +141,68 @@ export default function JobMatches({ matchResult, appliedJobIds, onApply, onBrow
         </div>
       ) : (
         <div className="jobs-grid">
-          {sortedMatches.map(m => {
-            const isApplied = appliedJobIds.includes(m.job_id)
-            return (
-              <div key={m.job_id} className="job-card" style={{ position: 'relative', opacity: isApplied ? 0.6 : 1 }}>
-                <div style={{
-                  position: 'absolute', top: 16, right: 16,
-                  ...pillStyle(m.match_percentage),
-                  fontSize: 15, fontWeight: 700,
-                  padding: '4px 12px', borderRadius: 20,
-                  lineHeight: 1.4,
-                }}>
-                  {m.match_percentage}%
-                </div>
-
-                <div>
-                  <span className="job-dept-badge">{m.job_department}</span>
-                </div>
-                <h2 className="job-card-title" style={{ paddingRight: 60 }}>
-                  {isApplied && <span style={{ color: '#0F6E56', marginRight: 6 }}>✓</span>}
-                  {m.job_title}
-                </h2>
-                <div className="job-meta">
-                  {m.job_location && <span className="job-meta-item">{m.job_location}</span>}
-                  {m.job_location && m.job_type && <span className="job-meta-sep">·</span>}
-                  {m.job_type && <span className="job-meta-item">{m.job_type}</span>}
-                </div>
-                <p style={{ fontSize: '0.85rem', color: 'var(--primary-light)', fontWeight: 500 }}>
-                  {m.match_reason}
-                </p>
-                {m.strengths.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {m.strengths.slice(0, 3).map((s, i) => (
-                      <span key={i} style={{
-                        padding: '2px 10px',
-                        background: 'var(--green-bg)',
-                        color: 'var(--green)',
-                        border: '1px solid rgba(15,110,86,0.2)',
-                        borderRadius: 20,
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
-                      }}>
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {isApplied ? (
-                  <div style={{
-                    marginTop: 4, width: '100%', padding: '10px',
-                    background: '#e2e8f0', color: '#64748b',
-                    borderRadius: 8, textAlign: 'center',
-                    fontWeight: 600, fontSize: '0.9rem',
-                  }}>
-                    Applied
-                  </div>
-                ) : (
-                  <button
-                    className="btn btn-primary"
-                    style={{ marginTop: 4, width: '100%' }}
-                    onClick={() => {
-                      const cp = matchResult.candidate_profile
-                      const ci = matchResult.candidate_info
-                      const prefillData: PrefillInfo = {
-                        name: cp?.full_name || ci?.name || '',
-                        email: cp?.email || ci?.email || '',
-                        phone: cp?.phone || ci?.phone || '',
-                        linkedin_url: cp?.linkedin || ci?.linkedin_url || '',
-                        current_role: cp?.current_role || ci?.current_role || '',
-                        location: cp?.location || ci?.location || '',
-                      }
-                      console.log('Prefill data:', prefillData)
-                      onApply(m.job_id, m.job_title, m, prefillData)
-                    }}
-                  >
-                    Apply Now
-                  </button>
-                )}
+          {sortedMatches.map(m => (
+            <div key={m.job_id} className="job-card" style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute', top: 16, right: 16,
+                ...pillStyle(m.match_percentage),
+                fontSize: 15, fontWeight: 700,
+                padding: '4px 12px', borderRadius: 20,
+                lineHeight: 1.4,
+              }}>
+                {m.match_percentage}%
               </div>
-            )
-          })}
+
+              <div>
+                <span className="job-dept-badge">{m.job_department}</span>
+              </div>
+              <h2 className="job-card-title" style={{ paddingRight: 60 }}>{m.job_title}</h2>
+              <div className="job-meta">
+                {m.job_location && <span className="job-meta-item">{m.job_location}</span>}
+                {m.job_location && m.job_type && <span className="job-meta-sep">·</span>}
+                {m.job_type && <span className="job-meta-item">{m.job_type}</span>}
+              </div>
+              <p style={{ fontSize: '0.85rem', color: 'var(--primary-light)', fontWeight: 500 }}>
+                {m.match_reason}
+              </p>
+              {m.strengths.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {m.strengths.slice(0, 3).map((s, i) => (
+                    <span key={i} style={{
+                      padding: '2px 10px',
+                      background: 'var(--green-bg)',
+                      color: 'var(--green)',
+                      border: '1px solid rgba(15,110,86,0.2)',
+                      borderRadius: 20,
+                      fontSize: '0.75rem',
+                      fontWeight: 500,
+                    }}>
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <button
+                className="btn btn-primary"
+                style={{ marginTop: 4, width: '100%' }}
+                onClick={() => {
+                  const cp = matchResult.candidate_profile
+                  const ci = matchResult.candidate_info
+                  const prefillData: PrefillInfo = {
+                    name: cp?.full_name || ci?.name || '',
+                    email: cp?.email || ci?.email || '',
+                    phone: cp?.phone || ci?.phone || '',
+                    linkedin_url: cp?.linkedin || ci?.linkedin_url || '',
+                    current_role: cp?.current_role || ci?.current_role || '',
+                    location: cp?.location || ci?.location || '',
+                  }
+                  onApply(m.job_id, m.job_title, m, prefillData)
+                }}
+              >
+                Apply Now
+              </button>
+            </div>
+          ))}
         </div>
       )}
 

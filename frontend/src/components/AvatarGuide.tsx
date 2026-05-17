@@ -16,6 +16,7 @@ type GuidePage =
   | 'recruiter-login'
   | 'recruiter-dashboard'
   | 'recruiter-scorecard'
+  | 'candidate-dashboard'
   | 'candidate-interview'
   | 'book-slot'
 
@@ -68,6 +69,10 @@ const GUIDE_COPY: Record<GuidePage, string[]> = {
   'recruiter-scorecard': [
     'This scorecard summarizes the interview outcome, strengths, and risk signals for the candidate.',
     'Use Back when you are ready to return to the recruiter dashboard.',
+  ],
+  'candidate-dashboard': [
+    'This is your applications dashboard. Track every role you have applied to and its current status.',
+    'When your interview is scheduled, you will see a start button here to join directly.',
   ],
   'candidate-interview': [
     'I will stay nearby while the interview runs. Answer naturally and keep your microphone and camera available.',
