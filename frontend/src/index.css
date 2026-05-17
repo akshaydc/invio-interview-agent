@@ -1392,6 +1392,138 @@ body {
   border: 1px solid rgba(163, 45, 45, 0.2);
 }
 
+/* LinkedIn experience verification */
+.experience-check {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: var(--white);
+}
+
+.experience-check--match {
+  border-left-color: var(--green);
+}
+
+.experience-check--review,
+.experience-check--missing {
+  border-left-color: var(--amber);
+}
+
+.experience-check--mismatch {
+  border-left-color: var(--red);
+}
+
+.experience-check__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.experience-check__verdict {
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.experience-check__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  color: var(--primary);
+  background: var(--white);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.experience-check__link:hover {
+  background: var(--primary-bg);
+}
+
+.experience-check__actions {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.experience-check__button {
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--surface-2);
+  font-family: var(--font);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.experience-check__button:hover:not(:disabled) {
+  border-color: var(--primary-border);
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+
+.experience-check__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.experience-check__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.experience-check__metrics div {
+  min-height: 68px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.experience-check__metrics span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.experience-check__metrics strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.experience-check__evidence {
+  margin-top: 12px;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 700px) {
+  .experience-check__metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* â”€â”€ Camera self-view (fixed top-right) â”€â”€ */
 .camera-self-view {
   position: fixed;

@@ -2,6 +2,7 @@ import io
 import json
 import os
 import random
+import re
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -33,6 +34,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "https://your-frontend.railway.app")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+LINKEDIN_ENRICHMENT_URL = os.getenv("LINKEDIN_ENRICHMENT_URL")
 
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
@@ -482,6 +484,170 @@ def _get_applications(candidate: dict) -> list[dict]:
     return [app] if app.get("job_id") else []
 
 
+def _parse_experience_years(text: str) -> float | None:
+    """Best-effort extraction for phrases like '4 years' or '5.5 yrs'."""
+    if not text:
+        return None
+    matches = re.findall(r"(\d+(?:\.\d+)?)\s*(?:\+?\s*)?(?:years?|yrs?)\b", text, flags=re.IGNORECASE)
+    if not matches:
+        return None
+    return max(float(m) for m in matches)
+
+
+def _extract_linkedin_url(text: str) -> str:
+    if not text:
+        return ""
+    match = re.search(
+        r"(?:https?://)?(?:www\.)?linkedin\.com/in/[A-Za-z0-9%_\-./]+",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return ""
+    url = match.group(0).rstrip(").,;]")
+    if not url.lower().startswith(("http://", "https://")):
+        url = f"https://{url}"
+    return url
+
+
+def _experience_requirement_min(job_text: str) -> float | None:
+    if not job_text:
+        return None
+    range_match = re.search(r"(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*(?:years?|yrs?)", job_text, flags=re.IGNORECASE)
+    if range_match:
+        return float(range_match.group(1))
+    plus_match = re.search(r"(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)", job_text, flags=re.IGNORECASE)
+    if plus_match:
+        return float(plus_match.group(1))
+    return None
+
+
+def _format_years(value: float | None) -> str:
+    if value is None:
+        return "Not found"
+    return f"{value:g} years"
+
+
+def _build_experience_verification(candidate: dict, application: dict) -> dict:
+    resume_text = application.get("resume_text", "") or ""
+    summary_text = application.get("match_summary", "") or ""
+    gap_text = " ".join(application.get("match_gaps", []) or [])
+    strength_text = " ".join(application.get("match_strengths", []) or [])
+    job_text = " ".join(
+        str(v) for v in (
+            application.get("job_description", ""),
+            application.get("job_role", ""),
+            application.get("job_title", ""),
+            candidate.get("current_role", ""),
+        ) if v
+    )
+
+    claimed_years = _parse_experience_years(" ".join([resume_text, summary_text, strength_text, gap_text]))
+    required_years = _experience_requirement_min(job_text)
+    linkedin_url = candidate.get("linkedin_url", "") or _extract_linkedin_url(resume_text)
+
+    if not linkedin_url:
+        status = "missing"
+        label = "LinkedIn missing"
+        verdict = "No LinkedIn URL was provided with the resume."
+    elif claimed_years is None:
+        status = "review"
+        label = "Needs review"
+        verdict = "LinkedIn URL is captured, but resume experience could not be extracted confidently."
+    elif required_years is not None and claimed_years + 0.25 < required_years:
+        status = "mismatch"
+        label = "Below role need"
+        verdict = f"Claimed experience appears below the role requirement of {_format_years(required_years)}."
+    else:
+        status = "match"
+        label = "Matched"
+        verdict = "Resume experience is matched against the role requirement. LinkedIn profile enrichment can add external confirmation."
+
+    evidence = []
+    if linkedin_url:
+        evidence.append("LinkedIn URL captured from candidate profile/resume.")
+        if not LINKEDIN_ENRICHMENT_URL:
+            evidence.append("External LinkedIn profile and activity enrichment is not configured in this local build.")
+    if claimed_years is not None:
+        evidence.append(f"Resume/match summary indicates about {_format_years(claimed_years)} of experience.")
+    if required_years is not None:
+        evidence.append(f"Role asks for at least {_format_years(required_years)}.")
+
+    return {
+        "status": status,
+        "label": label,
+        "claimed_years": claimed_years,
+        "linkedin_years": None,
+        "required_years": required_years,
+        "linkedin_url": linkedin_url,
+        "verdict": verdict,
+        "evidence": evidence,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+async def _enrich_experience_verification(candidate: dict, application: dict) -> dict:
+    verification = _build_experience_verification(candidate, application)
+    linkedin_url = verification.get("linkedin_url")
+    if not LINKEDIN_ENRICHMENT_URL or not linkedin_url:
+        return verification
+
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            response = await client.post(
+                LINKEDIN_ENRICHMENT_URL,
+                json={
+                    "linkedin_url": linkedin_url,
+                    "name": candidate.get("name", ""),
+                    "current_role": candidate.get("current_role", ""),
+                    "resume_text": application.get("resume_text", ""),
+                    "job_role": application.get("job_role") or application.get("job_title", ""),
+                    "job_description": application.get("job_description", ""),
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
+    except Exception:
+        verification["evidence"].append("LinkedIn enrichment call failed; resume-only check shown.")
+        return verification
+
+    linkedin_years = data.get("experience_years")
+    try:
+        linkedin_years = float(linkedin_years) if linkedin_years is not None else None
+    except (TypeError, ValueError):
+        linkedin_years = None
+
+    verification["linkedin_years"] = linkedin_years
+    if data.get("activity_summary"):
+        verification["evidence"].append(f"LinkedIn activity: {data['activity_summary']}")
+    for item in data.get("evidence", []) or []:
+        verification["evidence"].append(str(item))
+
+    claimed_years = verification.get("claimed_years")
+    if linkedin_years is None:
+        verification["status"] = "review"
+        verification["label"] = "Needs review"
+        verification["verdict"] = "LinkedIn profile was reached, but experience years were not returned."
+    elif claimed_years is None:
+        verification["status"] = "review"
+        verification["label"] = "LinkedIn found"
+        verification["verdict"] = f"LinkedIn indicates {_format_years(linkedin_years)}, but resume experience was not extracted confidently."
+    elif abs(linkedin_years - claimed_years) <= 0.75:
+        verification["status"] = "match"
+        verification["label"] = "Matched"
+        verification["verdict"] = f"LinkedIn and resume experience are aligned at about {_format_years(claimed_years)}."
+    else:
+        verification["status"] = "mismatch"
+        verification["label"] = "Not matched"
+        verification["verdict"] = (
+            f"Resume indicates {_format_years(claimed_years)}, while LinkedIn indicates "
+            f"{_format_years(linkedin_years)}."
+        )
+
+    verification["checked_at"] = datetime.now(timezone.utc).isoformat()
+    return verification
+
+
 def _flatten_for_recruiter(candidate: dict) -> list[dict]:
     """Return one flat dict per application, merged with candidate identity fields."""
     identity = {k: candidate.get(k) for k in (
@@ -493,6 +659,7 @@ def _flatten_for_recruiter(candidate: dict) -> list[dict]:
     for app in _get_applications(candidate):
         row = {**identity, **app}
         row["job_role"] = app.get("job_title") or app.get("job_role", "")
+        row["experience_verification"] = app.get("experience_verification") or _build_experience_verification(candidate, app)
         rows.append(row)
     return rows
 
@@ -1242,6 +1409,36 @@ async def list_candidates(_auth: dict = Depends(verify_recruiter_token)) -> list
     for c in candidates:
         rows.extend(_flatten_for_recruiter(c))
     return rows
+
+
+@app.post("/recruiter/candidates/{ct_number}/experience-check")
+async def recheck_candidate_experience(
+    ct_number: str,
+    body: JobActionRequest,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    applications = _get_applications(candidate)
+    application = None
+    if body.job_id:
+        application = next((a for a in applications if a.get("job_id") == body.job_id), None)
+    if not application and applications:
+        application = applications[0]
+    if not application:
+        raise HTTPException(status_code=404, detail="Candidate application not found")
+
+    extracted_url = _extract_linkedin_url(application.get("resume_text", ""))
+    if extracted_url and not candidate.get("linkedin_url"):
+        candidate["linkedin_url"] = extracted_url
+
+    verification = await _enrich_experience_verification(candidate, application)
+    application["experience_verification"] = verification
+    await _write_candidates(candidates)
+    return verification
 
 
 @app.get("/recruiter/candidates/{ct_number}/scorecard")
@@ -2049,6 +2246,7 @@ async def apply_for_job(
         file_bytes = await resume.read()
         resume_text = _extract_resume_text(file_bytes, resume.filename)
         resume_filename = resume.filename
+    linkedin_url = linkedin_url.strip() or _extract_linkedin_url(resume_text)
 
     if match_data.strip():
         try:
@@ -2092,6 +2290,18 @@ async def apply_for_job(
         "status": "applied",
         "applied_at": datetime.now(timezone.utc).isoformat(),
     }
+    candidate_identity = {
+        "name": name,
+        "email": email,
+        "phone": phone,
+        "linkedin_url": linkedin_url,
+        "location": location,
+        "current_role": current_role,
+        "current_ctc": current_ctc,
+        "expected_ctc": expected_ctc,
+        "notice_period": notice_period,
+    }
+    new_application["experience_verification"] = await _enrich_experience_verification(candidate_identity, new_application)
 
     # Check if this email belongs to an existing candidate (returning applicant)
     existing = next((c for c in candidates if c.get("email", "").lower() == email.lower()), None)

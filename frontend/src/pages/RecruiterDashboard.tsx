@@ -27,6 +27,18 @@ type CallStatus = {
   note?: string
 }
 
+type ExperienceVerification = {
+  status: 'match' | 'review' | 'mismatch' | 'missing'
+  label: string
+  claimed_years: number | null
+  linkedin_years: number | null
+  required_years: number | null
+  linkedin_url: string
+  verdict: string
+  evidence: string[]
+  checked_at?: string
+}
+
 type Candidate = {
   name: string
   ct_number: string
@@ -50,6 +62,7 @@ type Candidate = {
   match_gaps?: string[]
   compensation_fit?: string
   notice_fit?: string
+  experience_verification?: ExperienceVerification
   recommendation?: string
   applied_at?: string
   interview_slot?: string
@@ -107,6 +120,28 @@ function matchBadge(pct: number | null | undefined) {
   if (pct == null) return <span className="muted" style={{ fontSize: '0.85rem' }}>—</span>
   const cls = pct >= 70 ? 'match-badge match-badge--green' : pct >= 50 ? 'match-badge match-badge--amber' : 'match-badge match-badge--red'
   return <span className={cls}>{pct}%</span>
+}
+
+function formatYears(value: number | null | undefined) {
+  if (value == null) return 'Not found'
+  return `${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1)} years`
+}
+
+function experienceFitBadge(check: ExperienceVerification | undefined) {
+  if (!check) return null
+  const cls = check.status === 'match'
+    ? 'fit-badge--good'
+    : check.status === 'mismatch'
+    ? 'fit-badge--mismatch'
+    : 'fit-badge--partial'
+  const label = check.status === 'match'
+    ? 'Matched'
+    : check.status === 'mismatch'
+    ? 'Not matched'
+    : check.status === 'missing'
+    ? 'Missing'
+    : 'Needs review'
+  return <span className={`fit-badge ${cls}`}>LinkedIn: {label}</span>
 }
 
 function formatSlotDisplay(slot: string): string {
@@ -204,6 +239,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [scheduleDateSelected, setScheduleDateSelected] = useState('')
   const [scheduleTimezone, setScheduleTimezone] = useState('Asia/Kolkata')
   const [shortlistingCt, setShortlistingCt] = useState<string | null>(null)
+  const [experienceCheckCt, setExperienceCheckCt] = useState<string | null>(null)
 
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [analyticsLoading, setAnalyticsLoading] = useState(true)
@@ -426,6 +462,28 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
       )
       fetchAnalytics()
     } catch { /* silent */ } finally { setActionCt(null) }
+  }
+
+  async function handleExperienceRecheck(candidate: Candidate) {
+    setExperienceCheckCt(candidate.ct_number)
+    try {
+      const res = await axios.post<ExperienceVerification>(
+        `${API}/recruiter/candidates/${candidate.ct_number}/experience-check`,
+        { job_id: candidate.job_id ?? null },
+        { headers },
+      )
+      setCandidates(prev => prev.map(c =>
+        c.ct_number === candidate.ct_number && c.job_id === candidate.job_id
+          ? { ...c, experience_verification: res.data }
+          : c
+      ))
+      showToast('Experience check updated.')
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Experience check failed.' : 'Experience check failed.'
+      showToast(String(msg))
+    } finally {
+      setExperienceCheckCt(null)
+    }
   }
 
   async function handleCreateCandidate() {
@@ -1127,7 +1185,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
                             {expandedCt === c.ct_number && (
                               <tr key={`${c.ct_number}-detail`}>
-                                <td colSpan={6} style={{ padding: 0, background: 'var(--surface-2)' }}>
+                                <td colSpan={7} style={{ padding: 0, background: 'var(--surface-2)' }}>
                                   <div className="candidate-panel">
 
                                     <div className="candidate-details-grid">
@@ -1185,7 +1243,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                             <p style={{ color: 'var(--text)', fontSize: '0.9rem', lineHeight: 1.6 }}>
                                               {c.match_summary || '—'}
                                             </p>
-                                            {(c.compensation_fit || c.notice_fit) && (
+                                            {(c.compensation_fit || c.notice_fit || c.experience_verification) && (
                                               <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
                                                 {c.compensation_fit && (
                                                   <span className={`fit-badge fit-badge--${c.compensation_fit === 'good' ? 'good' : c.compensation_fit === 'partial' ? 'partial' : 'mismatch'}`}>
@@ -1197,10 +1255,61 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                                     Notice: {c.notice_fit}
                                                   </span>
                                                 )}
+                                                {experienceFitBadge(c.experience_verification)}
                                               </div>
                                             )}
                                           </div>
                                         </div>
+
+                                        {c.experience_verification && (
+                                          <div className={`experience-check experience-check--${c.experience_verification.status}`}>
+                                            <div className="experience-check__header">
+                                              <div>
+                                                <p className="role-label" style={{ marginBottom: 4 }}>Resume vs LinkedIn Check</p>
+                                                <p className="experience-check__verdict">{c.experience_verification.verdict}</p>
+                                              </div>
+                                              <div className="experience-check__actions">
+                                                {c.experience_verification.linkedin_url && (
+                                                  <a
+                                                    className="experience-check__link"
+                                                    href={c.experience_verification.linkedin_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    onClick={e => e.stopPropagation()}
+                                                  >
+                                                    Open LinkedIn
+                                                  </a>
+                                                )}
+                                                <button
+                                                  className="experience-check__button"
+                                                  disabled={experienceCheckCt === c.ct_number}
+                                                  onClick={e => { e.stopPropagation(); handleExperienceRecheck(c) }}
+                                                >
+                                                  {experienceCheckCt === c.ct_number ? 'Checking...' : 'Re-check'}
+                                                </button>
+                                              </div>
+                                            </div>
+                                            <div className="experience-check__metrics">
+                                              <div>
+                                                <span>Resume</span>
+                                                <strong>{formatYears(c.experience_verification.claimed_years)}</strong>
+                                              </div>
+                                              <div>
+                                                <span>LinkedIn</span>
+                                                <strong>{formatYears(c.experience_verification.linkedin_years)}</strong>
+                                              </div>
+                                              <div>
+                                                <span>Role Need</span>
+                                                <strong>{formatYears(c.experience_verification.required_years)}</strong>
+                                              </div>
+                                            </div>
+                                            {c.experience_verification.evidence?.length > 0 && (
+                                              <ul className="experience-check__evidence">
+                                                {c.experience_verification.evidence.map((item, i) => <li key={i}>{item}</li>)}
+                                              </ul>
+                                            )}
+                                          </div>
+                                        )}
 
                                         {(c.match_strengths?.length || c.match_gaps?.length) ? (
                                           <div className="two-col" style={{ marginTop: 16 }}>
