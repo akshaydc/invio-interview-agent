@@ -33,8 +33,6 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "https://your-frontend.railway.app")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
-ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-ELEVENLABS_RINA_VOICE_ID = "yj30vwTGJxSHezdAGsv9"
 
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
@@ -1815,51 +1813,6 @@ async def reschedule_interview(
     candidate["interview_slot"] = body.new_slot
     await _write_candidates(candidates)
     return {"success": True, "slot": body.new_slot}
-
-
-# ---------------------------------------------------------------------------
-# Rina TTS endpoint
-# ---------------------------------------------------------------------------
-
-@app.post("/rina/speak")
-async def rina_speak(request: Request):
-    body = await request.json()
-    text = body.get("text", "")
-    if not text:
-        raise HTTPException(400, "No text provided")
-
-    elevenlabs_key = ELEVENLABS_API_KEY
-    if not elevenlabs_key:
-        raise HTTPException(500, "ElevenLabs not configured")
-
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.post(
-                f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_RINA_VOICE_ID}",
-                headers={
-                    "xi-api-key": elevenlabs_key,
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "text": text,
-                    "model_id": "eleven_turbo_v2_5",
-                    "voice_settings": {
-                        "stability": 0.5,
-                        "similarity_boost": 0.75,
-                        "style": 0.3,
-                        "use_speaker_boost": True,
-                    },
-                },
-            )
-            if response.status_code == 200:
-                return Response(content=response.content, media_type="audio/mpeg")
-            print(f"ElevenLabs error: {response.status_code} {response.text[:200]}")
-            raise HTTPException(502, f"ElevenLabs error: {response.text[:100]}")
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Rina speak error: {e}")
-        raise HTTPException(500, str(e))
 
 
 # ---------------------------------------------------------------------------
