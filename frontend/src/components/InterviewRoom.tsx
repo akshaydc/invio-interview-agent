@@ -7,6 +7,7 @@ type Stage = 'ready' | 'starting' | 'active' | 'ending' | 'error'
 type RecordingState = 'listening' | 'speaking' | 'processing' | 'ai_speaking'
 type Violation = { type: string; timestamp: string; reason?: string }
 
+
 type Props = {
   token: string
   candidateName: string
@@ -30,6 +31,8 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
   const [endLockout, setEndLockout] = useState(true)
   const [lockoutSecsLeft, setLockoutSecsLeft] = useState(END_LOCKOUT_MS / 1000)
   const [autoEndMsg, setAutoEndMsg] = useState('')
+  const [taraLoaded, setTaraLoaded] = useState<boolean>(false)
+  const [taraUrl, setTaraUrl] = useState<string>('')
 
   const sessionIdRef = useRef<string | null>(null)
   const audioCleanupRef = useRef<(() => void) | null>(null)
@@ -317,6 +320,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
   }
 
   async function startInterview() {
+    setTaraLoaded(false)
     setStage('starting')
     setErrorMsg('')
     setProctorEndMsg('')
@@ -341,6 +345,18 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
       sessionIdRef.current = res.data.session_id
       setTranscript([{ q: res.data.first_question, a: '', score: null }])
       setStage('active')
+      
+      // Create Tara CVI avatar session
+      try {
+        const taraRes = await axios.post(
+          `${API}/create-tara-session?job_role=${encodeURIComponent(jobRole)}`
+        )
+        if (taraRes.data.conversation_url) {
+          setTaraUrl(taraRes.data.conversation_url)
+        }
+      } catch (e) {
+        console.log('Tara not available:', e)
+      }
       stageRef.current = 'active'
       console.log('Session started:', res.data.session_id)
       proctorIntervalRef.current = setInterval(captureProctorFrame, 3000)
@@ -473,6 +489,41 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
 
       {(stage === 'active' || stage === 'ending') && (
         <div className="interview-layout">
+          {taraUrl && (
+            <div style={{ position: 'relative', width: '100%', height: '380px', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
+              <iframe
+                src={taraUrl}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                allow="camera; microphone; autoplay"
+                title="Tara AI Interviewer"
+                onLoad={() => setTaraLoaded(true)}
+              />
+              {!taraLoaded && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0, left: 0, right: 0, bottom: 0,
+                  background: '#1a1a2e',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '16px'
+                }}>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    border: '3px solid #7F77DD',
+                    borderTopColor: 'transparent',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  <p style={{ color: 'white', fontSize: '16px', margin: 0 }}>Connecting you to Tara...</p>
+                  <p style={{ color: '#888', fontSize: '13px', margin: 0 }}>Please allow camera and microphone access</p>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </div>
+              )}
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="card status-card" style={{ flex: 1 }}>
               <span className="status-dot" />
