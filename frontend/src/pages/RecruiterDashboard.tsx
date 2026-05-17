@@ -39,8 +39,9 @@ type Candidate = {
   current_ctc?: string
   expected_ctc?: string
   notice_period?: string
+  job_id?: string
   job_role: string
-  job_description: string
+  job_description?: string
   session_id: string | null
   status: CandidateStatus
   match_percentage?: number | null
@@ -193,6 +194,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleModalCt, setScheduleModalCt] = useState('')
+  const [scheduleModalJobId, setScheduleModalJobId] = useState<string | null>(null)
   const [slots, setSlots] = useState<SlotInfo[]>([])
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState('')
@@ -322,6 +324,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   function openScheduleModal(ct: string) {
     setScheduleModalCt(ct)
+    setScheduleModalJobId(candidates.find(c => c.ct_number === ct)?.job_id ?? null)
     setShowScheduleModal(true)
     setSlots([])
     setSelectedSlot('')
@@ -372,7 +375,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
         call_sid: string
         call_result: { success: boolean; error?: string }
         message: string
-      }>(`${API}/recruiter/candidates/${ct}/shortlist`, {}, { headers })
+      }>(`${API}/recruiter/candidates/${ct}/shortlist`, { job_id: candidates.find(c => c.ct_number === ct)?.job_id ?? null }, { headers })
       const cand = candidates.find(c => c.ct_number === ct)
       setCandidates(prev =>
         prev.map(c => c.ct_number === ct ? { ...c, status: 'shortlisted' as CandidateStatus } : c)
@@ -397,7 +400,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     setBookingLoading(true)
     setBookSlotError('')
     try {
-      await axios.post(`${API}/recruiter/candidates/${scheduleModalCt}/book-slot`, { slot: selectedSlot }, { headers })
+      await axios.post(`${API}/recruiter/candidates/${scheduleModalCt}/book-slot`, { slot: selectedSlot, job_id: scheduleModalJobId }, { headers })
       setCandidates(prev =>
         prev.map(c => c.ct_number === scheduleModalCt
           ? { ...c, status: 'interview_scheduled' as CandidateStatus, interview_slot: selectedSlot }
@@ -417,7 +420,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   async function handleReject(ct: string) {
     setActionCt(ct)
     try {
-      await axios.post(`${API}/recruiter/candidates/${ct}/reject`, {}, { headers })
+      await axios.post(`${API}/recruiter/candidates/${ct}/reject`, { job_id: candidates.find(c => c.ct_number === ct)?.job_id ?? null }, { headers })
       setCandidates(prev =>
         prev.map(c => c.ct_number === ct ? { ...c, status: 'rejected' as CandidateStatus } : c)
       )

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import AstraIntro from './components/AstraIntro'
 import LandingPage from './pages/LandingPage'
 import JobListings, { type Job } from './pages/JobListings'
@@ -10,28 +10,41 @@ import RecruiterLogin from './pages/RecruiterLogin'
 import RecruiterDashboard from './pages/RecruiterDashboard'
 import ScorecardView from './pages/ScorecardView'
 import CandidateInterview from './pages/CandidateInterview'
+import CandidateDashboard from './pages/CandidateDashboard'
 import BookSlot from './pages/BookSlot'
 import AvatarGuide from './components/AvatarGuide'
 import './index.css'
 
 const ASTRA_INTRO_STORAGE_KEY = 'astra_intro_seen_enterprise_v3'
 
+export type Application = {
+  job_id: string
+  job_title?: string
+  job_role?: string
+  job_description?: string
+  status?: string
+  interview_slot?: string
+  session_id?: string | null
+  match_percentage?: number | null
+  match_summary?: string
+  match_strengths?: string[]
+  match_gaps?: string[]
+  recommendation?: string
+  compensation_fit?: string
+  notice_fit?: string
+  applied_at?: string
+  shortlisted_at?: string
+  scheduled_at?: string
+  withdrawn_at?: string
+  slot_booking_token?: string | null
+}
+
 export type AuthInfo = {
   token: string
   role: 'recruiter' | 'candidate'
   name?: string
   ctNumber?: string
-  jobRole?: string
-  jobDescription?: string
-  status?: string
-  interviewSlot?: string
-}
-
-export type AppliedJob = {
-  job_id: string
-  job_title: string
-  ct_number: string
-  applied_at: string
+  applications?: Application[]
 }
 
 type ApplicationPrefill = {
@@ -57,6 +70,7 @@ type Page =
   | 'recruiter-login'
   | 'recruiter-dashboard'
   | 'recruiter-scorecard'
+  | 'candidate-dashboard'
   | 'candidate-interview'
   | 'book-slot'
 
@@ -74,17 +88,18 @@ function App() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [resumeMatch, setResumeMatch] = useState<ResumeMatchResult | null>(null)
   const [applicationPrefill, setApplicationPrefill] = useState<ApplicationPrefill | null>(null)
-  const [appliedJobs, setAppliedJobs] = useState<AppliedJob[]>([])
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
   const [returnedFromJobDetail, setReturnedFromJobDetail] = useState(false)
 
   function handleLogin(info: AuthInfo) {
     setAuth(info)
     setReturnedFromJobDetail(false)
-    setPage(info.role === 'recruiter' ? 'recruiter-dashboard' : 'candidate-interview')
+    setPage(info.role === 'recruiter' ? 'recruiter-dashboard' : 'candidate-dashboard')
   }
 
   function handleLogout() {
     setAuth(null)
+    setSelectedApplication(null)
     setReturnedFromJobDetail(false)
     setPage('landing')
   }
@@ -121,6 +136,11 @@ function App() {
       matchData,
     })
     setPage('application-form')
+  }
+
+  function handleStartInterview(app: Application) {
+    setSelectedApplication(app)
+    setPage('candidate-interview')
   }
 
   return (
@@ -168,14 +188,12 @@ function App() {
             setReturnedFromJobDetail(false)
             setPage('landing')
           }}
-          sessionAppliedJobs={appliedJobs}
         />
       )}
 
       {page === 'job-matches' && resumeMatch && (
         <JobMatches
           matchResult={resumeMatch}
-          appliedJobIds={appliedJobs.map(j => j.job_id)}
           onApply={handleApplyFromMatch}
           onBrowseAll={() => {
             setReturnedFromJobDetail(false)
@@ -219,18 +237,9 @@ function App() {
             if (applicationPrefill) { setPage('job-matches') }
             else { setPage('job-detail') }
           }}
-          onApplied={(ctNumber, jobTitle) => {
+          onApplied={(_ctNumber, _jobTitle) => {
             const fromMatch = !!applicationPrefill?.matchData
             const appliedId = applicationPrefill?.jobId ?? selectedJob?.id ?? ''
-            const appliedTitle = jobTitle ?? applicationPrefill?.jobTitle ?? selectedJob?.title ?? ''
-            if (appliedId && ctNumber) {
-              setAppliedJobs(prev => [...prev, {
-                job_id: appliedId,
-                job_title: appliedTitle,
-                ct_number: ctNumber,
-                applied_at: new Date().toISOString(),
-              }])
-            }
             setApplicationPrefill(null)
             if (fromMatch && appliedId) {
               setPage('job-matches')
@@ -285,16 +294,27 @@ function App() {
 
       {page === 'book-slot' && <BookSlot />}
 
-      {page === 'candidate-interview' && auth && (
+      {page === 'candidate-dashboard' && auth && (
+        <CandidateDashboard
+          token={auth.token}
+          candidateName={auth.name ?? ''}
+          ctNumber={auth.ctNumber ?? ''}
+          initialApplications={auth.applications ?? []}
+          onLogout={handleLogout}
+          onStartInterview={handleStartInterview}
+        />
+      )}
+
+      {page === 'candidate-interview' && auth && selectedApplication && (
         <CandidateInterview
           token={auth.token}
           candidateName={auth.name ?? ''}
-          jobRole={auth.jobRole ?? ''}
-          jobDescription={auth.jobDescription ?? ''}
-          candidateStatus={auth.status ?? 'applied'}
+          jobRole={selectedApplication.job_role ?? selectedApplication.job_title ?? ''}
+          jobDescription={selectedApplication.job_description ?? ''}
+          candidateStatus={selectedApplication.status ?? 'applied'}
           ctNumber={auth.ctNumber ?? ''}
-          interviewSlot={auth.interviewSlot}
-          onLogout={handleLogout}
+          interviewSlot={selectedApplication.interview_slot}
+          onLogout={() => setPage('candidate-dashboard')}
         />
       )}
 
@@ -320,4 +340,3 @@ function App() {
 }
 
 export default App
-

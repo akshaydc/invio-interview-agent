@@ -255,6 +255,7 @@ class EndSessionRequest(BaseModel):
 
 class BookSlotRequest(BaseModel):
     slot: str  # "YYYY-MM-DD HH:MM"
+    job_id: str | None = None
 
 
 class RescheduleRequest(BaseModel):
@@ -265,6 +266,14 @@ class BookSlotConfirmRequest(BaseModel):
     token: str
     ct_number: str
     slot: str  # "YYYY-MM-DD HH:MM"
+
+
+class WithdrawRequest(BaseModel):
+    job_id: str
+
+
+class JobActionRequest(BaseModel):
+    job_id: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -293,9 +302,43 @@ def verify_candidate_token(x_auth_token: str = Header(None)) -> dict:
 # Data helpers
 # ---------------------------------------------------------------------------
 
+def _migrate_candidate(candidate: dict) -> dict:
+    """Convert old flat candidate structure to new applications-array structure if needed."""
+    if "applications" in candidate and isinstance(candidate["applications"], list):
+        return candidate
+
+    application = {
+        "job_id": candidate.get("job_id", ""),
+        "job_title": candidate.get("job_role", candidate.get("job_title", "")),
+        "status": candidate.get("status", "applied"),
+        "applied_at": candidate.get("created_at", datetime.now(timezone.utc).isoformat()),
+        "match_percentage": candidate.get("match_percentage"),
+        "recommendation": candidate.get("recommendation"),
+        "match_summary": candidate.get("match_summary", ""),
+        "strengths": candidate.get("strengths", []),
+        "gaps": candidate.get("gaps", []),
+        "compensation_fit": candidate.get("compensation_fit", ""),
+        "notice_fit": candidate.get("notice_fit", ""),
+        "resume_text": candidate.get("resume_text", ""),
+        "interview_slot": candidate.get("interview_slot"),
+        "session_id": candidate.get("session_id"),
+        "scorecard": candidate.get("scorecard"),
+        "call_status": candidate.get("call_status"),
+        "slot_booking_token": candidate.get("slot_booking_token", ""),
+    }
+
+    applications = []
+    if application["job_id"] or application["job_title"]:
+        applications.append(application)
+
+    candidate["applications"] = applications
+    return candidate
+
+
 async def _read_candidates() -> list:
     async with aiofiles.open(CANDIDATES_FILE, "r") as f:
-        return json.loads(await f.read())
+        candidates = json.loads(await f.read())
+    return [_migrate_candidate(c) for c in candidates]
 
 
 async def _write_candidates(candidates: list) -> None:
@@ -420,6 +463,40 @@ def find_candidate_by_session(session_id: str) -> dict | None:
         return None
     candidates = json.loads(CANDIDATES_FILE.read_text())
     return next((c for c in candidates if c.get("session_id") == session_id), None)
+
+
+def _get_applications(candidate: dict) -> list[dict]:
+    """Normalize flat or nested candidate record to a list of application dicts."""
+    if "applications" in candidate:
+        return candidate["applications"]
+    app: dict = {}
+    for k in (
+        "job_id", "job_role", "job_description", "status", "session_id",
+        "interview_slot", "slot_booking_token", "match_percentage", "match_summary",
+        "match_strengths", "match_gaps", "resume_text", "resume_filename",
+        "compensation_fit", "notice_fit", "recommendation",
+        "applied_at", "shortlisted_at", "scheduled_at", "rejected_at",
+    ):
+        if k in candidate:
+            app[k] = candidate[k]
+    app.setdefault("job_title", candidate.get("job_role", ""))
+    app.setdefault("status", "applied")
+    return [app] if app.get("job_id") else []
+
+
+def _flatten_for_recruiter(candidate: dict) -> list[dict]:
+    """Return one flat dict per application, merged with candidate identity fields."""
+    identity = {k: candidate.get(k) for k in (
+        "ct_number", "name", "email", "phone", "linkedin_url", "location",
+        "current_role", "current_ctc", "expected_ctc", "notice_period",
+    )}
+    identity["call_status"] = candidate.get("call_status", {})
+    rows = []
+    for app in _get_applications(candidate):
+        row = {**identity, **app}
+        row["job_role"] = app.get("job_title") or app.get("job_role", "")
+        rows.append(row)
+    return rows
 
 
 def _build_claude_messages(transcript: list[dict]) -> list[dict]:
@@ -1063,19 +1140,14 @@ async def candidate_login(body: CandidateLoginRequest) -> dict:
         "role": "candidate",
         "ct_number": candidate["ct_number"],
         "name": candidate["name"],
-        "job_role": candidate["job_role"],
-        "job_description": candidate.get("job_description", ""),
     }
+    applications = _get_applications(candidate)
     return {
         "token": token,
         "role": "candidate",
         "name": candidate["name"],
         "ct_number": candidate["ct_number"],
-        "job_role": candidate["job_role"],
-        "job_description": candidate.get("job_description", ""),
-        "session_id": candidate.get("session_id"),
-        "status": candidate.get("status", "applied"),
-        "interview_slot": candidate.get("interview_slot"),
+        "applications": applications,
     }
 
 
@@ -1109,7 +1181,13 @@ async def get_analytics(_auth: dict = Depends(verify_recruiter_token)) -> dict:
     candidates = await _read_candidates()
     jobs = await _read_jobs()
 
-    total = len(candidates)
+    # Flatten all applications across all candidates
+    all_apps = []
+    for c in candidates:
+        for app in _get_applications(c):
+            all_apps.append(app)
+
+    total = len(all_apps)
     by_status: dict = {
         "applied": 0,
         "shortlisted": 0,
@@ -1117,27 +1195,27 @@ async def get_analytics(_auth: dict = Depends(verify_recruiter_token)) -> dict:
         "interview_complete": 0,
         "rejected": 0,
     }
-    for c in candidates:
-        status = c.get("status", "applied")
+    for app in all_apps:
+        status = app.get("status", "applied")
         if status in by_status:
             by_status[status] += 1
 
     role_breakdown: dict = {}
     for job in jobs:
-        job_candidates = [c for c in candidates if c.get("job_id") == job["id"]]
-        if not job_candidates:
+        job_apps = [a for a in all_apps if a.get("job_id") == job["id"]]
+        if not job_apps:
             continue
-        with_match = [c for c in job_candidates if c.get("match_percentage")]
+        with_match = [a for a in job_apps if a.get("match_percentage")]
         role_breakdown[job["title"]] = {
             "job_id": job["id"],
-            "total": len(job_candidates),
-            "applied": sum(1 for c in job_candidates if c.get("status") == "applied"),
-            "shortlisted": sum(1 for c in job_candidates if c.get("status") == "shortlisted"),
-            "interview_scheduled": sum(1 for c in job_candidates if c.get("status") == "interview_scheduled"),
-            "interview_complete": sum(1 for c in job_candidates if c.get("status") == "interview_complete"),
-            "rejected": sum(1 for c in job_candidates if c.get("status") == "rejected"),
+            "total": len(job_apps),
+            "applied": sum(1 for a in job_apps if a.get("status") == "applied"),
+            "shortlisted": sum(1 for a in job_apps if a.get("status") == "shortlisted"),
+            "interview_scheduled": sum(1 for a in job_apps if a.get("status") == "interview_scheduled"),
+            "interview_complete": sum(1 for a in job_apps if a.get("status") == "interview_complete"),
+            "rejected": sum(1 for a in job_apps if a.get("status") == "rejected"),
             "avg_match": round(
-                sum(c.get("match_percentage", 0) for c in with_match) / max(1, len(with_match)),
+                sum(a.get("match_percentage", 0) for a in with_match) / max(1, len(with_match)),
                 1,
             ),
         }
@@ -1161,7 +1239,11 @@ async def get_analytics(_auth: dict = Depends(verify_recruiter_token)) -> dict:
 
 @app.get("/recruiter/candidates")
 async def list_candidates(_auth: dict = Depends(verify_recruiter_token)) -> list:
-    return await _read_candidates()
+    candidates = await _read_candidates()
+    rows = []
+    for c in candidates:
+        rows.extend(_flatten_for_recruiter(c))
+    return rows
 
 
 @app.get("/recruiter/candidates/{ct_number}/scorecard")
@@ -1271,6 +1353,33 @@ async def _set_candidate_status(ct_number: str, status: str, ts_key: str) -> dic
     return {"success": True}
 
 
+async def _update_application(
+    ct_number: str,
+    job_id: str | None,
+    updates: dict,
+) -> tuple[dict, dict]:
+    """Update a specific application (or first application if job_id is None).
+    Returns (candidate, application)."""
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    if "applications" in candidate:
+        apps = candidate["applications"]
+        app = next((a for a in apps if a.get("job_id") == job_id), None) if job_id else (apps[0] if apps else None)
+        if app is None:
+            raise HTTPException(status_code=404, detail="Application not found")
+        app.update(updates)
+    else:
+        # Flat legacy candidate — update top-level fields
+        candidate.update(updates)
+        app = candidate
+
+    await _write_candidates(candidates)
+    return candidate, app
+
+
 @app.post("/recruiter/candidates/{ct_number}/schedule")
 async def schedule_candidate(
     ct_number: str,
@@ -1329,20 +1438,18 @@ async def invite_candidate_alias(
 async def shortlist_candidate(
     ct_number: str,
     background_tasks: BackgroundTasks,
+    body: JobActionRequest = JobActionRequest(),
     _auth: dict = Depends(verify_recruiter_token),
 ) -> dict:
-    candidates = await _read_candidates()
-    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
-    if not candidate:
-        raise HTTPException(status_code=404, detail="Candidate not found")
     slot_booking_token = str(uuid.uuid4())
-    candidate["status"] = "shortlisted"
-    candidate["slot_booking_token"] = slot_booking_token
-    candidate["shortlisted_at"] = datetime.now(timezone.utc).isoformat()
-    await _write_candidates(candidates)
+    candidate, app = await _update_application(ct_number, body.job_id, {
+        "status": "shortlisted",
+        "slot_booking_token": slot_booking_token,
+        "shortlisted_at": datetime.now(timezone.utc).isoformat(),
+    })
     cand_email = candidate.get("email", "")
     cand_name = candidate.get("name", "Candidate")
-    job_title = candidate.get("job_role", "the role")
+    job_title = app.get("job_title") or app.get("job_role", "the role")
     slot_booking_url = f"{FRONTEND_URL}/book-slot?token={slot_booking_token}&ct={ct_number}"
     email_queued = False
     if cand_email:
@@ -1374,17 +1481,21 @@ async def shortlist_candidate(
             ct_number=ct_number,
         )
     print(f"Call result: {call_result}")
-    candidate["call_status"] = {
-        "call_made": call_result.get("success", False),
-        "call_made_at": datetime.now(timezone.utc).isoformat() if call_result.get("success") else None,
-        "call_answered": False,
-        "call_answered_at": None,
-        "call_complete": False,
-        "call_complete_at": None,
-        "message_delivered": False,
-        "call_sid": call_result.get("call_sid", ""),
-    }
-    await _write_candidates(candidates)
+    # Store call status on the candidate top-level for backwards compat
+    candidates = await _read_candidates()
+    cand_rec = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if cand_rec:
+        cand_rec["call_status"] = {
+            "call_made": call_result.get("success", False),
+            "call_made_at": datetime.now(timezone.utc).isoformat() if call_result.get("success") else None,
+            "call_answered": False,
+            "call_answered_at": None,
+            "call_complete": False,
+            "call_complete_at": None,
+            "message_delivered": False,
+            "call_sid": call_result.get("call_sid", ""),
+        }
+        await _write_candidates(candidates)
     return {
         "success": True,
         "email_sent": email_queued,
@@ -1401,16 +1512,16 @@ async def shortlist_candidate(
 async def reject_candidate(
     ct_number: str,
     background_tasks: BackgroundTasks,
+    body: JobActionRequest = JobActionRequest(),
     _auth: dict = Depends(verify_recruiter_token),
 ) -> dict:
-    candidates = await _read_candidates()
-    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
-    if not candidate:
-        raise HTTPException(status_code=404, detail="Candidate not found")
-    result = await _set_candidate_status(ct_number, "rejected", "rejected_at")
+    candidate, app = await _update_application(ct_number, body.job_id, {
+        "status": "rejected",
+        "rejected_at": datetime.now(timezone.utc).isoformat(),
+    })
     cand_email = candidate.get("email", "")
     cand_name = candidate.get("name", "Candidate")
-    job_title = candidate.get("job_role", "the role")
+    job_title = app.get("job_title") or app.get("job_role", "the role")
     if cand_email:
         reject_html = (
             f"<h2>Application Status Update</h2>"
@@ -1421,7 +1532,7 @@ async def reject_candidate(
             f"<p>Best regards,<br>Invio Recruitment Team</p>"
         )
         background_tasks.add_task(send_email_sync, cand_email, f"Application Update — {job_title}", reject_html)
-    return result
+    return {"success": True}
 
 
 @app.post("/recruiter/candidates/{ct_number}/cancel-schedule")
@@ -1482,18 +1593,37 @@ async def book_slot(
     existing = slots_data.get(body.slot)
     if existing and existing != ct_number:
         raise HTTPException(status_code=409, detail="Slot already booked by another candidate")
-    old_slot = candidate.get("interview_slot")
-    if old_slot and old_slot in slots_data and slots_data[old_slot] == ct_number:
-        del slots_data[old_slot]
-    slots_data[body.slot] = ct_number
-    await _write_slots(slots_data)
-    candidate["interview_slot"] = body.slot
-    candidate["status"] = "interview_scheduled"
-    candidate["scheduled_at"] = datetime.now(timezone.utc).isoformat()
+
+    job_id = body.job_id
+    # Find the target application
+    if "applications" in candidate:
+        apps = candidate["applications"]
+        app = next((a for a in apps if a.get("job_id") == job_id), None) if job_id else (apps[0] if apps else None)
+        if app is None:
+            raise HTTPException(status_code=404, detail="Application not found")
+        old_slot = app.get("interview_slot")
+        if old_slot and slots_data.get(old_slot) == ct_number:
+            del slots_data[old_slot]
+        slots_data[body.slot] = ct_number
+        await _write_slots(slots_data)
+        app["interview_slot"] = body.slot
+        app["status"] = "interview_scheduled"
+        app["scheduled_at"] = datetime.now(timezone.utc).isoformat()
+    else:
+        old_slot = candidate.get("interview_slot")
+        if old_slot and slots_data.get(old_slot) == ct_number:
+            del slots_data[old_slot]
+        slots_data[body.slot] = ct_number
+        await _write_slots(slots_data)
+        candidate["interview_slot"] = body.slot
+        candidate["status"] = "interview_scheduled"
+        candidate["scheduled_at"] = datetime.now(timezone.utc).isoformat()
+        app = candidate
+
     await _write_candidates(candidates)
     cand_email = candidate.get("email", "")
     cand_name = candidate.get("name", "Candidate")
-    job_title = candidate.get("job_role", "the role")
+    job_title = app.get("job_title") or app.get("job_role", "the role")
     slot_display = _format_slot_display(body.slot)
     if cand_email:
         schedule_html = (
@@ -1557,11 +1687,21 @@ async def get_candidate_slots(
 # Public slot-booking endpoints (for shortlisted candidates via email link)
 # ---------------------------------------------------------------------------
 
+def _find_app_by_token(candidate: dict, token: str) -> dict | None:
+    """Return the application dict that holds the given slot_booking_token."""
+    if "applications" in candidate:
+        return next((a for a in candidate["applications"] if a.get("slot_booking_token") == token), None)
+    return candidate if candidate.get("slot_booking_token") == token else None
+
+
 @app.get("/book-slot/available")
 async def book_slot_available(token: str, ct: str, timezone: str = "Asia/Kolkata") -> dict:
     candidates = await _read_candidates()
     candidate = next((c for c in candidates if c["ct_number"] == ct), None)
-    if not candidate or candidate.get("slot_booking_token") != token:
+    if not candidate:
+        raise HTTPException(status_code=403, detail="Invalid or expired link")
+    app = _find_app_by_token(candidate, token)
+    if app is None:
         raise HTTPException(status_code=403, detail="Invalid or expired link")
     slots_data = await _read_slots()
     dates_with_slots = []
@@ -1576,7 +1716,7 @@ async def book_slot_available(token: str, ct: str, timezone: str = "Asia/Kolkata
             dates_with_slots.append({**d, "slot_count": len(available), "slots": available})
     return {
         "name": candidate.get("name", ""),
-        "job_title": candidate.get("job_role", ""),
+        "job_title": app.get("job_title") or app.get("job_role", ""),
         "available_dates": dates_with_slots,
     }
 
@@ -1588,25 +1728,28 @@ async def book_slot_confirm(
 ) -> dict:
     candidates = await _read_candidates()
     candidate = next((c for c in candidates if c["ct_number"] == body.ct_number), None)
-    if not candidate or candidate.get("slot_booking_token") != body.token:
+    if not candidate:
+        raise HTTPException(status_code=403, detail="Invalid or expired link")
+    app = _find_app_by_token(candidate, body.token)
+    if app is None:
         raise HTTPException(status_code=403, detail="Invalid or expired link")
     slots_data = await _read_slots()
     existing = slots_data.get(body.slot)
     if existing and existing != body.ct_number:
         raise HTTPException(status_code=409, detail="This slot has already been booked. Please choose another.")
-    old_slot = candidate.get("interview_slot")
+    old_slot = app.get("interview_slot")
     if old_slot and slots_data.get(old_slot) == body.ct_number:
         del slots_data[old_slot]
     slots_data[body.slot] = body.ct_number
     await _write_slots(slots_data)
-    candidate["interview_slot"] = body.slot
-    candidate["status"] = "interview_scheduled"
-    candidate["scheduled_at"] = datetime.now(timezone.utc).isoformat()
-    candidate["slot_booking_token"] = None
+    app["interview_slot"] = body.slot
+    app["status"] = "interview_scheduled"
+    app["scheduled_at"] = datetime.now(timezone.utc).isoformat()
+    app["slot_booking_token"] = None
     await _write_candidates(candidates)
     cand_email = candidate.get("email", "")
     cand_name = candidate.get("name", "Candidate")
-    job_title = candidate.get("job_role", "the role")
+    job_title = app.get("job_title") or app.get("job_role", "the role")
     ct_number = body.ct_number
     slot_display = _format_slot_display(body.slot)
     if cand_email:
@@ -1625,6 +1768,29 @@ async def book_slot_confirm(
             confirm_html,
         )
     return {"success": True, "slot": body.slot, "slot_display": slot_display}
+
+
+@app.get("/candidate/applications")
+async def get_candidate_applications(_auth: dict = Depends(verify_candidate_token)) -> list:
+    ct_number = _auth["ct_number"]
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    return _get_applications(candidate)
+
+
+@app.post("/candidate/withdraw")
+async def withdraw_application(
+    body: WithdrawRequest,
+    _auth: dict = Depends(verify_candidate_token),
+) -> dict:
+    ct_number = _auth["ct_number"]
+    candidate, app = await _update_application(ct_number, body.job_id, {
+        "status": "withdrawn",
+        "withdrawn_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"success": True}
 
 
 @app.post("/candidate/reschedule")
@@ -1915,27 +2081,14 @@ async def apply_for_job(
 
     candidates = await _read_candidates()
 
-    duplicate = next(
-        (c for c in candidates if c.get("email", "").lower() == email.lower() and c.get("job_id") == job_id),
-        None,
-    )
-    if duplicate:
-        raise HTTPException(
-            status_code=409,
-            detail="You have already applied for this position. Check your email for your CT number.",
-        )
-
-    year = datetime.now(timezone.utc).year
-    existing_ct = {c["ct_number"] for c in candidates}
-    ct_number = None
-    for _ in range(20):
-        n = random.randint(1, 9999)
-        candidate_ct = f"CT{year}{n:04d}"
-        if candidate_ct not in existing_ct:
-            ct_number = candidate_ct
-            break
-    if not ct_number:
-        raise HTTPException(status_code=500, detail="Could not generate unique CT number")
+    # Check for duplicate: same email + same job
+    for c in candidates:
+        apps = _get_applications(c)
+        if c.get("email", "").lower() == email.lower() and any(a.get("job_id") == job_id for a in apps):
+            raise HTTPException(
+                status_code=409,
+                detail="You have already applied for this position. Check your email for your CT number.",
+            )
 
     resume_text = ""
     resume_filename = ""
@@ -1966,19 +2119,9 @@ async def apply_for_job(
             resume_text, job, expected_ctc=expected_ctc, notice_period=notice_period,
         )
 
-    candidate = {
-        "name": name,
-        "ct_number": ct_number,
-        "email": email,
-        "phone": phone,
-        "linkedin_url": linkedin_url,
-        "location": location,
-        "current_role": current_role,
-        "current_ctc": current_ctc,
-        "expected_ctc": expected_ctc,
-        "notice_period": notice_period,
-        "additional_comments": additional_comments,
+    new_application = {
         "job_id": job_id,
+        "job_title": job["title"],
         "job_role": job["title"],
         "job_description": job["description"],
         "resume_text": resume_text,
@@ -1991,21 +2134,81 @@ async def apply_for_job(
         "notice_fit": match_result.get("notice_fit"),
         "recommendation": match_result.get("recommendation"),
         "session_id": None,
+        "interview_slot": None,
+        "slot_booking_token": None,
         "status": "applied",
         "applied_at": datetime.now(timezone.utc).isoformat(),
     }
-    candidates.append(candidate)
+
+    # Check if this email belongs to an existing candidate (returning applicant)
+    existing = next((c for c in candidates if c.get("email", "").lower() == email.lower()), None)
+
+    if existing:
+        ct_number = existing["ct_number"]
+        # Migrate flat record to applications array if needed
+        if "applications" not in existing:
+            legacy_apps = _get_applications(existing)
+            existing["applications"] = legacy_apps
+            for k in ("job_id", "job_role", "job_description", "status", "session_id",
+                      "interview_slot", "slot_booking_token", "match_percentage", "match_summary",
+                      "match_strengths", "match_gaps", "resume_text", "resume_filename",
+                      "compensation_fit", "notice_fit", "recommendation",
+                      "applied_at", "shortlisted_at", "scheduled_at", "rejected_at"):
+                existing.pop(k, None)
+        existing["applications"].append(new_application)
+        is_new = False
+    else:
+        # New candidate — generate CT number
+        year = datetime.now(timezone.utc).year
+        existing_ct = {c["ct_number"] for c in candidates}
+        ct_number = None
+        for _ in range(20):
+            n = random.randint(1, 9999)
+            candidate_ct = f"CT{year}{n:04d}"
+            if candidate_ct not in existing_ct:
+                ct_number = candidate_ct
+                break
+        if not ct_number:
+            raise HTTPException(status_code=500, detail="Could not generate unique CT number")
+
+        new_candidate = {
+            "name": name,
+            "ct_number": ct_number,
+            "email": email,
+            "phone": phone,
+            "linkedin_url": linkedin_url,
+            "location": location,
+            "current_role": current_role,
+            "current_ctc": current_ctc,
+            "expected_ctc": expected_ctc,
+            "notice_period": notice_period,
+            "additional_comments": additional_comments,
+            "applications": [new_application],
+        }
+        candidates.append(new_candidate)
+        is_new = True
+
     await _write_candidates(candidates)
 
-    apply_html = (
-        f"<h2>Application Received</h2>"
-        f"<p>Dear {name},</p>"
-        f"<p>Thank you for applying for <b>{job['title']}</b>.</p>"
-        f"<p>Your CT Number is: <b style=\"color:#0C447C\">{ct_number}</b></p>"
-        f"<p>Use this CT number to login and track your application.</p>"
-        f"<p>We will be in touch if your profile matches our requirements.</p>"
-        f"<p>Best regards,<br>Invio Recruitment Team</p>"
-    )
+    if is_new:
+        apply_html = (
+            f"<h2>Application Received</h2>"
+            f"<p>Dear {name},</p>"
+            f"<p>Thank you for applying for <b>{job['title']}</b>.</p>"
+            f"<p>Your CT Number is: <b style=\"color:#0C447C\">{ct_number}</b></p>"
+            f"<p>Use this CT number to login and track all your applications.</p>"
+            f"<p>We will be in touch if your profile matches our requirements.</p>"
+            f"<p>Best regards,<br>ASTRA Recruitment Team</p>"
+        )
+    else:
+        apply_html = (
+            f"<h2>New Application Received</h2>"
+            f"<p>Dear {name},</p>"
+            f"<p>Thank you for applying for <b>{job['title']}</b>.</p>"
+            f"<p>This application has been added to your existing account. "
+            f"Log in with your CT Number <b style=\"color:#0C447C\">{ct_number}</b> to track all your applications.</p>"
+            f"<p>Best regards,<br>ASTRA Recruitment Team</p>"
+        )
     background_tasks.add_task(
         send_email,
         email,
@@ -2956,8 +3159,8 @@ async def start_session(
     if x_auth_token and x_auth_token in active_sessions:
         sess = active_sessions[x_auth_token]
         if sess["role"] == "candidate":
-            job_role = sess["job_role"]
-            job_description = sess["job_description"]
+            job_role = sess.get("job_role") or body.job_role
+            job_description = sess.get("job_description", "") or body.job_description
             ct_number = sess["ct_number"]
         else:
             job_role = body.job_role
@@ -2972,23 +3175,29 @@ async def start_session(
     if ct_number:
         _cands = await _read_candidates()
         _cand = next((c for c in _cands if c["ct_number"] == ct_number), None)
-        if _cand and _cand.get("interview_slot"):
-            slot_str = _cand["interview_slot"]
-            try:
-                slot_time = datetime.strptime(slot_str, "%Y-%m-%d %H:%M")
-                now = datetime.now()
-                minutes_diff = (slot_time - now).total_seconds() / 60
-                if minutes_diff > 2:
-                    return JSONResponse(
-                        status_code=403,
-                        content={
-                            "detail": "too_early",
-                            "slot": slot_str,
-                            "minutes_remaining": round(minutes_diff),
-                        },
-                    )
-            except Exception as e:
-                print(f"Slot parse error: {e}")
+        if _cand:
+            slot_str = _cand.get("interview_slot")
+            if not slot_str:
+                for _app in _get_applications(_cand):
+                    if _app.get("status") == "interview_scheduled" and _app.get("interview_slot"):
+                        slot_str = _app["interview_slot"]
+                        break
+            if slot_str:
+                try:
+                    slot_time = datetime.strptime(slot_str, "%Y-%m-%d %H:%M")
+                    now = datetime.now()
+                    minutes_diff = (slot_time - now).total_seconds() / 60
+                    if minutes_diff > 2:
+                        return JSONResponse(
+                            status_code=403,
+                            content={
+                                "detail": "too_early",
+                                "slot": slot_str,
+                                "minutes_remaining": round(minutes_diff),
+                            },
+                        )
+                except Exception as e:
+                    print(f"Slot parse error: {e}")
 
     first_question = "Welcome! Tell me about yourself and what interests you about this role."
 

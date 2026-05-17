@@ -17,7 +17,7 @@ type Props = {
 
 const END_LOCKOUT_MS = 5 * 60 * 1000
 
-export default function InterviewRoom({ token, candidateName, jobRole, onDone }: Props) {
+export default function InterviewRoom({ token, candidateName, jobRole, jobDescription, onDone }: Props) {
   const [stage, setStage] = useState<Stage>('ready')
   const [recordingState, setRecordingState] = useState<RecordingState>('listening')
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
@@ -335,7 +335,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, onDone }:
     try {
       const res = await axios.post<{ session_id: string; first_question: string }>(
         `${API}/session/start`,
-        {},
+        { job_role: jobRole, job_description: jobDescription },
         { headers: { 'X-Auth-Token': token } }
       )
       sessionIdRef.current = res.data.session_id
