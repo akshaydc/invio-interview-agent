@@ -544,66 +544,48 @@ def _build_experience_verification(candidate: dict, application: dict) -> dict:
     summary_text = application.get("match_summary", "") or ""
     gap_text = " ".join(application.get("match_gaps", []) or [])
     strength_text = " ".join(application.get("match_strengths", []) or [])
-    job_text = " ".join(
-        str(v) for v in (
-            application.get("job_description", ""),
-            application.get("job_role", ""),
-            application.get("job_title", ""),
-            application.get("job_experience", ""),
-            application.get("experience", ""),
-            _job_experience_for_id(application.get("job_id")),
-            candidate.get("current_role", ""),
-        ) if v
-    )
-
     claimed_years = _parse_experience_years(" ".join([resume_text, summary_text, strength_text, gap_text]))
-    required_years = _experience_requirement_min(job_text)
     linkedin_url = candidate.get("linkedin_url", "") or _extract_linkedin_url(resume_text)
 
     if not linkedin_url:
         status = "missing"
         label = "LinkedIn missing"
-        verdict = "No LinkedIn URL was provided for verification."
+        verdict = "Resume and LinkedIn cannot be compared because no LinkedIn URL was provided."
     elif not LINKEDIN_ENRICHMENT_URL:
         status = "review"
-        label = "Not verified"
+        label = "Resume matched" if claimed_years is not None else "Needs review"
         if claimed_years is None:
             verdict = "LinkedIn URL is available, but resume experience could not be extracted confidently."
-        elif required_years is not None and claimed_years + 0.25 < required_years:
-            verdict = f"Resume experience appears below the role requirement of {_format_years(required_years)}."
-        elif required_years is not None:
-            verdict = "Resume experience meets the role requirement. LinkedIn has not been verified."
         else:
-            verdict = "Resume experience was found. LinkedIn has not been verified."
+            verdict = (
+                f"Resume shows {_format_years(claimed_years)} of experience. "
+                "LinkedIn experience was not found, so resume and LinkedIn cannot be compared."
+            )
     elif claimed_years is None:
         status = "review"
         label = "Needs review"
         verdict = "LinkedIn URL is available, but resume experience could not be extracted confidently."
-    elif required_years is not None and claimed_years + 0.25 < required_years:
-        status = "mismatch"
-        label = "Below role need"
-        verdict = f"Resume experience appears below the role requirement of {_format_years(required_years)}."
     else:
         status = "review"
         label = "Pending LinkedIn check"
-        verdict = "Resume experience meets the role requirement. LinkedIn profile data is pending verification."
+        verdict = "Resume experience was found. LinkedIn profile experience is pending comparison."
 
     evidence = []
     if claimed_years is not None:
-        evidence.append(f"Resume indicates about {_format_years(claimed_years)} of experience.")
-    if required_years is not None:
-        evidence.append(f"Role requires at least {_format_years(required_years)}.")
-    if linkedin_url:
-        evidence.append("LinkedIn URL is available, but profile experience has not been verified.")
+        evidence.append(f"Matched: Resume indicates about {_format_years(claimed_years)} of experience.")
     else:
-        evidence.append("No LinkedIn URL is available for verification.")
+        evidence.append("Failing: Resume experience years were not found clearly.")
+    if linkedin_url:
+        evidence.append("Failing: LinkedIn experience was not found, so resume and LinkedIn are not synced yet.")
+    else:
+        evidence.append("Failing: LinkedIn URL is missing.")
 
     return {
         "status": status,
         "label": label,
         "claimed_years": claimed_years,
         "linkedin_years": None,
-        "required_years": required_years,
+        "required_years": None,
         "linkedin_url": linkedin_url,
         "verdict": verdict,
         "evidence": evidence,
@@ -652,18 +634,18 @@ async def _enrich_experience_verification(candidate: dict, application: dict) ->
     if linkedin_years is None:
         verification["status"] = "review"
         verification["label"] = "Needs review"
-        verification["verdict"] = "LinkedIn profile was reached, but experience years were not returned."
+        verification["verdict"] = "LinkedIn experience was not returned, so resume and LinkedIn cannot be compared."
     elif claimed_years is None:
         verification["status"] = "review"
         verification["label"] = "LinkedIn found"
         verification["verdict"] = f"LinkedIn indicates {_format_years(linkedin_years)}, but resume experience was not extracted confidently."
     elif abs(linkedin_years - claimed_years) <= 0.75:
         verification["status"] = "match"
-        verification["label"] = "Matched"
+        verification["label"] = "Resume matched"
         verification["verdict"] = f"LinkedIn and resume experience are aligned at about {_format_years(claimed_years)}."
     else:
         verification["status"] = "mismatch"
-        verification["label"] = "Not matched"
+        verification["label"] = "LinkedIn not matched"
         verification["verdict"] = (
             f"Resume indicates {_format_years(claimed_years)}, while LinkedIn indicates "
             f"{_format_years(linkedin_years)}."

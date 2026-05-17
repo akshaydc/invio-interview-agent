@@ -129,7 +129,7 @@ function formatYears(value: number | null | undefined) {
 
 function formatLinkedInYears(check: ExperienceVerification) {
   if (check.linkedin_years != null) return formatYears(check.linkedin_years)
-  return check.linkedin_url ? 'Not checked' : 'Not found'
+  return 'Not found'
 }
 
 function experienceFitBadge(check: ExperienceVerification | undefined) {
@@ -139,56 +139,16 @@ function experienceFitBadge(check: ExperienceVerification | undefined) {
     : check.status === 'mismatch'
     ? 'fit-badge--mismatch'
     : 'fit-badge--partial'
-  const label = check.linkedin_years == null && check.linkedin_url
-    ? 'Not verified'
-    : check.status === 'match'
-    ? 'Matched'
+  const label = check.status === 'match'
+    ? 'Resume Matched'
     : check.status === 'mismatch'
-    ? 'Not matched'
+    ? 'LinkedIn Not Matched'
     : check.status === 'missing'
-    ? 'Missing'
-    : 'Needs review'
-  return <span className={`fit-badge ${cls}`}>LinkedIn: {label}</span>
-}
-
-function resumeCallReview(c: Candidate) {
-  const pct = c.match_percentage
-  const scoreClass = pct == null ? 'resume-call-review__score--muted' : pct >= 70 ? 'resume-call-review__score--good' : pct >= 50 ? 'resume-call-review__score--partial' : 'resume-call-review__score--mismatch'
-  const status = pct == null ? 'Not analyzed' : pct >= 70 ? 'Strong resume match' : pct >= 50 ? 'Needs recruiter review' : 'Weak resume match'
-  const summary = c.match_summary || (c.resume_text ? 'Resume is available, but no match summary has been generated yet.' : 'No resume analysis is available for this candidate.')
-  const strengths = c.match_strengths?.slice(0, 2) ?? []
-  const gaps = c.match_gaps?.slice(0, 2) ?? []
-
-  return (
-    <div className="resume-call-review">
-      <div className="resume-call-review__header">
-        <div>
-          <p className="role-label" style={{ marginBottom: 4 }}>Resume Match Before Call</p>
-          <p className="resume-call-review__summary">{summary}</p>
-        </div>
-        <div className={`resume-call-review__score ${scoreClass}`}>
-          <span>{pct == null ? '-' : `${pct}%`}</span>
-          <strong>{status}</strong>
-        </div>
-      </div>
-      {(strengths.length > 0 || gaps.length > 0) && (
-        <div className="resume-call-review__signals">
-          {strengths.length > 0 && (
-            <div>
-              <span>Top strengths</span>
-              <p>{strengths.join(', ')}</p>
-            </div>
-          )}
-          {gaps.length > 0 && (
-            <div>
-              <span>Watch before call</span>
-              <p>{gaps.join(', ')}</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
+    ? 'LinkedIn Missing'
+    : check.claimed_years != null
+    ? 'Resume Matched'
+    : 'Needs Review'
+  return <span className={`fit-badge ${cls}`}>{label}</span>
 }
 
 function formatSlotDisplay(slot: string): string {
@@ -1308,56 +1268,6 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                           </div>
                                         </div>
 
-                                        {c.experience_verification && (
-                                          <div className={`experience-check experience-check--${c.experience_verification.status}`}>
-                                            <div className="experience-check__header">
-                                              <div>
-                                                <p className="role-label" style={{ marginBottom: 4 }}>Resume, Role & LinkedIn Check</p>
-                                                <p className="experience-check__verdict">{c.experience_verification.verdict}</p>
-                                              </div>
-                                              <div className="experience-check__actions">
-                                                {c.experience_verification.linkedin_url && (
-                                                  <a
-                                                    className="experience-check__link"
-                                                    href={c.experience_verification.linkedin_url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    onClick={e => e.stopPropagation()}
-                                                  >
-                                                    Open LinkedIn
-                                                  </a>
-                                                )}
-                                                <button
-                                                  className="experience-check__button"
-                                                  disabled={experienceCheckCt === c.ct_number}
-                                                  onClick={e => { e.stopPropagation(); handleExperienceRecheck(c) }}
-                                                >
-                                                  {experienceCheckCt === c.ct_number ? 'Checking...' : 'Re-check'}
-                                                </button>
-                                              </div>
-                                            </div>
-                                            <div className="experience-check__metrics">
-                                              <div>
-                                                <span>Resume</span>
-                                                <strong>{formatYears(c.experience_verification.claimed_years)}</strong>
-                                              </div>
-                                              <div>
-                                                <span>LinkedIn</span>
-                                                <strong>{formatLinkedInYears(c.experience_verification)}</strong>
-                                              </div>
-                                              <div>
-                                                <span>Role Need</span>
-                                                <strong>{formatYears(c.experience_verification.required_years)}</strong>
-                                              </div>
-                                            </div>
-                                            {c.experience_verification.evidence?.length > 0 && (
-                                              <ul className="experience-check__evidence">
-                                                {c.experience_verification.evidence.map((item, i) => <li key={i}>{item}</li>)}
-                                              </ul>
-                                            )}
-                                          </div>
-                                        )}
-
                                         {(c.match_strengths?.length || c.match_gaps?.length) ? (
                                           <div className="two-col" style={{ marginTop: 16 }}>
                                             {c.match_strengths && c.match_strengths.length > 0 && (
@@ -1385,6 +1295,52 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                       </p>
                                     )}
 
+                                    {c.experience_verification && (
+                                      <div className={`experience-check experience-check--${c.experience_verification.status}`}>
+                                        <div className="experience-check__header">
+                                          <div>
+                                            <p className="role-label" style={{ marginBottom: 4 }}>Resume vs LinkedIn Check</p>
+                                            <p className="experience-check__verdict">{c.experience_verification.verdict}</p>
+                                          </div>
+                                          <div className="experience-check__actions">
+                                            {c.experience_verification.linkedin_url && (
+                                              <a
+                                                className="experience-check__link"
+                                                href={c.experience_verification.linkedin_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                onClick={e => e.stopPropagation()}
+                                              >
+                                                Open LinkedIn
+                                              </a>
+                                            )}
+                                            <button
+                                              className="experience-check__button"
+                                              disabled={experienceCheckCt === c.ct_number}
+                                              onClick={e => { e.stopPropagation(); handleExperienceRecheck(c) }}
+                                            >
+                                              {experienceCheckCt === c.ct_number ? 'Checking...' : 'Re-check'}
+                                            </button>
+                                          </div>
+                                        </div>
+                                        <div className="experience-check__metrics">
+                                          <div>
+                                            <span>Resume</span>
+                                            <strong>{formatYears(c.experience_verification.claimed_years)}</strong>
+                                          </div>
+                                          <div>
+                                            <span>LinkedIn</span>
+                                            <strong>{formatLinkedInYears(c.experience_verification)}</strong>
+                                          </div>
+                                        </div>
+                                        {c.experience_verification.evidence?.length > 0 && (
+                                          <ul className="experience-check__evidence">
+                                            {c.experience_verification.evidence.map((item, i) => <li key={i}>{item}</li>)}
+                                          </ul>
+                                        )}
+                                      </div>
+                                    )}
+
                                     {c.recommendation && (
                                       <div style={{ marginTop: 16 }}>
                                         <p className="role-label" style={{ marginBottom: 6 }}>AI Recommendation</p>
@@ -1401,9 +1357,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                       </div>
                                     )}
 
-                                    {resumeCallReview(c)}
-
-                                    {c.call_status && (() => {
+                                    {c.match_percentage != null && c.match_percentage >= 50 && c.call_status && (() => {
                                       const cs = c.call_status
                                       const steps = [
                                         { label: 'Call Made', done: cs.call_made === true, ts: cs.call_made_at },
