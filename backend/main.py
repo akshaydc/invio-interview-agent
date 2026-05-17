@@ -528,6 +528,17 @@ def _format_years(value: float | None) -> str:
     return f"{value:g} years"
 
 
+def _job_experience_for_id(job_id: str | None) -> str:
+    if not job_id:
+        return ""
+    try:
+        jobs = json.loads(JOBS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return ""
+    job = next((j for j in jobs if j.get("id") == job_id), None)
+    return str(job.get("experience", "")) if job else ""
+
+
 def _build_experience_verification(candidate: dict, application: dict) -> dict:
     resume_text = application.get("resume_text", "") or ""
     summary_text = application.get("match_summary", "") or ""
@@ -538,6 +549,9 @@ def _build_experience_verification(candidate: dict, application: dict) -> dict:
             application.get("job_description", ""),
             application.get("job_role", ""),
             application.get("job_title", ""),
+            application.get("job_experience", ""),
+            application.get("experience", ""),
+            _job_experience_for_id(application.get("job_id")),
             candidate.get("current_role", ""),
         ) if v
     )
@@ -549,29 +563,40 @@ def _build_experience_verification(candidate: dict, application: dict) -> dict:
     if not linkedin_url:
         status = "missing"
         label = "LinkedIn missing"
-        verdict = "No LinkedIn URL was provided with the resume."
+        verdict = "No LinkedIn URL was provided for verification."
+    elif not LINKEDIN_ENRICHMENT_URL:
+        status = "review"
+        label = "Not verified"
+        if claimed_years is None:
+            verdict = "LinkedIn URL is available, but resume experience could not be extracted confidently."
+        elif required_years is not None and claimed_years + 0.25 < required_years:
+            verdict = f"Resume experience appears below the role requirement of {_format_years(required_years)}."
+        elif required_years is not None:
+            verdict = "Resume experience meets the role requirement. LinkedIn has not been verified."
+        else:
+            verdict = "Resume experience was found. LinkedIn has not been verified."
     elif claimed_years is None:
         status = "review"
         label = "Needs review"
-        verdict = "LinkedIn URL is captured, but resume experience could not be extracted confidently."
+        verdict = "LinkedIn URL is available, but resume experience could not be extracted confidently."
     elif required_years is not None and claimed_years + 0.25 < required_years:
         status = "mismatch"
         label = "Below role need"
-        verdict = f"Claimed experience appears below the role requirement of {_format_years(required_years)}."
+        verdict = f"Resume experience appears below the role requirement of {_format_years(required_years)}."
     else:
-        status = "match"
-        label = "Matched"
-        verdict = "Resume experience is matched against the role requirement. LinkedIn profile enrichment can add external confirmation."
+        status = "review"
+        label = "Pending LinkedIn check"
+        verdict = "Resume experience meets the role requirement. LinkedIn profile data is pending verification."
 
     evidence = []
-    if linkedin_url:
-        evidence.append("LinkedIn URL captured from candidate profile/resume.")
-        if not LINKEDIN_ENRICHMENT_URL:
-            evidence.append("External LinkedIn profile and activity enrichment is not configured in this local build.")
     if claimed_years is not None:
-        evidence.append(f"Resume/match summary indicates about {_format_years(claimed_years)} of experience.")
+        evidence.append(f"Resume indicates about {_format_years(claimed_years)} of experience.")
     if required_years is not None:
-        evidence.append(f"Role asks for at least {_format_years(required_years)}.")
+        evidence.append(f"Role requires at least {_format_years(required_years)}.")
+    if linkedin_url:
+        evidence.append("LinkedIn URL is available, but profile experience has not been verified.")
+    else:
+        evidence.append("No LinkedIn URL is available for verification.")
 
     return {
         "status": status,
@@ -659,7 +684,9 @@ def _flatten_for_recruiter(candidate: dict) -> list[dict]:
     for app in _get_applications(candidate):
         row = {**identity, **app}
         row["job_role"] = app.get("job_title") or app.get("job_role", "")
-        row["experience_verification"] = app.get("experience_verification") or _build_experience_verification(candidate, app)
+        verification = app.get("experience_verification")
+        has_linkedin_data = bool(verification and verification.get("linkedin_years") is not None)
+        row["experience_verification"] = verification if has_linkedin_data else _build_experience_verification(candidate, row)
         rows.append(row)
     return rows
 
@@ -2275,6 +2302,7 @@ async def apply_for_job(
         "job_title": job["title"],
         "job_role": job["title"],
         "job_description": job["description"],
+        "job_experience": job.get("experience", ""),
         "resume_text": resume_text,
         "resume_filename": resume_filename,
         "match_percentage": match_result.get("match_percentage"),

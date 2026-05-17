@@ -127,6 +127,11 @@ function formatYears(value: number | null | undefined) {
   return `${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1)} years`
 }
 
+function formatLinkedInYears(check: ExperienceVerification) {
+  if (check.linkedin_years != null) return formatYears(check.linkedin_years)
+  return check.linkedin_url ? 'Not checked' : 'Not found'
+}
+
 function experienceFitBadge(check: ExperienceVerification | undefined) {
   if (!check) return null
   const cls = check.status === 'match'
@@ -134,7 +139,9 @@ function experienceFitBadge(check: ExperienceVerification | undefined) {
     : check.status === 'mismatch'
     ? 'fit-badge--mismatch'
     : 'fit-badge--partial'
-  const label = check.status === 'match'
+  const label = check.linkedin_years == null && check.linkedin_url
+    ? 'Not verified'
+    : check.status === 'match'
     ? 'Matched'
     : check.status === 'mismatch'
     ? 'Not matched'
@@ -142,6 +149,46 @@ function experienceFitBadge(check: ExperienceVerification | undefined) {
     ? 'Missing'
     : 'Needs review'
   return <span className={`fit-badge ${cls}`}>LinkedIn: {label}</span>
+}
+
+function resumeCallReview(c: Candidate) {
+  const pct = c.match_percentage
+  const scoreClass = pct == null ? 'resume-call-review__score--muted' : pct >= 70 ? 'resume-call-review__score--good' : pct >= 50 ? 'resume-call-review__score--partial' : 'resume-call-review__score--mismatch'
+  const status = pct == null ? 'Not analyzed' : pct >= 70 ? 'Strong resume match' : pct >= 50 ? 'Needs recruiter review' : 'Weak resume match'
+  const summary = c.match_summary || (c.resume_text ? 'Resume is available, but no match summary has been generated yet.' : 'No resume analysis is available for this candidate.')
+  const strengths = c.match_strengths?.slice(0, 2) ?? []
+  const gaps = c.match_gaps?.slice(0, 2) ?? []
+
+  return (
+    <div className="resume-call-review">
+      <div className="resume-call-review__header">
+        <div>
+          <p className="role-label" style={{ marginBottom: 4 }}>Resume Match Before Call</p>
+          <p className="resume-call-review__summary">{summary}</p>
+        </div>
+        <div className={`resume-call-review__score ${scoreClass}`}>
+          <span>{pct == null ? '-' : `${pct}%`}</span>
+          <strong>{status}</strong>
+        </div>
+      </div>
+      {(strengths.length > 0 || gaps.length > 0) && (
+        <div className="resume-call-review__signals">
+          {strengths.length > 0 && (
+            <div>
+              <span>Top strengths</span>
+              <p>{strengths.join(', ')}</p>
+            </div>
+          )}
+          {gaps.length > 0 && (
+            <div>
+              <span>Watch before call</span>
+              <p>{gaps.join(', ')}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function formatSlotDisplay(slot: string): string {
@@ -1265,7 +1312,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                           <div className={`experience-check experience-check--${c.experience_verification.status}`}>
                                             <div className="experience-check__header">
                                               <div>
-                                                <p className="role-label" style={{ marginBottom: 4 }}>Resume vs LinkedIn Check</p>
+                                                <p className="role-label" style={{ marginBottom: 4 }}>Resume, Role & LinkedIn Check</p>
                                                 <p className="experience-check__verdict">{c.experience_verification.verdict}</p>
                                               </div>
                                               <div className="experience-check__actions">
@@ -1296,7 +1343,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                               </div>
                                               <div>
                                                 <span>LinkedIn</span>
-                                                <strong>{formatYears(c.experience_verification.linkedin_years)}</strong>
+                                                <strong>{formatLinkedInYears(c.experience_verification)}</strong>
                                               </div>
                                               <div>
                                                 <span>Role Need</span>
@@ -1353,6 +1400,8 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                         </span>
                                       </div>
                                     )}
+
+                                    {resumeCallReview(c)}
 
                                     {c.call_status && (() => {
                                       const cs = c.call_status
