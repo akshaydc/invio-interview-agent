@@ -478,6 +478,9 @@ async def analyze_linkedin_profile(
             print(f"LinkedIn profile status: {profile_resp.status_code}")
             if profile_resp.status_code == 200:
                 profile_data = profile_resp.json()
+                if profile_data:
+                    print(f"LinkedIn profile keys: {list(profile_data.keys())}")
+                    print(f"LinkedIn profile sample: {str(profile_data)[:500]}")
             else:
                 print(f"LinkedIn error: {profile_resp.text[:200]}")
 
