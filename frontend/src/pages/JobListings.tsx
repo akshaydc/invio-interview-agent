@@ -23,6 +23,7 @@ type Props = {
   onSelectJob: (job: Job) => void
   onCandidateLoginClick: () => void
   onRecruiterLoginClick: () => void
+  onInternalLoginClick: () => void
   onHome?: () => void
 }
 
@@ -31,7 +32,7 @@ const LOCATIONS = ['All Locations', 'Bangalore', 'Mumbai', 'Pune', 'Remote']
 const DEPARTMENTS = ['All Departments', 'Engineering', 'Sales Operations', 'Product', 'QA', 'Quality Assurance']
 const EXPERIENCES = ['Any Experience', '0-2 years', '2-4 years', '3-5 years', '4-7 years', '5+ years']
 
-export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecruiterLoginClick, onHome }: Props) {
+export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecruiterLoginClick, onInternalLoginClick, onHome }: Props) {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -99,6 +100,7 @@ export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecr
         showLoginButtons: true,
         onCandidateLogin: onCandidateLoginClick,
         onRecruiterLogin: onRecruiterLoginClick,
+        onInternalLogin: onInternalLoginClick,
       }}
     >
       <div>

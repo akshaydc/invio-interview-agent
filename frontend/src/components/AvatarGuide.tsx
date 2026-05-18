@@ -14,9 +14,11 @@ type GuidePage =
   | 'job-matches'
   | 'candidate-login'
   | 'recruiter-login'
+  | 'internal-login'
   | 'recruiter-dashboard'
   | 'recruiter-scorecard'
   | 'candidate-dashboard'
+  | 'internal-dashboard'
   | 'candidate-interview'
   | 'book-slot'
 
@@ -61,6 +63,10 @@ const GUIDE_COPY: Record<GuidePage, string[]> = {
     'Recruiter access opens the candidate pipeline, job controls, and scorecards.',
     'After login, start with the candidates tab to review matches and interview progress.',
   ],
+  'internal-login': [
+    'Internal employees can sign in with a P ID to search openings, apply internally, or refer a candidate.',
+    'Use the same job board, with a lighter application path and no AI interview step.',
+  ],
   'recruiter-dashboard': [
     'This is your hiring control room. Review candidates, schedule interviews, and inspect AI match signals.',
     'Use the jobs tab to create or update roles before inviting more candidates.',
@@ -72,6 +78,10 @@ const GUIDE_COPY: Record<GuidePage, string[]> = {
   'candidate-dashboard': [
     'This is your applications dashboard. Track every role you have applied to and its current status.',
     'When your interview is scheduled, you will see a start button here to join directly.',
+  ],
+  'internal-dashboard': [
+    'Search by job ID or browse all openings from here.',
+    'Internal applications and referrals are saved for recruiter review without starting candidate interviews.',
   ],
   'candidate-interview': [
     'I will stay nearby while the interview runs. Answer naturally and keep your microphone and camera available.',

@@ -39,6 +39,7 @@ DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 CANDIDATES_FILE = DATA_DIR / "candidates.json"
 SLOTS_FILE = DATA_DIR / "slots.json"
+INTERNAL_APPLICATIONS_FILE = DATA_DIR / "internal_applications.json"
 
 app = FastAPI(title="AI Interview Agent")
 active_sessions: dict = {}
@@ -169,6 +170,9 @@ _SEED_JOBS = [
 if not CANDIDATES_FILE.exists():
     CANDIDATES_FILE.write_text("[]")
 
+if not INTERNAL_APPLICATIONS_FILE.exists():
+    INTERNAL_APPLICATIONS_FILE.write_text("[]")
+
 if not JOBS_FILE.exists():
     JOBS_FILE.write_text("[]")
 if not json.loads(JOBS_FILE.read_text()):
@@ -197,6 +201,21 @@ class RecruiterLoginRequest(BaseModel):
 
 class CandidateLoginRequest(BaseModel):
     ct_number: str
+
+
+class InternalLoginRequest(BaseModel):
+    employee_id: str
+
+
+class InternalApplyRequest(BaseModel):
+    note: str = ""
+
+
+class InternalReferRequest(BaseModel):
+    candidate_name: str
+    candidate_email: str
+    candidate_phone: str = ""
+    note: str = ""
 
 
 class CreateCandidateRequest(BaseModel):
@@ -310,6 +329,15 @@ def verify_candidate_token(x_auth_token: str = Header(None)) -> dict:
     return sess
 
 
+def verify_internal_token(x_auth_token: str = Header(None)) -> dict:
+    if not x_auth_token or x_auth_token not in active_sessions:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    sess = active_sessions[x_auth_token]
+    if sess["role"] != "internal":
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return sess
+
+
 # ---------------------------------------------------------------------------
 # Data helpers
 # ---------------------------------------------------------------------------
@@ -410,6 +438,19 @@ async def _read_slots() -> dict:
 async def _write_slots(slots: dict) -> None:
     async with aiofiles.open(SLOTS_FILE, "w") as f:
         await f.write(json.dumps(slots, indent=2))
+
+
+async def _read_internal_applications() -> list:
+    if not INTERNAL_APPLICATIONS_FILE.exists():
+        return []
+    async with aiofiles.open(INTERNAL_APPLICATIONS_FILE, "r") as f:
+        content = await f.read()
+    return json.loads(content or "[]")
+
+
+async def _write_internal_applications(records: list) -> None:
+    async with aiofiles.open(INTERNAL_APPLICATIONS_FILE, "w") as f:
+        await f.write(json.dumps(records, indent=2))
 
 
 DEMO_BLOCKED_TIMES = {
@@ -1188,6 +1229,16 @@ async def candidate_login(body: CandidateLoginRequest) -> dict:
     }
 
 
+@app.post("/auth/internal/login")
+async def internal_login(body: InternalLoginRequest) -> dict:
+    employee_id = body.employee_id.strip().upper()
+    if not employee_id.startswith("P") or len(employee_id) != 10 or not employee_id[1:].isdigit():
+        raise HTTPException(status_code=400, detail="Enter a valid employee ID like P123456789.")
+    token = str(uuid.uuid4())
+    active_sessions[token] = {"role": "internal", "employee_id": employee_id}
+    return {"token": token, "role": "internal", "employee_id": employee_id}
+
+
 # ---------------------------------------------------------------------------
 # Recruiter endpoints
 # ---------------------------------------------------------------------------
@@ -1295,6 +1346,12 @@ async def list_candidates(
         else:
             rows = [r for r in rows if not r.get("linkedin_url")]
     return rows
+
+
+@app.get("/recruiter/internal-applications")
+async def list_internal_applications(_auth: dict = Depends(verify_recruiter_token)) -> list:
+    records = await _read_internal_applications()
+    return sorted(records, key=lambda r: r.get("created_at", ""), reverse=True)
 
 
 @app.get("/recruiter/candidates/{ct_number}/scorecard")
@@ -2114,6 +2171,89 @@ async def get_job(job_id: str) -> dict:
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+
+@app.get("/internal/activity")
+async def get_internal_activity(_auth: dict = Depends(verify_internal_token)) -> list:
+    employee_id = _auth["employee_id"]
+    records = await _read_internal_applications()
+    return sorted(
+        [r for r in records if r.get("employee_id") == employee_id],
+        key=lambda r: r.get("created_at", ""),
+        reverse=True,
+    )
+
+
+@app.post("/internal/jobs/{job_id}/apply")
+async def internal_apply_for_job(
+    job_id: str,
+    body: InternalApplyRequest,
+    _auth: dict = Depends(verify_internal_token),
+) -> dict:
+    employee_id = _auth["employee_id"]
+    jobs = await _read_jobs()
+    job = next((j for j in jobs if j["id"] == job_id), None)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.get("status") != "open":
+        raise HTTPException(status_code=400, detail="This position is no longer accepting applications")
+
+    records = await _read_internal_applications()
+    if any(r.get("employee_id") == employee_id and r.get("job_id") == job_id and r.get("type") == "internal_apply" for r in records):
+        raise HTTPException(status_code=409, detail="You have already internally applied for this job.")
+
+    record = {
+        "id": str(uuid.uuid4()),
+        "type": "internal_apply",
+        "employee_id": employee_id,
+        "job_id": job_id,
+        "job_title": job["title"],
+        "job_department": job.get("department", ""),
+        "job_location": job.get("location", ""),
+        "status": "submitted",
+        "note": body.note.strip(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    records.append(record)
+    await _write_internal_applications(records)
+    return {"success": True, "message": "You have applied for the job.", "record": record}
+
+
+@app.post("/internal/jobs/{job_id}/refer")
+async def internal_refer_candidate(
+    job_id: str,
+    body: InternalReferRequest,
+    _auth: dict = Depends(verify_internal_token),
+) -> dict:
+    employee_id = _auth["employee_id"]
+    jobs = await _read_jobs()
+    job = next((j for j in jobs if j["id"] == job_id), None)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.get("status") != "open":
+        raise HTTPException(status_code=400, detail="This position is no longer accepting referrals")
+    if not body.candidate_name.strip() or not body.candidate_email.strip():
+        raise HTTPException(status_code=400, detail="Candidate name and email are required.")
+
+    records = await _read_internal_applications()
+    record = {
+        "id": str(uuid.uuid4()),
+        "type": "referral",
+        "employee_id": employee_id,
+        "job_id": job_id,
+        "job_title": job["title"],
+        "job_department": job.get("department", ""),
+        "job_location": job.get("location", ""),
+        "candidate_name": body.candidate_name.strip(),
+        "candidate_email": body.candidate_email.strip(),
+        "candidate_phone": body.candidate_phone.strip(),
+        "status": "submitted",
+        "note": body.note.strip(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    records.append(record)
+    await _write_internal_applications(records)
+    return {"success": True, "message": "Your referral has been submitted.", "record": record}
 
 
 def _recommendation_from_pct(pct: int | float | None) -> str | None:
