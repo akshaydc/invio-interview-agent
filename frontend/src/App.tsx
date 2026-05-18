@@ -7,10 +7,12 @@ import JobDetail from './pages/JobDetail'
 import ApplicationForm from './pages/ApplicationForm'
 import CandidateLogin from './pages/CandidateLogin'
 import RecruiterLogin from './pages/RecruiterLogin'
+import InternalEmployeeLogin from './pages/InternalEmployeeLogin'
 import RecruiterDashboard from './pages/RecruiterDashboard'
 import ScorecardView from './pages/ScorecardView'
 import CandidateInterview from './pages/CandidateInterview'
 import CandidateDashboard from './pages/CandidateDashboard'
+import InternalEmployeeDashboard from './pages/InternalEmployeeDashboard'
 import BookSlot from './pages/BookSlot'
 import AvatarGuide from './components/AvatarGuide'
 import './index.css'
@@ -41,9 +43,10 @@ export type Application = {
 
 export type AuthInfo = {
   token: string
-  role: 'recruiter' | 'candidate'
+  role: 'recruiter' | 'candidate' | 'internal'
   name?: string
   ctNumber?: string
+  employeeId?: string
   applications?: Application[]
 }
 
@@ -68,9 +71,11 @@ type Page =
   | 'job-matches'
   | 'candidate-login'
   | 'recruiter-login'
+  | 'internal-login'
   | 'recruiter-dashboard'
   | 'recruiter-scorecard'
   | 'candidate-dashboard'
+  | 'internal-dashboard'
   | 'candidate-interview'
   | 'book-slot'
 
@@ -94,7 +99,9 @@ function App() {
   function handleLogin(info: AuthInfo) {
     setAuth(info)
     setReturnedFromJobDetail(false)
-    setPage(info.role === 'recruiter' ? 'recruiter-dashboard' : 'candidate-dashboard')
+    if (info.role === 'recruiter') setPage('recruiter-dashboard')
+    else if (info.role === 'internal') setPage('internal-dashboard')
+    else setPage('candidate-dashboard')
   }
 
   function handleLogout() {
@@ -169,6 +176,10 @@ function App() {
             setReturnedFromJobDetail(false)
             setPage('recruiter-login')
           }}
+          onInternalLoginClick={() => {
+            setReturnedFromJobDetail(false)
+            setPage('internal-login')
+          }}
         />
       )}
 
@@ -182,6 +193,10 @@ function App() {
           onRecruiterLoginClick={() => {
             setReturnedFromJobDetail(false)
             setPage('recruiter-login')
+          }}
+          onInternalLoginClick={() => {
+            setReturnedFromJobDetail(false)
+            setPage('internal-login')
           }}
           onHome={() => {
             setReturnedFromJobDetail(false)
@@ -205,6 +220,10 @@ function App() {
           onRecruiterLoginClick={() => {
             setReturnedFromJobDetail(false)
             setPage('recruiter-login')
+          }}
+          onInternalLoginClick={() => {
+            setReturnedFromJobDetail(false)
+            setPage('internal-login')
           }}
           onHome={() => {
             setReturnedFromJobDetail(false)
@@ -275,6 +294,13 @@ function App() {
         />
       )}
 
+      {page === 'internal-login' && (
+        <InternalEmployeeLogin
+          onLogin={handleLogin}
+          onBack={() => setPage('landing')}
+        />
+      )}
+
       {page === 'recruiter-dashboard' && auth && (
         <RecruiterDashboard
           token={auth.token}
@@ -301,6 +327,14 @@ function App() {
           initialApplications={auth.applications ?? []}
           onLogout={handleLogout}
           onStartInterview={handleStartInterview}
+        />
+      )}
+
+      {page === 'internal-dashboard' && auth && (
+        <InternalEmployeeDashboard
+          token={auth.token}
+          employeeId={auth.employeeId ?? ''}
+          onLogout={handleLogout}
         />
       )}
 

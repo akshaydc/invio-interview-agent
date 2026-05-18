@@ -57,6 +57,7 @@ type Props = {
   onBrowseAll: () => void
   onCandidateLoginClick: () => void
   onRecruiterLoginClick: () => void
+  onInternalLoginClick: () => void
   onHome?: () => void
 }
 
@@ -66,7 +67,7 @@ function pillStyle(pct: number): React.CSSProperties {
   return { background: '#FCEBEB', color: '#A32D2D' }
 }
 
-export default function JobMatches({ matchResult, onApply, onBrowseAll, onCandidateLoginClick, onRecruiterLoginClick, onHome }: Props) {
+export default function JobMatches({ matchResult, onApply, onBrowseAll, onCandidateLoginClick, onRecruiterLoginClick, onInternalLoginClick, onHome }: Props) {
   const { candidate_profile, matches } = matchResult
   const sortedMatches = [...matches].sort((a, b) => b.match_percentage - a.match_percentage)
 
@@ -77,6 +78,7 @@ export default function JobMatches({ matchResult, onApply, onBrowseAll, onCandid
         showLoginButtons: true,
         onCandidateLogin: onCandidateLoginClick,
         onRecruiterLogin: onRecruiterLoginClick,
+        onInternalLogin: onInternalLoginClick,
       }}
       contentStyle={{ maxWidth: 900 }}
     >

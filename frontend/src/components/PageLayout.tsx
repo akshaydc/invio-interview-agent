@@ -7,6 +7,7 @@ type NavbarOptions = {
   showLoginButtons?: boolean
   onCandidateLogin?: () => void
   onRecruiterLogin?: () => void
+  onInternalLogin?: () => void
 }
 
 type Props = {

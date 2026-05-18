@@ -20,10 +20,11 @@ type Props = {
   onSelectJob: (job: Job) => void
   onCandidateLoginClick: () => void
   onRecruiterLoginClick: () => void
+  onInternalLoginClick: () => void
   onHome?: () => void
 }
 
-export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecruiterLoginClick, onHome }: Props) {
+export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecruiterLoginClick, onInternalLoginClick, onHome }: Props) {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -41,6 +42,7 @@ export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecr
         showLoginButtons: true,
         onCandidateLogin: onCandidateLoginClick,
         onRecruiterLogin: onRecruiterLoginClick,
+        onInternalLogin: onInternalLoginClick,
       }}
     >
       <div>
