@@ -478,6 +478,9 @@ async def analyze_linkedin_profile(
             print(f"LinkedIn profile status: {profile_resp.status_code}")
             if profile_resp.status_code == 200:
                 profile_data = profile_resp.json()
+                git add backend/main.py
+git commit -m "add LinkedIn debug logging"
+git push origin akshay/real-linkedin-integration
             else:
                 print(f"LinkedIn error: {profile_resp.text[:200]}")
 
