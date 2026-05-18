@@ -382,6 +382,24 @@ async def _write_jobs(jobs: list) -> None:
         await f.write(json.dumps(jobs, indent=2))
 
 
+def _generate_job_code(jobs: list) -> str:
+    """Return the next unique ASTRA-YYYY-NNNN code not already in the list."""
+    year = datetime.now().year
+    prefix = f"ASTRA-{year}-"
+    existing: set[int] = set()
+    for job in jobs:
+        code = job.get("job_code", "")
+        if code.startswith(prefix):
+            try:
+                existing.add(int(code.split("-")[-1]))
+            except ValueError:
+                pass
+    counter = 1
+    while counter in existing:
+        counter += 1
+    return f"ASTRA-{year}-{counter:04d}"
+
+
 async def _read_slots() -> dict:
     if not SLOTS_FILE.exists():
         return {}
@@ -2317,8 +2335,7 @@ async def create_job(
 
     requirements_list = [r.strip() for r in requirements.split(",") if r.strip()]
 
-    year = datetime.now().year
-    job_code = f"ASTRA-{year}-{len(jobs) + 1:04d}"
+    job_code = _generate_job_code(jobs)
 
     job = {
         "id": str(uuid.uuid4()),
@@ -3262,16 +3279,24 @@ def _seed_demo_data() -> None:
 
     # ── Job codes for all jobs (always check) ────────────────────────────────
     _current_jobs = json.loads(JOBS_FILE.read_text()) if JOBS_FILE.exists() else []
-    _job_codes_map = {
+    # Fixed codes for the 4 known demo jobs
+    _demo_code_map: dict[str, str] = {
         DEMO_JOB_IDS["sf_admin"]: "ASTRA-2026-0001",
         DEMO_JOB_IDS["sf_dev"]:   "ASTRA-2026-0002",
         DEMO_JOB_IDS["qa_eng"]:   "ASTRA-2026-0003",
         DEMO_JOB_IDS["ba"]:       "ASTRA-2026-0004",
     }
     _jobs_code_changed = False
-    for _i, _job in enumerate(_current_jobs):
-        if "job_code" not in _job:
-            _job["job_code"] = _job_codes_map.get(_job["id"]) or f"ASTRA-2026-{_i+1:04d}"
+    for _job in _current_jobs:
+        _desired = _demo_code_map.get(_job["id"])
+        if _desired:
+            # Enforce fixed code for demo jobs (correct if wrong, add if missing)
+            if _job.get("job_code") != _desired:
+                _job["job_code"] = _desired
+                _jobs_code_changed = True
+        elif "job_code" not in _job:
+            # Generate a unique code for non-demo jobs
+            _job["job_code"] = _generate_job_code(_current_jobs)
             _jobs_code_changed = True
     if _jobs_code_changed:
         JOBS_FILE.write_text(json.dumps(_current_jobs, indent=2))
@@ -3281,18 +3306,17 @@ def _seed_demo_data() -> None:
 @app.on_event("startup")
 async def on_startup() -> None:
     _seed_demo_data()
-    # Migration: ensure every job has a job_code
+    # Migration: ensure every job has a unique job_code
     if JOBS_FILE.exists():
         _startup_jobs = json.loads(JOBS_FILE.read_text())
         _startup_changed = False
-        for _idx, _j in enumerate(_startup_jobs):
+        for _j in _startup_jobs:
             if "job_code" not in _j:
-                _year = datetime.now().year
-                _j["job_code"] = f"ASTRA-{_year}-{_idx+1:04d}"
+                _j["job_code"] = _generate_job_code(_startup_jobs)
                 _startup_changed = True
         if _startup_changed:
             JOBS_FILE.write_text(json.dumps(_startup_jobs, indent=2))
-            print(f"Startup migration: added job_code to {sum(1 for j in _startup_jobs if 'job_code' in j)} jobs.")
+            print("Startup migration: filled missing job codes.")
 
 
 # ---------------------------------------------------------------------------
