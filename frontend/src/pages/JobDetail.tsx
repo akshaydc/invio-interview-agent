@@ -19,8 +19,13 @@ export default function JobDetail({ job, onApply, onBack, onHome }: Props) {
       }}
     >
       <div className="card">
-        <div style={{ marginBottom: 10 }}>
+        <div style={{ marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span className="job-dept-badge">{job.department}</span>
+          {job.job_code && (
+            <span style={{ fontSize: 11, color: '#64748b', fontFamily: 'monospace' }}>
+              Job ID: {job.job_code}
+            </span>
+          )}
         </div>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: 14 }}>
           {job.title}

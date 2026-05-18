@@ -64,6 +64,7 @@ type SlotInfo = { slot: string; display: string; available: boolean; booked_by: 
 
 type Job = {
   id: string
+  job_code?: string
   title: string
   department: string
   location: string
@@ -210,6 +211,20 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [filterMinMatch, setFilterMinMatch] = useState(0)
   const [filterRecommendation, setFilterRecommendation] = useState('All')
   const [filterStatus, setFilterStatus] = useState('All')
+  const [filterLinkedInStatus, setFilterLinkedInStatus] = useState('All')
+  const [filterHasLinkedin, setFilterHasLinkedin] = useState(false)
+  const [showFilterPanel, setShowFilterPanel] = useState(false)
+  const filterBtnRef = useRef<HTMLDivElement>(null)
+
+  // Staged filter values (in-panel, applied on "Apply Filters")
+  const [panelMinMatch, setPanelMinMatch] = useState(0)
+  const [panelRole, setPanelRole] = useState('')
+  const [panelSkill, setPanelSkill] = useState('')
+  const [panelLocation, setPanelLocation] = useState('')
+  const [panelStatus, setPanelStatus] = useState('All')
+  const [panelRecommendation, setPanelRecommendation] = useState('All')
+  const [panelLinkedInStatus, setPanelLinkedInStatus] = useState('All')
+  const [panelHasLinkedin, setPanelHasLinkedin] = useState(false)
 
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleModalCt, setScheduleModalCt] = useState('')
@@ -269,8 +284,8 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   const filteredCandidates = useMemo(() => {
     let result = [...candidates].sort((a, b) => {
-      const aMatch = a.match_percentage ?? -1
-      const bMatch = b.match_percentage ?? -1
+      const aMatch = a.combined_score ?? a.match_percentage ?? -1
+      const bMatch = b.combined_score ?? b.match_percentage ?? -1
       return bMatch - aMatch
     })
     if (filterRole.trim()) {
@@ -289,7 +304,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
       result = result.filter(c => (c.location || '').toLowerCase().includes(l))
     }
     if (filterMinMatch > 0) {
-      result = result.filter(c => (c.match_percentage ?? 0) >= filterMinMatch)
+      result = result.filter(c => (c.combined_score ?? c.match_percentage ?? 0) >= filterMinMatch)
     }
     if (filterRecommendation !== 'All') {
       result = result.filter(c => c.recommendation === filterRecommendation)
@@ -304,8 +319,20 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
       }
       result = result.filter(c => c.status === statusMap[filterStatus])
     }
+    if (filterLinkedInStatus !== 'All') {
+      const liStatusMap: Record<string, string> = {
+        'Verified Match': 'verified_match',
+        'Mismatch Detected': 'mismatch',
+        'No URL': 'no_url',
+        'Profile Not Found': 'no_match',
+      }
+      result = result.filter(c => c.linkedin_analysis?.status === liStatusMap[filterLinkedInStatus])
+    }
+    if (filterHasLinkedin) {
+      result = result.filter(c => !!c.linkedin_url)
+    }
     return result
-  }, [candidates, filterRole, filterSkill, filterLocation, filterMinMatch, filterRecommendation, filterStatus])
+  }, [candidates, filterRole, filterSkill, filterLocation, filterMinMatch, filterRecommendation, filterStatus, filterLinkedInStatus, filterHasLinkedin])
 
   const headers = { 'X-Auth-Token': token }
 
@@ -347,6 +374,16 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   useEffect(() => { fetchCandidates(); fetchAnalytics() }, [])
   useEffect(() => { if (tab === 'jobs') fetchJobs() }, [tab])
+  useEffect(() => {
+    if (!showFilterPanel) return
+    function handleClick(e: MouseEvent) {
+      if (filterBtnRef.current && !filterBtnRef.current.contains(e.target as Node)) {
+        setShowFilterPanel(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showFilterPanel])
   useEffect(() => {
     axios.get<Job[]>(`${API}/jobs`).then(res => setOpenJobs(res.data.filter(j => j.status === 'open'))).catch(() => {})
   }, [])
@@ -647,6 +684,53 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     setEditingProfileCt(null)
     setEpError('')
   }
+
+  function openFilterPanel() {
+    setPanelMinMatch(filterMinMatch)
+    setPanelRole(filterRole)
+    setPanelSkill(filterSkill)
+    setPanelLocation(filterLocation)
+    setPanelStatus(filterStatus)
+    setPanelRecommendation(filterRecommendation)
+    setPanelLinkedInStatus(filterLinkedInStatus)
+    setPanelHasLinkedin(filterHasLinkedin)
+    setShowFilterPanel(true)
+  }
+
+  function applyFilters() {
+    setFilterMinMatch(panelMinMatch)
+    setFilterRole(panelRole)
+    setFilterSkill(panelSkill)
+    setFilterLocation(panelLocation)
+    setFilterStatus(panelStatus)
+    setFilterRecommendation(panelRecommendation)
+    setFilterLinkedInStatus(panelLinkedInStatus)
+    setFilterHasLinkedin(panelHasLinkedin)
+    setShowFilterPanel(false)
+  }
+
+  function clearAllFilters() {
+    setPanelMinMatch(0); setFilterMinMatch(0)
+    setPanelRole(''); setFilterRole('')
+    setPanelSkill(''); setFilterSkill('')
+    setPanelLocation(''); setFilterLocation('')
+    setPanelStatus('All'); setFilterStatus('All')
+    setPanelRecommendation('All'); setFilterRecommendation('All')
+    setPanelLinkedInStatus('All'); setFilterLinkedInStatus('All')
+    setPanelHasLinkedin(false); setFilterHasLinkedin(false)
+    setShowFilterPanel(false)
+  }
+
+  const activeFilterCount = [
+    filterMinMatch > 0,
+    filterRole.trim() !== '',
+    filterSkill.trim() !== '',
+    filterLocation.trim() !== '',
+    filterStatus !== 'All',
+    filterRecommendation !== 'All',
+    filterLinkedInStatus !== 'All',
+    filterHasLinkedin,
+  ].filter(Boolean).length
 
   async function saveEditProfile(ct: string) {
     setEpLoading(true)
@@ -1088,63 +1172,125 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div className="filter-bar">
-            <div className="filter-bar-item">
-              <label className="role-label">Role</label>
-              <input className="role-input" placeholder="e.g. Salesforce" value={filterRole} onChange={e => setFilterRole(e.target.value)} />
-            </div>
-            <div className="filter-bar-item">
-              <label className="role-label">Skill</label>
-              <input className="role-input" placeholder="e.g. Apex, React" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} />
-            </div>
-            <div className="filter-bar-item">
-              <label className="role-label">Location</label>
-              <input className="role-input" placeholder="e.g. Bangalore" value={filterLocation} onChange={e => setFilterLocation(e.target.value)} />
-            </div>
-            <div className="filter-bar-item filter-bar-item--range">
-              <label className="role-label">Min Match: {filterMinMatch}%</label>
-              <input type="range" min={0} max={100} value={filterMinMatch} onChange={e => setFilterMinMatch(Number(e.target.value))} style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary)', marginTop: 4 }} />
-            </div>
-            <div className="filter-bar-item">
-              <label className="role-label">Recommendation</label>
-              <select className="role-select" value={filterRecommendation} onChange={e => setFilterRecommendation(e.target.value)}>
-                <option>All</option>
-                <option>Strong Hire</option>
-                <option>Hire</option>
-                <option>Consider</option>
-                <option>Reject</option>
-              </select>
-            </div>
-            <div className="filter-bar-item">
-              <label className="role-label">Status</label>
-              <select className="role-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-                <option>All</option>
-                <option>Applied</option>
-                <option>Shortlisted</option>
-                <option>Interview Scheduled</option>
-                <option>Interview Complete</option>
-                <option>Rejected</option>
-              </select>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <button
-                className="btn btn-secondary"
-                style={{ fontSize: '0.85rem', padding: '8px 16px', whiteSpace: 'nowrap' }}
-                onClick={() => { setFilterRole(''); setFilterSkill(''); setFilterLocation(''); setFilterMinMatch(0); setFilterRecommendation('All'); setFilterStatus('All') }}
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-
           {!analyticsLoading && analytics && <PipelineWidget analytics={analytics} />}
 
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3 style={{ color: 'var(--text)' }}>
+                <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  <h3 style={{ color: 'var(--text)', margin: 0 }}>
                     {filteredCandidates.length} candidate{filteredCandidates.length !== 1 ? 's' : ''} found
                     {filteredCandidates.length !== candidates.length && ` (of ${candidates.length})`}
                   </h3>
+                  <div ref={filterBtnRef} style={{ position: 'relative', flexShrink: 0 }}>
+                    <button
+                      onClick={() => showFilterPanel ? setShowFilterPanel(false) : openFilterPanel()}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+                        border: `1.5px solid ${activeFilterCount > 0 ? '#0C447C' : '#0C447C'}`,
+                        background: activeFilterCount > 0 ? '#0C447C' : 'transparent',
+                        color: activeFilterCount > 0 ? '#fff' : '#0C447C',
+                        fontWeight: 600, fontSize: '0.85rem',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                      </svg>
+                      {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : 'Filters'}
+                    </button>
+
+                    {showFilterPanel && (
+                      <div style={{
+                        position: 'absolute', right: 0, top: 'calc(100% + 6px)',
+                        background: '#fff', border: '1px solid #e2e8f0',
+                        borderRadius: 12, padding: 20,
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                        zIndex: 100, width: 320,
+                        display: 'flex', flexDirection: 'column', gap: 14,
+                      }}>
+                        <div>
+                          <label className="role-label">Minimum Match %: {panelMinMatch}%</label>
+                          <input type="range" min={0} max={100} value={panelMinMatch} onChange={e => setPanelMinMatch(Number(e.target.value))} style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary)', marginTop: 4 }} />
+                        </div>
+                        <div>
+                          <label className="role-label">Role</label>
+                          <input className="role-input" placeholder="e.g. Salesforce" value={panelRole} onChange={e => setPanelRole(e.target.value)} style={{ marginTop: 4 }} />
+                        </div>
+                        <div>
+                          <label className="role-label">Skill</label>
+                          <input className="role-input" placeholder="e.g. Apex, React" value={panelSkill} onChange={e => setPanelSkill(e.target.value)} style={{ marginTop: 4 }} />
+                        </div>
+                        <div>
+                          <label className="role-label">Location</label>
+                          <input className="role-input" placeholder="e.g. Bangalore" value={panelLocation} onChange={e => setPanelLocation(e.target.value)} style={{ marginTop: 4 }} />
+                        </div>
+                        <div>
+                          <label className="role-label">Status</label>
+                          <select className="role-select" value={panelStatus} onChange={e => setPanelStatus(e.target.value)} style={{ marginTop: 4 }}>
+                            <option>All</option>
+                            <option>Applied</option>
+                            <option>Shortlisted</option>
+                            <option>Interview Scheduled</option>
+                            <option>Interview Complete</option>
+                            <option>Rejected</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="role-label">AI Recommendation</label>
+                          <select className="role-select" value={panelRecommendation} onChange={e => setPanelRecommendation(e.target.value)} style={{ marginTop: 4 }}>
+                            <option>All</option>
+                            <option>Strong Hire</option>
+                            <option>Hire</option>
+                            <option>Consider</option>
+                            <option>Reject</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="role-label">LinkedIn Status</label>
+                          <select className="role-select" value={panelLinkedInStatus} onChange={e => setPanelLinkedInStatus(e.target.value)} style={{ marginTop: 4 }}>
+                            <option>All</option>
+                            <option>Verified Match</option>
+                            <option>Mismatch Detected</option>
+                            <option>Profile Not Found</option>
+                            <option>No URL</option>
+                          </select>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <label className="role-label" style={{ margin: 0 }}>Has LinkedIn URL</label>
+                          <div
+                            onClick={() => setPanelHasLinkedin(v => !v)}
+                            style={{
+                              width: 36, height: 20, borderRadius: 10, cursor: 'pointer',
+                              background: panelHasLinkedin ? '#0C447C' : '#cbd5e1',
+                              position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                            }}
+                          >
+                            <div style={{
+                              position: 'absolute', top: 2, left: panelHasLinkedin ? 18 : 2,
+                              width: 16, height: 16, borderRadius: '50%', background: '#fff',
+                              transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                            }} />
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, paddingTop: 4, borderTop: '1px solid #e2e8f0' }}>
+                          <button
+                            className="btn btn-primary"
+                            style={{ flex: 1, fontSize: '0.85rem', padding: '8px 0' }}
+                            onClick={applyFilters}
+                          >
+                            Apply Filters
+                          </button>
+                          <button
+                            className="btn btn-secondary"
+                            style={{ flex: 1, fontSize: '0.85rem', padding: '8px 0' }}
+                            onClick={clearAllFilters}
+                          >
+                            Clear All
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {candidatesLoading ? (
                   <p className="muted" style={{ padding: 24 }}>Loading...</p>
@@ -1710,7 +1856,10 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                   <tbody>
                     {jobs.map(j => (
                       <tr key={j.id}>
-                        <td style={{ fontWeight: 500 }}>{j.title}</td>
+                        <td>
+                          <div style={{ fontWeight: 500 }}>{j.title}</div>
+                          {j.job_code && <div style={{ fontSize: '0.75rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: 2 }}>{j.job_code}</div>}
+                        </td>
                         <td style={{ color: 'var(--muted)' }}>{j.department}</td>
                         <td style={{ color: 'var(--muted)' }}>{j.location}</td>
                         <td style={{ color: 'var(--muted)' }}>{j.experience}</td>
