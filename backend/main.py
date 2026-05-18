@@ -514,6 +514,20 @@ async def analyze_linkedin_profile(
     except Exception as e:
         print(f"Posts fetch error: {e}")
 
+    experience_data = None
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            exp_resp = await client.get(
+                "https://fresh-linkedin-profile-data.p.rapidapi.com/get-year-of-experiences",
+                headers=headers,
+                params={"linkedin_url": linkedin_url},
+            )
+            if exp_resp.status_code == 200:
+                experience_data = exp_resp.json()
+                print(f"Experience API data: {str(experience_data)[:300]}")
+    except Exception as e:
+        print(f"Experience fetch error: {e}")
+
     if not isinstance(profile_data, dict):
         print(f"Invalid profile data type: {type(profile_data)}")
         profile_data = None
@@ -537,22 +551,62 @@ async def analyze_linkedin_profile(
             "scanned_at": datetime.now(timezone.utc).isoformat(),
         }
 
+    resume_skills: list[str] = []
+    if resume_text:
+        common_skills = [
+            "salesforce", "apex", "lwc", "soql", "python", "javascript", "react", "java",
+            "sql", "aws", "azure", "jira", "agile", "scrum", "tableau", "power bi", "excel",
+        ]
+        resume_lower = resume_text.lower()
+        resume_skills = [s.capitalize() for s in common_skills if s in resume_lower]
+
     try:
-        # Extract experience — prefer positions[], fall back to experience[]
-        positions_raw = profile_data.get("positions", []) or profile_data.get("experience", []) or []
-        linkedin_exp_years = 0
-        companies = []
-        for pos in positions_raw:
-            duration = str(pos.get("duration", "") or "")
-            company = pos.get("company", "") or pos.get("companyName", "")
-            if company:
-                companies.append(company)
-            if "yr" in duration:
+        # Extract experience — use dedicated endpoint, fall back to summing positions[]
+        linkedin_exp_years: float = 0.0
+        companies: list[str] = []
+        current_job_title = ""
+        current_company = ""
+
+        if experience_data and isinstance(experience_data.get("data"), dict):
+            exp_info = experience_data["data"]
+            yoe_str = str(exp_info.get("years_of_experience", "") or "")
+            current_job_title = str(exp_info.get("current_job_title", "") or "")
+            current_company = str(exp_info.get("current_company", "") or "")
+            if current_company:
+                companies.append(current_company)
+            if "yr" in yoe_str:
                 try:
-                    yrs = int(duration.split("yr")[0].strip().split()[-1])
-                    linkedin_exp_years += yrs
+                    parts = yoe_str.split("yr")
+                    yrs = int(parts[0].strip().split()[-1])
+                    mos = 0
+                    if len(parts) > 1 and "mo" in parts[1]:
+                        try:
+                            mos = int(parts[1].strip().split("mo")[0].strip().split()[-1])
+                        except Exception:
+                            pass
+                    linkedin_exp_years = round(yrs + mos / 12, 1)
                 except Exception:
                     pass
+
+        if not linkedin_exp_years:
+            positions_raw = profile_data.get("positions", []) or profile_data.get("experience", []) or []
+            for pos in positions_raw:
+                duration = str(pos.get("duration", "") or "")
+                company = pos.get("company", "") or pos.get("companyName", "")
+                if company and company not in companies:
+                    companies.append(company)
+                if "yr" in duration:
+                    try:
+                        yrs = int(duration.split("yr")[0].strip().split()[-1])
+                        linkedin_exp_years += yrs
+                    except Exception:
+                        pass
+        else:
+            positions_raw = profile_data.get("positions", []) or profile_data.get("experience", []) or []
+            for pos in positions_raw:
+                company = pos.get("company", "") or pos.get("companyName", "")
+                if company and company not in companies:
+                    companies.append(company)
 
         # Extract education
         education_raw = profile_data.get("education", []) or []
@@ -564,16 +618,22 @@ async def analyze_linkedin_profile(
                 "field": edu.get("field", "") or edu.get("fieldOfStudy", ""),
             })
 
-        # Extract skills; fall back to scanning about text if the list is empty
+        # Extract skills; log raw structure, filter noise, keep resume-relevant
         skills_raw = profile_data.get("skills", []) or []
+        print(f"Raw LinkedIn skills (first 3): {skills_raw[:3]}")
         linkedin_skills: list[str] = []
         for s in skills_raw:
-            if isinstance(s, str) and s:
+            if isinstance(s, str) and len(s) > 2:
                 linkedin_skills.append(s)
             elif isinstance(s, dict):
-                name = s.get("name", "") or s.get("skill", "")
-                if name:
+                name = s.get("name", "") or s.get("skill", "") or s.get("title", "")
+                if name and len(name) > 2:
                     linkedin_skills.append(name)
+        if resume_skills:
+            linkedin_skills = [
+                s for s in linkedin_skills
+                if any(r.lower() in s.lower() or s.lower() in r.lower() for r in resume_skills)
+            ]
         if not linkedin_skills:
             about = profile_data.get("about", "") or ""
             common_tech = [
@@ -652,16 +712,6 @@ async def analyze_linkedin_profile(
                 analysis_result = json.loads(_strip_code_fence(raw))
             except Exception as e:
                 print(f"Claude LinkedIn analysis error: {e}")
-
-        # Resume skill extraction
-        resume_skills: list[str] = []
-        if resume_text:
-            common_skills = [
-                "salesforce", "apex", "lwc", "soql", "python", "javascript", "react", "java",
-                "sql", "aws", "azure", "jira", "agile", "scrum", "tableau", "power bi", "excel",
-            ]
-            resume_lower = resume_text.lower()
-            resume_skills = [s.capitalize() for s in common_skills if s in resume_lower]
 
         matching_skills = [
             s for s in linkedin_skills
