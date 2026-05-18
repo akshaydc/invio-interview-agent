@@ -214,7 +214,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [filterLinkedInStatus, setFilterLinkedInStatus] = useState('All')
   const [filterHasLinkedin, setFilterHasLinkedin] = useState(false)
   const [showFilterPanel, setShowFilterPanel] = useState(false)
-  const filterBtnRef = useRef<HTMLDivElement>(null)
+  const filterBtnRef = useRef<HTMLButtonElement>(null)
 
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleModalCt, setScheduleModalCt] = useState('')
@@ -364,16 +364,6 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   useEffect(() => { fetchCandidates(); fetchAnalytics() }, [])
   useEffect(() => { if (tab === 'jobs') fetchJobs() }, [tab])
-  useEffect(() => {
-    if (!showFilterPanel) return
-    function handleClick(e: MouseEvent) {
-      if (filterBtnRef.current && !filterBtnRef.current.contains(e.target as Node)) {
-        setShowFilterPanel(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [showFilterPanel])
   useEffect(() => {
     axios.get<Job[]>(`${API}/jobs`).then(res => setOpenJobs(res.data.filter(j => j.status === 'open'))).catch(() => {})
   }, [])
@@ -765,6 +755,115 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
           </div>
         </div>
       )}
+      {showFilterPanel && (
+        <>
+          <div
+            onClick={() => setShowFilterPanel(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.2)', zIndex: 999 }}
+          />
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'fixed', top: 0, right: 0, height: '100vh', width: 320,
+              background: '#fff', boxShadow: '-8px 0 32px rgba(0,0,0,0.12)',
+              zIndex: 1000, overflowY: 'auto', padding: '24px 20px',
+              display: 'flex', flexDirection: 'column', gap: 16,
+              transform: 'translateX(0)',
+              animation: 'slideInRight 0.25s ease',
+            }}
+          >
+            <style>{`@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontWeight: 600, fontSize: '1rem', color: '#042C53' }}>Filters</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={clearAllFilters}
+                    style={{ background: 'none', border: 'none', color: '#A32D2D', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                  >
+                    Clear All
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowFilterPanel(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '1.4rem', lineHeight: 1, padding: 0 }}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="role-label">Minimum Match %: {filterMinMatch}%</label>
+              <input type="range" min={0} max={100} value={filterMinMatch}
+                onChange={e => setFilterMinMatch(Number(e.target.value))}
+                onInput={e => setFilterMinMatch(Number((e.target as HTMLInputElement).value))}
+                style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary)', marginTop: 4 }} />
+            </div>
+            <div>
+              <label className="role-label">Role</label>
+              <input className="role-input" placeholder="e.g. Salesforce" value={filterRole} onChange={e => setFilterRole(e.target.value)} style={{ marginTop: 4 }} />
+            </div>
+            <div>
+              <label className="role-label">Skill</label>
+              <input className="role-input" placeholder="e.g. Apex, React" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} style={{ marginTop: 4 }} />
+            </div>
+            <div>
+              <label className="role-label">Location</label>
+              <input className="role-input" placeholder="e.g. Bangalore" value={filterLocation} onChange={e => setFilterLocation(e.target.value)} style={{ marginTop: 4 }} />
+            </div>
+            <div>
+              <label className="role-label">Status</label>
+              <select className="role-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ marginTop: 4 }}>
+                <option>All</option>
+                <option>Applied</option>
+                <option>Shortlisted</option>
+                <option>Interview Scheduled</option>
+                <option>Interview Complete</option>
+                <option>Rejected</option>
+              </select>
+            </div>
+            <div>
+              <label className="role-label">AI Recommendation</label>
+              <select className="role-select" value={filterRecommendation} onChange={e => setFilterRecommendation(e.target.value)} style={{ marginTop: 4 }}>
+                <option>All</option>
+                <option>Strong Hire</option>
+                <option>Hire</option>
+                <option>Consider</option>
+                <option>Reject</option>
+              </select>
+            </div>
+            <div>
+              <label className="role-label">LinkedIn Status</label>
+              <select className="role-select" value={filterLinkedInStatus} onChange={e => setFilterLinkedInStatus(e.target.value)} style={{ marginTop: 4 }}>
+                <option>All</option>
+                <option>Verified Match</option>
+                <option>Mismatch Detected</option>
+                <option>Profile Not Found</option>
+                <option>No URL</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <label className="role-label" style={{ margin: 0 }}>Has LinkedIn URL</label>
+              <div
+                onClick={() => setFilterHasLinkedin(v => !v)}
+                style={{
+                  width: 36, height: 20, borderRadius: 10, cursor: 'pointer',
+                  background: filterHasLinkedin ? '#0C447C' : '#cbd5e1',
+                  position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                }}
+              >
+                <div style={{
+                  position: 'absolute', top: 2, left: filterHasLinkedin ? 18 : 2,
+                  width: 16, height: 16, borderRadius: '50%', background: '#fff',
+                  transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }} />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {showScheduleModal && (() => {
         const schedCand = candidates.find(c => c.ct_number === scheduleModalCt)
         return (
@@ -1145,116 +1244,24 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                     {filteredCandidates.length} candidate{filteredCandidates.length !== 1 ? 's' : ''} found
                     {filteredCandidates.length !== candidates.length && ` (of ${candidates.length})`}
                   </h3>
-                  <div ref={filterBtnRef} style={{ position: 'relative', flexShrink: 0 }}>
-                    <button
-                      onClick={() => setShowFilterPanel(v => !v)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
-                        border: '1.5px solid #0C447C',
-                        background: activeFilterCount > 0 ? '#0C447C' : 'transparent',
-                        color: activeFilterCount > 0 ? '#fff' : '#0C447C',
-                        fontWeight: 600, fontSize: '0.85rem',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-                      </svg>
-                      {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : 'Filters'}
-                    </button>
-
-                    {showFilterPanel && (
-                      <div style={{
-                        position: 'fixed',
-                        right: 40,
-                        top: filterBtnRef.current ? filterBtnRef.current.getBoundingClientRect().bottom + 6 : 60,
-                        background: '#fff', border: '1px solid #e2e8f0',
-                        borderRadius: 12, padding: 20,
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                        zIndex: 1000, width: 300, maxWidth: 'calc(100vw - 48px)',
-                        maxHeight: '80vh', overflowY: 'auto',
-                        display: 'flex', flexDirection: 'column', gap: 14,
-                      }}>
-                        <div>
-                          <label className="role-label">Minimum Match %: {filterMinMatch}%</label>
-                          <input type="range" min={0} max={100} value={filterMinMatch}
-                            onChange={e => setFilterMinMatch(Number(e.target.value))}
-                            onInput={e => setFilterMinMatch(Number((e.target as HTMLInputElement).value))}
-                            style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary)', marginTop: 4 }} />
-                        </div>
-                        <div>
-                          <label className="role-label">Role</label>
-                          <input className="role-input" placeholder="e.g. Salesforce" value={filterRole} onChange={e => setFilterRole(e.target.value)} style={{ marginTop: 4 }} />
-                        </div>
-                        <div>
-                          <label className="role-label">Skill</label>
-                          <input className="role-input" placeholder="e.g. Apex, React" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} style={{ marginTop: 4 }} />
-                        </div>
-                        <div>
-                          <label className="role-label">Location</label>
-                          <input className="role-input" placeholder="e.g. Bangalore" value={filterLocation} onChange={e => setFilterLocation(e.target.value)} style={{ marginTop: 4 }} />
-                        </div>
-                        <div>
-                          <label className="role-label">Status</label>
-                          <select className="role-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ marginTop: 4 }}>
-                            <option>All</option>
-                            <option>Applied</option>
-                            <option>Shortlisted</option>
-                            <option>Interview Scheduled</option>
-                            <option>Interview Complete</option>
-                            <option>Rejected</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="role-label">AI Recommendation</label>
-                          <select className="role-select" value={filterRecommendation} onChange={e => setFilterRecommendation(e.target.value)} style={{ marginTop: 4 }}>
-                            <option>All</option>
-                            <option>Strong Hire</option>
-                            <option>Hire</option>
-                            <option>Consider</option>
-                            <option>Reject</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="role-label">LinkedIn Status</label>
-                          <select className="role-select" value={filterLinkedInStatus} onChange={e => setFilterLinkedInStatus(e.target.value)} style={{ marginTop: 4 }}>
-                            <option>All</option>
-                            <option>Verified Match</option>
-                            <option>Mismatch Detected</option>
-                            <option>Profile Not Found</option>
-                            <option>No URL</option>
-                          </select>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <label className="role-label" style={{ margin: 0 }}>Has LinkedIn URL</label>
-                          <div
-                            onClick={() => setFilterHasLinkedin(v => !v)}
-                            style={{
-                              width: 36, height: 20, borderRadius: 10, cursor: 'pointer',
-                              background: filterHasLinkedin ? '#0C447C' : '#cbd5e1',
-                              position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-                            }}
-                          >
-                            <div style={{
-                              position: 'absolute', top: 2, left: filterHasLinkedin ? 18 : 2,
-                              width: 16, height: 16, borderRadius: '50%', background: '#fff',
-                              transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                            }} />
-                          </div>
-                        </div>
-                        <div style={{ paddingTop: 4, borderTop: '1px solid #e2e8f0' }}>
-                          <button
-                            className="btn btn-secondary"
-                            style={{ width: '100%', fontSize: '0.85rem', padding: '8px 0' }}
-                            onClick={clearAllFilters}
-                          >
-                            Clear All
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    ref={filterBtnRef as React.RefObject<HTMLButtonElement>}
+                    onClick={() => setShowFilterPanel(v => !v)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+                      border: '1.5px solid #0C447C',
+                      background: activeFilterCount > 0 ? '#0C447C' : 'transparent',
+                      color: activeFilterCount > 0 ? '#fff' : '#0C447C',
+                      fontWeight: 600, fontSize: '0.85rem', flexShrink: 0,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                    </svg>
+                    {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : 'Filters'}
+                  </button>
                 </div>
                 {candidatesLoading ? (
                   <p className="muted" style={{ padding: 24 }}>Loading...</p>
