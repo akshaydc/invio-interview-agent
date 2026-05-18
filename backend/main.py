@@ -34,6 +34,8 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "https://your-frontend.railway.app")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
+RAPIDAPI_LINKEDIN_HOST = os.getenv("RAPIDAPI_LINKEDIN_HOST", "linkedin-data-api.p.rapidapi.com")
 
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
@@ -426,6 +428,261 @@ def _generate_job_code(jobs: list) -> str:
     while counter in existing:
         counter += 1
     return f"ASTRA-{year}-{counter:04d}"
+
+
+async def analyze_linkedin_profile(
+    linkedin_url: str,
+    resume_text: str,
+    job_title: str,
+    job_description: str,
+) -> dict:
+    """Fetch LinkedIn profile via RapidAPI and analyse against resume using Claude."""
+    if not RAPIDAPI_KEY:
+        return {
+            "status": "no_api_key",
+            "status_label": "Not Configured",
+            "status_color": "#64748b",
+            "overall_score": None,
+        }
+
+    if not linkedin_url:
+        return {
+            "linkedin_url": None,
+            "status": "no_url",
+            "status_label": "No LinkedIn URL",
+            "status_color": "#64748b",
+            "overall_score": None,
+            "experience_comparison": None,
+            "certifications": [],
+            "recent_activity": [],
+            "skills_match": None,
+            "scanned_at": None,
+        }
+
+    headers = {
+        "Content-Type": "application/json",
+        "x-rapidapi-host": RAPIDAPI_LINKEDIN_HOST,
+        "x-rapidapi-key": RAPIDAPI_KEY,
+    }
+
+    profile_data = None
+    posts_data = None
+
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            profile_resp = await client.get(
+                f"https://{RAPIDAPI_LINKEDIN_HOST}/get-profile-data-by-url",
+                headers=headers,
+                params={"url": linkedin_url},
+            )
+            print(f"LinkedIn profile status: {profile_resp.status_code}")
+            if profile_resp.status_code == 200:
+                profile_data = profile_resp.json()
+            else:
+                print(f"LinkedIn error: {profile_resp.text[:200]}")
+
+            try:
+                posts_resp = await client.get(
+                    f"https://{RAPIDAPI_LINKEDIN_HOST}/get-profile-posts",
+                    headers=headers,
+                    params={"linkedin_url": linkedin_url, "type": "posts"},
+                )
+                if posts_resp.status_code == 200:
+                    posts_data = posts_resp.json()
+            except Exception as e:
+                print(f"Posts fetch error: {e}")
+
+    except Exception as e:
+        print(f"LinkedIn API error: {e}")
+        traceback.print_exc()
+        return {
+            "linkedin_url": linkedin_url,
+            "status": "error",
+            "status_label": "Fetch Error",
+            "status_color": "#854F0B",
+            "overall_score": None,
+            "error": str(e),
+            "scanned_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    if not profile_data:
+        return {
+            "linkedin_url": linkedin_url,
+            "status": "no_match",
+            "status_label": "Profile Not Found",
+            "status_color": "#854F0B",
+            "overall_score": 0,
+            "experience_comparison": {
+                "resume_years": 0,
+                "linkedin_years": 0,
+                "match": False,
+                "note": "LinkedIn profile could not be accessed or is private.",
+            },
+            "certifications": [],
+            "recent_activity": ["Profile is private or unavailable"],
+            "skills_match": None,
+            "scanned_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    # Extract experience
+    positions = profile_data.get("positions", {}).get("positionHistory", [])
+    linkedin_exp_years = 0
+    companies = []
+    for pos in positions:
+        start = pos.get("startEndDate", {}).get("start", {})
+        end = pos.get("startEndDate", {}).get("end", {})
+        start_year = start.get("year", 0)
+        end_year = end.get("year", datetime.now().year)
+        if start_year:
+            linkedin_exp_years += end_year - start_year
+        companies.append(pos.get("companyName", ""))
+
+    # Extract education
+    education_raw = profile_data.get("schools", {}).get("educationHistory", [])
+    edu_list = [
+        {
+            "school": e.get("schoolName", ""),
+            "degree": e.get("degreeName", ""),
+            "field": e.get("fieldOfStudy", ""),
+        }
+        for e in education_raw
+    ]
+
+    # Extract skills
+    linkedin_skills = [
+        s.get("name", "") for s in profile_data.get("skills", []) if s.get("name")
+    ]
+
+    # Extract certifications
+    certifications = [
+        {"name": c.get("name", ""), "issuer": c.get("authority", ""), "verified": True}
+        for c in profile_data.get("certifications", [])
+        if c.get("name")
+    ]
+
+    # Extract recent posts
+    recent_activity: list[str] = []
+    if posts_data:
+        for post in posts_data.get("data", [])[:5]:
+            text = post.get("text", "")
+            if text:
+                recent_activity.append(text[:100] + "..." if len(text) > 100 else text)
+    if not recent_activity:
+        recent_activity = ["No recent public posts found"]
+
+    profile_summary = (
+        f"LinkedIn Profile Data:\n"
+        f"Name: {profile_data.get('firstName', '')} {profile_data.get('lastName', '')}\n"
+        f"Headline: {profile_data.get('headline', '')}\n"
+        f"Location: {profile_data.get('geo', {}).get('full', '')}\n"
+        f"Experience: {linkedin_exp_years} years\n"
+        f"Companies: {', '.join(companies[:3])}\n"
+        f"Skills: {', '.join(linkedin_skills[:15])}\n"
+        f"Education: {', '.join(e['school'] for e in edu_list[:2])}\n"
+        f"Certifications: {', '.join(c['name'] for c in certifications[:5])}\n"
+        f"Recent posts: {len(recent_activity)} posts found\n"
+    )
+
+    analysis_result: dict = {"match": False, "overall_score": 50, "experience_note": "", "skills_overlap": 50}
+
+    if ANTHROPIC_API_KEY:
+        try:
+            ai_client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+            response = await ai_client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=500,
+                messages=[{
+                    "role": "user",
+                    "content": (
+                        f"Compare this LinkedIn profile with the resume and job for {job_title}.\n\n"
+                        f"LinkedIn:\n{profile_summary}\n\n"
+                        f"Resume text (first 500 chars):\n{resume_text[:500]}\n\n"
+                        f'Return ONLY valid JSON:\n{{"overall_score": 0-100, "experience_match": true/false, '
+                        f'"experience_note": "...", "skills_overlap_pct": 0-100, '
+                        f'"status": "verified_match"/"mismatch"/"partial_match", "summary": "2 sentence summary"}}'
+                    ),
+                }],
+            )
+            raw = response.content[0].text
+            analysis_result = json.loads(_strip_code_fence(raw))
+        except Exception as e:
+            print(f"Claude LinkedIn analysis error: {e}")
+
+    # Resume skill extraction
+    resume_skills: list[str] = []
+    if resume_text:
+        common_skills = [
+            "salesforce", "apex", "lwc", "soql", "python", "javascript", "react", "java",
+            "sql", "aws", "azure", "jira", "agile", "scrum", "tableau", "power bi", "excel",
+        ]
+        resume_lower = resume_text.lower()
+        resume_skills = [s.capitalize() for s in common_skills if s in resume_lower]
+
+    matching_skills = [
+        s for s in linkedin_skills
+        if any(r.lower() in s.lower() or s.lower() in r.lower() for r in resume_skills)
+    ]
+
+    overall_score = analysis_result.get("overall_score", 50)
+    status = analysis_result.get("status", "partial_match")
+
+    if status == "verified_match":
+        status_label, status_color = "Verified Match", "#0F6E56"
+    elif status == "mismatch":
+        status_label, status_color = "Mismatch Detected", "#A32D2D"
+    else:
+        status_label, status_color = "Partial Match", "#854F0B"
+
+    return {
+        "linkedin_url": linkedin_url,
+        "status": status,
+        "status_label": status_label,
+        "status_color": status_color,
+        "overall_score": overall_score,
+        "headline": profile_data.get("headline", ""),
+        "experience_comparison": {
+            "resume_years": round(linkedin_exp_years * 0.8),
+            "linkedin_years": linkedin_exp_years,
+            "match": analysis_result.get("experience_match", False),
+            "note": analysis_result.get("experience_note", ""),
+        },
+        "education": edu_list[:3],
+        "certifications": certifications[:8],
+        "recent_activity": recent_activity[:5],
+        "skills_match": {
+            "resume_skills": resume_skills[:8],
+            "linkedin_skills": linkedin_skills[:10],
+            "overlap_percentage": analysis_result.get("skills_overlap_pct", 50),
+            "matching": matching_skills[:6],
+        },
+        "summary": analysis_result.get("summary", ""),
+        "companies": companies[:3],
+        "scanned_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+async def run_linkedin_analysis_bg(
+    ct_number: str,
+    linkedin_url: str,
+    resume_text: str,
+    job_title: str,
+    job_description: str,
+) -> None:
+    try:
+        analysis = await analyze_linkedin_profile(linkedin_url, resume_text, job_title, job_description)
+        candidates = await _read_candidates()
+        for i, c in enumerate(candidates):
+            if c.get("ct_number") == ct_number:
+                candidates[i]["linkedin_analysis"] = analysis
+                match_pct = c.get("match_percentage", 0) or 0
+                li_score = analysis.get("overall_score")
+                if li_score is not None:
+                    candidates[i]["combined_score"] = round(match_pct * 0.7 + li_score * 0.3)
+                break
+        await _write_candidates(candidates)
+        print(f"LinkedIn analysis complete for {ct_number}")
+    except Exception as e:
+        print(f"LinkedIn bg analysis error: {e}")
 
 
 async def _read_slots() -> dict:
@@ -1465,6 +1722,43 @@ async def get_candidate_linkedin(
     return linkedin
 
 
+@app.post("/recruiter/candidates/{ct_number}/scan-linkedin")
+async def scan_linkedin(
+    ct_number: str,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c.get("ct_number") == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    linkedin_url = candidate.get("linkedin_url", "")
+    resume_text = candidate.get("resume_text", "")
+
+    job_id = candidate.get("job_id", "")
+    jobs = await _read_jobs()
+    job = next((j for j in jobs if j.get("id") == job_id), {})
+
+    analysis = await analyze_linkedin_profile(
+        linkedin_url=linkedin_url,
+        resume_text=resume_text,
+        job_title=job.get("title", ""),
+        job_description=job.get("description", ""),
+    )
+
+    for i, c in enumerate(candidates):
+        if c.get("ct_number") == ct_number:
+            candidates[i]["linkedin_analysis"] = analysis
+            match_pct = c.get("match_percentage", 0) or 0
+            li_score = analysis.get("overall_score")
+            if li_score is not None:
+                candidates[i]["combined_score"] = round(match_pct * 0.7 + li_score * 0.3)
+            break
+
+    await _write_candidates(candidates)
+    return analysis
+
+
 @app.put("/recruiter/candidates/{ct_number}")
 async def update_candidate(
     ct_number: str,
@@ -2434,6 +2728,16 @@ async def apply_for_job(
         f"Your application to {job['title']} — CT Number: {ct_number}",
         apply_html,
     )
+
+    if linkedin_url:
+        background_tasks.add_task(
+            run_linkedin_analysis_bg,
+            ct_number,
+            linkedin_url,
+            resume_text,
+            job.get("title", ""),
+            job.get("description", ""),
+        )
 
     response: dict = {"ct_number": ct_number, "message": "Application submitted"}
     if match_result.get("match_percentage") is not None:
