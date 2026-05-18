@@ -16,6 +16,7 @@ except ImportError:
 import aiofiles
 import anthropic
 import httpx
+import requests
 import openai
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
@@ -3599,3 +3600,30 @@ async def get_scorecard(session_id: str) -> dict:
     if session.get("scorecard") is None:
         raise HTTPException(status_code=404, detail="Scorecard not yet available")
     return session["scorecard"]
+
+
+@app.post("/create-tara-session")
+async def create_tara_session(job_role: str = "Software Engineer"):
+    tavus_key = os.getenv("TAVUS_API_KEY")
+    if not tavus_key:
+        return {"conversation_url": "", "error": "Tavus key not configured"}
+    try:
+        response = requests.post(
+            "https://tavusapi.com/v2/conversations",
+            headers={
+                "x-api-key": tavus_key,
+                "Content-Type": "application/json"
+            },
+            json={
+                "persona_id": "pcb7a34da5fe",
+                "replica_id": "r9664272580d",
+                "conversation_name": f"{job_role} Interview",
+                "custom_greeting": f"Hi! I'm Tara, your AI interviewer today for the {job_role} position. Could you start by telling me a bit about yourself?"
+            }
+        )
+        data = response.json()
+        print("Tara CVI response:", data)
+        return {"conversation_url": data.get("conversation_url", "")}
+    except Exception as e:
+        print("Tara error:", e)
+        return {"conversation_url": "", "error": str(e)}
