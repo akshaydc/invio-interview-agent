@@ -27,7 +27,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
   const [volumeLevel, setVolumeLevel] = useState(0)
   const [violations, setViolations] = useState<Violation[]>([])
   const [showWarningModal, setShowWarningModal] = useState(false)
-  const [cameraActive, setCameraActive] = useState(false)
   const [endLockout, setEndLockout] = useState(true)
   const [lockoutSecsLeft, setLockoutSecsLeft] = useState(END_LOCKOUT_MS / 1000)
   const [autoEndMsg, setAutoEndMsg] = useState('')
@@ -89,20 +88,12 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
   }
 
   function speakQuestion(text: string) {
+    // Tara handles the spoken interview. Keep the legacy browser voice silent.
+    void text
     window.speechSynthesis.cancel()
-    isAISpeakingRef.current = true
-    setRecordingState('ai_speaking')
-    recordingStateRef.current = 'ai_speaking'
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = 0.85
-    utterance.pitch = 1
-    utterance.volume = 1
-    utterance.onend = () => {
-      isAISpeakingRef.current = false
-      setRecordingState('listening')
-      recordingStateRef.current = 'listening'
-    }
-    window.speechSynthesis.speak(utterance)
+    isAISpeakingRef.current = false
+    setRecordingState('listening')
+    recordingStateRef.current = 'listening'
   }
 
   async function sendAudio(blob: Blob) {
@@ -172,7 +163,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
 
     if (stream.getVideoTracks().length > 0 && videoRef.current) {
       videoRef.current.srcObject = stream
-      setCameraActive(true)
     }
 
     const audioCtx = new AudioContext()
@@ -387,7 +377,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
     if (proctorIntervalRef.current) { clearInterval(proctorIntervalRef.current); proctorIntervalRef.current = null }
     if (lockoutTimerRef.current) { clearInterval(lockoutTimerRef.current); lockoutTimerRef.current = null }
     window.speechSynthesis.cancel()
-    setCameraActive(false)
   }
 
   async function endInterview() {
@@ -436,7 +425,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
   return (
     <div className="page">
       <canvas ref={canvasRef} style={{ display: 'none' }} />
-      <div className="camera-self-view" style={{ display: cameraActive ? 'flex' : 'none' }}>
+      <div className="camera-self-view" style={{ display: 'none' }} aria-hidden="true">
         <video ref={videoRef} autoPlay muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
       </div>
 
@@ -490,7 +479,7 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
       {(stage === 'active' || stage === 'ending') && (
         <div className="interview-layout">
           {taraUrl && (
-            <div style={{ position: 'relative', width: '100%', height: '380px', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
+            <div style={{ position: 'relative', width: '100%', height: 'min(68vh, 620px)', minHeight: 460, borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
               <iframe
                 src={taraUrl}
                 style={{ width: '100%', height: '100%', border: 'none' }}
