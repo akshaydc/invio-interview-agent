@@ -35,7 +35,7 @@ TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
-RAPIDAPI_LINKEDIN_HOST = os.getenv("RAPIDAPI_LINKEDIN_HOST", "linkedin-data-api.p.rapidapi.com")
+RAPIDAPI_LINKEDIN_HOST = os.getenv("RAPIDAPI_LINKEDIN_HOST", "fresh-linkedin-profile-data.p.rapidapi.com")
 
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
@@ -443,21 +443,27 @@ async def analyze_linkedin_profile(
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
             profile_resp = await client.get(
-                f"https://{RAPIDAPI_LINKEDIN_HOST}/get-profile-data-by-url",
+                "https://fresh-linkedin-profile-data.p.rapidapi.com/enrich-lead",
                 headers=headers,
-                params={"url": linkedin_url},
+                params={
+                    "linkedin_url": linkedin_url,
+                    "include_skills": "true",
+                    "include_certifications": "true",
+                    "include_profile_status": "false",
+                    "include_company_public_url": "false",
+                },
             )
             print(f"LinkedIn profile status: {profile_resp.status_code}")
+            print(f"LinkedIn response keys: {list(profile_resp.json().keys()) if profile_resp.status_code == 200 else profile_resp.text[:200]}")
             if profile_resp.status_code == 200:
                 profile_data = profile_resp.json()
-                print(f"LinkedIn profile keys: {list(profile_data.keys())}")
-print(f"LinkedIn profile sample: {str(profile_data)[:800]}")
+                print(f"Profile sample: {str(profile_data)[:600]}")
             else:
                 print(f"LinkedIn error: {profile_resp.text[:200]}")
 
             try:
                 posts_resp = await client.get(
-                    f"https://{RAPIDAPI_LINKEDIN_HOST}/get-profile-posts",
+                    "https://fresh-linkedin-profile-data.p.rapidapi.com/get-profile-posts",
                     headers=headers,
                     params={"linkedin_url": linkedin_url, "type": "posts"},
                 )
@@ -499,62 +505,83 @@ print(f"LinkedIn profile sample: {str(profile_data)[:800]}")
         }
 
     # Extract experience
-    positions = profile_data.get("positions", {}).get("positionHistory", [])
+    positions = profile_data.get("experience", []) or []
     linkedin_exp_years = 0
     companies = []
     for pos in positions:
-        start = pos.get("startEndDate", {}).get("start", {})
-        end = pos.get("startEndDate", {}).get("end", {})
-        start_year = start.get("year", 0)
-        end_year = end.get("year", datetime.now().year)
-        if start_year:
-            linkedin_exp_years += end_year - start_year
-        companies.append(pos.get("companyName", ""))
+        duration = pos.get("duration", "")
+        company = pos.get("company", "") or pos.get("companyName", "")
+        if company:
+            companies.append(company)
+        if "yr" in str(duration):
+            try:
+                yrs = int(str(duration).split("yr")[0].strip().split()[-1])
+                linkedin_exp_years += yrs
+            except Exception:
+                pass
 
     # Extract education
-    education_raw = profile_data.get("schools", {}).get("educationHistory", [])
-    edu_list = [
-        {
-            "school": e.get("schoolName", ""),
-            "degree": e.get("degreeName", ""),
-            "field": e.get("fieldOfStudy", ""),
-        }
-        for e in education_raw
-    ]
+    education_raw = profile_data.get("education", []) or []
+    edu_list = []
+    for edu in education_raw:
+        edu_list.append({
+            "school": edu.get("school", "") or edu.get("schoolName", ""),
+            "degree": edu.get("degree", "") or edu.get("degreeName", ""),
+            "field": edu.get("field", "") or edu.get("fieldOfStudy", ""),
+        })
 
     # Extract skills
-    linkedin_skills = [
-        s.get("name", "") for s in profile_data.get("skills", []) if s.get("name")
-    ]
+    skills_raw = profile_data.get("skills", []) or []
+    linkedin_skills = []
+    for s in skills_raw:
+        if isinstance(s, str):
+            linkedin_skills.append(s)
+        elif isinstance(s, dict):
+            name = s.get("name", "") or s.get("skill", "")
+            if name:
+                linkedin_skills.append(name)
 
     # Extract certifications
-    certifications = [
-        {"name": c.get("name", ""), "issuer": c.get("authority", ""), "verified": True}
-        for c in profile_data.get("certifications", [])
-        if c.get("name")
-    ]
+    certs_raw = profile_data.get("certifications", []) or []
+    certifications = []
+    for c in certs_raw:
+        if isinstance(c, dict):
+            name = c.get("name", "") or c.get("title", "")
+            if name:
+                certifications.append({
+                    "name": name,
+                    "issuer": c.get("authority", "") or c.get("issuer", ""),
+                    "verified": True,
+                })
 
     # Extract recent posts
     recent_activity: list[str] = []
     if posts_data:
-        for post in posts_data.get("data", [])[:5]:
-            text = post.get("text", "")
+        posts_list = posts_data.get("data", []) or posts_data.get("posts", []) or []
+        for post in posts_list[:5]:
+            text = post.get("text", "") or post.get("content", "") or post.get("commentary", "")
             if text:
-                recent_activity.append(text[:100] + "..." if len(text) > 100 else text)
+                recent_activity.append(text[:120] + "..." if len(text) > 120 else text)
     if not recent_activity:
         recent_activity = ["No recent public posts found"]
 
+    first_name = profile_data.get("firstName", "") or profile_data.get("first_name", "")
+    last_name = profile_data.get("lastName", "") or profile_data.get("last_name", "")
+    headline = profile_data.get("headline", "") or profile_data.get("title", "")
+    geo = profile_data.get("geo", {})
+    location = profile_data.get("location", "") or (geo.get("full", "") if isinstance(geo, dict) else "")
+
     profile_summary = (
-        f"LinkedIn Profile Data:\n"
-        f"Name: {profile_data.get('firstName', '')} {profile_data.get('lastName', '')}\n"
-        f"Headline: {profile_data.get('headline', '')}\n"
-        f"Location: {profile_data.get('geo', {}).get('full', '')}\n"
+        f"LinkedIn Profile:\n"
+        f"Name: {first_name} {last_name}\n"
+        f"Headline: {headline}\n"
+        f"Location: {location}\n"
         f"Experience: {linkedin_exp_years} years\n"
         f"Companies: {', '.join(companies[:3])}\n"
         f"Skills: {', '.join(linkedin_skills[:15])}\n"
         f"Education: {', '.join(e['school'] for e in edu_list[:2])}\n"
         f"Certifications: {', '.join(c['name'] for c in certifications[:5])}\n"
-        f"Recent posts: {len(recent_activity)} posts found\n"
+        f"Recent posts: {len([p for p in recent_activity if 'No recent' not in p])} posts\n"
     )
 
     analysis_result: dict = {"match": False, "overall_score": 50, "experience_note": "", "skills_overlap": 50}
@@ -613,7 +640,7 @@ print(f"LinkedIn profile sample: {str(profile_data)[:800]}")
         "status_label": status_label,
         "status_color": status_color,
         "overall_score": overall_score,
-        "headline": profile_data.get("headline", ""),
+        "headline": headline,
         "experience_comparison": {
             "resume_years": round(linkedin_exp_years * 0.8),
             "linkedin_years": linkedin_exp_years,
