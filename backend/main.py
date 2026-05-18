@@ -482,9 +482,10 @@ async def analyze_linkedin_profile(
                 },
             )
             print(f"LinkedIn profile status: {profile_resp.status_code}")
-            print(f"LinkedIn response keys: {list(profile_resp.json().keys()) if profile_resp.status_code == 200 else profile_resp.text[:200]}")
             if profile_resp.status_code == 200:
-                profile_data = profile_resp.json()
+                api_response = profile_resp.json()
+                print(f"LinkedIn response keys: {list(api_response.keys())}")
+                profile_data = api_response.get("data") or {}
                 print(f"Profile sample: {str(profile_data)[:600]}")
             else:
                 print(f"LinkedIn error: {profile_resp.text[:200]}")
@@ -537,18 +538,18 @@ async def analyze_linkedin_profile(
         }
 
     try:
-        # Extract experience
-        positions = profile_data.get("experience", []) or []
+        # Extract experience — prefer positions[], fall back to experience[]
+        positions_raw = profile_data.get("positions", []) or profile_data.get("experience", []) or []
         linkedin_exp_years = 0
         companies = []
-        for pos in positions:
-            duration = pos.get("duration", "")
+        for pos in positions_raw:
+            duration = str(pos.get("duration", "") or "")
             company = pos.get("company", "") or pos.get("companyName", "")
             if company:
                 companies.append(company)
-            if "yr" in str(duration):
+            if "yr" in duration:
                 try:
-                    yrs = int(str(duration).split("yr")[0].strip().split()[-1])
+                    yrs = int(duration.split("yr")[0].strip().split()[-1])
                     linkedin_exp_years += yrs
                 except Exception:
                     pass
@@ -563,18 +564,25 @@ async def analyze_linkedin_profile(
                 "field": edu.get("field", "") or edu.get("fieldOfStudy", ""),
             })
 
-        # Extract skills
+        # Extract skills; fall back to scanning about text if the list is empty
         skills_raw = profile_data.get("skills", []) or []
-        linkedin_skills = []
+        linkedin_skills: list[str] = []
         for s in skills_raw:
-            if isinstance(s, str):
+            if isinstance(s, str) and s:
                 linkedin_skills.append(s)
             elif isinstance(s, dict):
                 name = s.get("name", "") or s.get("skill", "")
                 if name:
                     linkedin_skills.append(name)
+        if not linkedin_skills:
+            about = profile_data.get("about", "") or ""
+            common_tech = [
+                "Python", "JavaScript", "React", "SQL", "AWS", "Java", "Salesforce",
+                "Excel", "PowerBI", "Tableau", "Apex", "LWC", "Azure", "Jira",
+            ]
+            linkedin_skills = [t for t in common_tech if t.lower() in about.lower()]
 
-        # Extract certifications
+        # Extract certifications (fields: name, authority, issued)
         certs_raw = profile_data.get("certifications", []) or []
         certifications = []
         for c in certs_raw:
@@ -600,9 +608,12 @@ async def analyze_linkedin_profile(
 
         first_name = profile_data.get("firstName", "") or profile_data.get("first_name", "")
         last_name = profile_data.get("lastName", "") or profile_data.get("last_name", "")
-        headline = profile_data.get("headline", "") or profile_data.get("title", "")
-        geo = profile_data.get("geo", {})
-        location = profile_data.get("location", "") or (geo.get("full", "") if isinstance(geo, dict) else "")
+        headline = profile_data.get("headline", "") or profile_data.get("title", "") or profile_data.get("company", "")
+        location = (
+            profile_data.get("city", "")
+            or profile_data.get("location", "")
+            or (profile_data.get("geo") or {}).get("full", "")
+        )
 
         profile_summary = (
             f"LinkedIn Profile:\n"
