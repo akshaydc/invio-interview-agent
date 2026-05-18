@@ -35,12 +35,13 @@ TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
-RAPIDAPI_LINKEDIN_HOST = os.getenv("RAPIDAPI_LINKEDIN_HOST", "fresh-linkedin-profile-data.p.rapidapi.com")
+RAPIDAPI_LINKEDIN_HOST = os.getenv("RAPIDAPI_LINKEDIN_HOST", "linkedin-data-api.p.rapidapi.com")
 
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 CANDIDATES_FILE = DATA_DIR / "candidates.json"
 SLOTS_FILE = DATA_DIR / "slots.json"
+INTERNAL_APPLICATIONS_FILE = DATA_DIR / "internal_applications.json"
 
 app = FastAPI(title="AI Interview Agent")
 active_sessions: dict = {}
@@ -171,6 +172,9 @@ _SEED_JOBS = [
 if not CANDIDATES_FILE.exists():
     CANDIDATES_FILE.write_text("[]")
 
+if not INTERNAL_APPLICATIONS_FILE.exists():
+    INTERNAL_APPLICATIONS_FILE.write_text("[]")
+
 if not JOBS_FILE.exists():
     JOBS_FILE.write_text("[]")
 if not json.loads(JOBS_FILE.read_text()):
@@ -199,6 +203,21 @@ class RecruiterLoginRequest(BaseModel):
 
 class CandidateLoginRequest(BaseModel):
     ct_number: str
+
+
+class InternalLoginRequest(BaseModel):
+    employee_id: str
+
+
+class InternalApplyRequest(BaseModel):
+    note: str = ""
+
+
+class InternalReferRequest(BaseModel):
+    candidate_name: str
+    candidate_email: str
+    candidate_phone: str = ""
+    note: str = ""
 
 
 class CreateCandidateRequest(BaseModel):
@@ -308,6 +327,15 @@ def verify_candidate_token(x_auth_token: str = Header(None)) -> dict:
         raise HTTPException(status_code=401, detail="Unauthorized")
     sess = active_sessions[x_auth_token]
     if sess["role"] != "candidate":
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return sess
+
+
+def verify_internal_token(x_auth_token: str = Header(None)) -> dict:
+    if not x_auth_token or x_auth_token not in active_sessions:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    sess = active_sessions[x_auth_token]
+    if sess["role"] != "internal":
         raise HTTPException(status_code=403, detail="Forbidden")
     return sess
 
@@ -443,27 +471,22 @@ async def analyze_linkedin_profile(
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
             profile_resp = await client.get(
-                "https://fresh-linkedin-profile-data.p.rapidapi.com/enrich-lead",
+                f"https://{RAPIDAPI_LINKEDIN_HOST}/get-profile-data-by-url",
                 headers=headers,
-                params={
-                    "linkedin_url": linkedin_url,
-                    "include_skills": "true",
-                    "include_certifications": "true",
-                    "include_profile_status": "false",
-                    "include_company_public_url": "false",
-                },
+                params={"url": linkedin_url},
             )
             print(f"LinkedIn profile status: {profile_resp.status_code}")
-            print(f"LinkedIn response keys: {list(profile_resp.json().keys()) if profile_resp.status_code == 200 else profile_resp.text[:200]}")
             if profile_resp.status_code == 200:
                 profile_data = profile_resp.json()
-                print(f"Profile sample: {str(profile_data)[:600]}")
+                if profile_data:
+                    print(f"LinkedIn profile keys: {list(profile_data.keys())}")
+                    print(f"LinkedIn profile sample: {str(profile_data)[:500]}")
             else:
                 print(f"LinkedIn error: {profile_resp.text[:200]}")
 
             try:
                 posts_resp = await client.get(
-                    "https://fresh-linkedin-profile-data.p.rapidapi.com/get-profile-posts",
+                    f"https://{RAPIDAPI_LINKEDIN_HOST}/get-profile-posts",
                     headers=headers,
                     params={"linkedin_url": linkedin_url, "type": "posts"},
                 )
@@ -485,6 +508,10 @@ async def analyze_linkedin_profile(
             "scanned_at": datetime.now(timezone.utc).isoformat(),
         }
 
+    if not isinstance(profile_data, dict):
+        print(f"Invalid profile data type: {type(profile_data)}")
+        profile_data = None
+
     if not profile_data:
         return {
             "linkedin_url": linkedin_url,
@@ -504,186 +531,194 @@ async def analyze_linkedin_profile(
             "scanned_at": datetime.now(timezone.utc).isoformat(),
         }
 
-    # Extract experience
-    positions = profile_data.get("experience", []) or []
-    linkedin_exp_years = 0
-    companies = []
-    for pos in positions:
-        duration = pos.get("duration", "")
-        company = pos.get("company", "") or pos.get("companyName", "")
-        if company:
-            companies.append(company)
-        if "yr" in str(duration):
-            try:
-                yrs = int(str(duration).split("yr")[0].strip().split()[-1])
-                linkedin_exp_years += yrs
-            except Exception:
-                pass
+    try:
+        # Extract experience
+        positions = (profile_data.get("positions") or {}).get("positionHistory", [])
+        linkedin_exp_years = 0
+        companies = []
+        for pos in (positions or []):
+            start = (pos.get("startEndDate") or {}).get("start") or {}
+            end = (pos.get("startEndDate") or {}).get("end") or {}
+            start_year = start.get("year", 0)
+            end_year = end.get("year", datetime.now().year)
+            if start_year:
+                linkedin_exp_years += end_year - start_year
+            companies.append(pos.get("companyName", ""))
 
-    # Extract education
-    education_raw = profile_data.get("education", []) or []
-    edu_list = []
-    for edu in education_raw:
-        edu_list.append({
-            "school": edu.get("school", "") or edu.get("schoolName", ""),
-            "degree": edu.get("degree", "") or edu.get("degreeName", ""),
-            "field": edu.get("field", "") or edu.get("fieldOfStudy", ""),
-        })
-
-    # Extract skills
-    skills_raw = profile_data.get("skills", []) or []
-    linkedin_skills = []
-    for s in skills_raw:
-        if isinstance(s, str):
-            linkedin_skills.append(s)
-        elif isinstance(s, dict):
-            name = s.get("name", "") or s.get("skill", "")
-            if name:
-                linkedin_skills.append(name)
-
-    # Extract certifications
-    certs_raw = profile_data.get("certifications", []) or []
-    certifications = []
-    for c in certs_raw:
-        if isinstance(c, dict):
-            name = c.get("name", "") or c.get("title", "")
-            if name:
-                certifications.append({
-                    "name": name,
-                    "issuer": c.get("authority", "") or c.get("issuer", ""),
-                    "verified": True,
-                })
-
-    # Extract recent posts
-    recent_activity: list[str] = []
-    if posts_data:
-        posts_list = posts_data.get("data", []) or posts_data.get("posts", []) or []
-        for post in posts_list[:5]:
-            text = post.get("text", "") or post.get("content", "") or post.get("commentary", "")
-            if text:
-                recent_activity.append(text[:120] + "..." if len(text) > 120 else text)
-    if not recent_activity:
-        recent_activity = ["No recent public posts found"]
-
-    first_name = profile_data.get("firstName", "") or profile_data.get("first_name", "")
-    last_name = profile_data.get("lastName", "") or profile_data.get("last_name", "")
-    headline = profile_data.get("headline", "") or profile_data.get("title", "")
-    geo = profile_data.get("geo", {})
-    location = profile_data.get("location", "") or (geo.get("full", "") if isinstance(geo, dict) else "")
-
-    profile_summary = (
-        f"LinkedIn Profile:\n"
-        f"Name: {first_name} {last_name}\n"
-        f"Headline: {headline}\n"
-        f"Location: {location}\n"
-        f"Experience: {linkedin_exp_years} years\n"
-        f"Companies: {', '.join(companies[:3])}\n"
-        f"Skills: {', '.join(linkedin_skills[:15])}\n"
-        f"Education: {', '.join(e['school'] for e in edu_list[:2])}\n"
-        f"Certifications: {', '.join(c['name'] for c in certifications[:5])}\n"
-        f"Recent posts: {len([p for p in recent_activity if 'No recent' not in p])} posts\n"
-    )
-
-    analysis_result: dict = {"match": False, "overall_score": 50, "experience_note": "", "skills_overlap": 50}
-
-    if ANTHROPIC_API_KEY:
-        try:
-            ai_client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-            response = await ai_client.messages.create(
-                model="claude-haiku-4-5-20251001",
-                max_tokens=500,
-                messages=[{
-                    "role": "user",
-                    "content": (
-                        f"Compare this LinkedIn profile with the resume and job for {job_title}.\n\n"
-                        f"LinkedIn:\n{profile_summary}\n\n"
-                        f"Resume text (first 500 chars):\n{resume_text[:500]}\n\n"
-                        f'Return ONLY valid JSON:\n{{"overall_score": 0-100, "experience_match": true/false, '
-                        f'"experience_note": "...", "skills_overlap_pct": 0-100, '
-                        f'"status": "verified_match"/"mismatch"/"partial_match", "summary": "2 sentence summary"}}'
-                    ),
-                }],
-            )
-            raw = response.content[0].text
-            analysis_result = json.loads(_strip_code_fence(raw))
-        except Exception as e:
-            print(f"Claude LinkedIn analysis error: {e}")
-
-    # Resume skill extraction
-    resume_skills: list[str] = []
-    if resume_text:
-        common_skills = [
-            "salesforce", "apex", "lwc", "soql", "python", "javascript", "react", "java",
-            "sql", "aws", "azure", "jira", "agile", "scrum", "tableau", "power bi", "excel",
+        # Extract education
+        education_raw = (profile_data.get("schools") or {}).get("educationHistory", [])
+        edu_list = [
+            {
+                "school": e.get("schoolName", ""),
+                "degree": e.get("degreeName", ""),
+                "field": e.get("fieldOfStudy", ""),
+            }
+            for e in (education_raw or [])
         ]
-        resume_lower = resume_text.lower()
-        resume_skills = [s.capitalize() for s in common_skills if s in resume_lower]
 
-    matching_skills = [
-        s for s in linkedin_skills
-        if any(r.lower() in s.lower() or s.lower() in r.lower() for r in resume_skills)
-    ]
+        # Extract skills
+        linkedin_skills = [
+            s.get("name", "") for s in (profile_data.get("skills") or [])
+            if s and s.get("name")
+        ]
 
-    overall_score = analysis_result.get("overall_score", 50)
-    status = analysis_result.get("status", "partial_match")
+        # Extract certifications
+        certifications = [
+            {"name": c.get("name", ""), "issuer": c.get("authority", ""), "verified": True}
+            for c in (profile_data.get("certifications") or [])
+            if c and c.get("name")
+        ]
 
-    if status == "verified_match":
-        status_label, status_color = "Verified Match", "#0F6E56"
-    elif status == "mismatch":
-        status_label, status_color = "Mismatch Detected", "#A32D2D"
-    else:
-        status_label, status_color = "Partial Match", "#854F0B"
+        # Extract recent posts
+        recent_activity: list[str] = []
+        if posts_data:
+            for post in (posts_data.get("data") or [])[:5]:
+                text = post.get("text", "") if post else ""
+                if text:
+                    recent_activity.append(text[:100] + "..." if len(text) > 100 else text)
+        if not recent_activity:
+            recent_activity = ["No recent public posts found"]
 
-    return {
-        "linkedin_url": linkedin_url,
-        "status": status,
-        "status_label": status_label,
-        "status_color": status_color,
-        "overall_score": overall_score,
-        "headline": headline,
-        "experience_comparison": {
-            "resume_years": round(linkedin_exp_years * 0.8),
-            "linkedin_years": linkedin_exp_years,
-            "match": analysis_result.get("experience_match", False),
-            "note": analysis_result.get("experience_note", ""),
-        },
-        "education": edu_list[:3],
-        "certifications": certifications[:8],
-        "recent_activity": recent_activity[:5],
-        "skills_match": {
-            "resume_skills": resume_skills[:8],
-            "linkedin_skills": linkedin_skills[:10],
-            "overlap_percentage": analysis_result.get("skills_overlap_pct", 50),
-            "matching": matching_skills[:6],
-        },
-        "summary": analysis_result.get("summary", ""),
-        "companies": companies[:3],
-        "scanned_at": datetime.now(timezone.utc).isoformat(),
-    }
+        profile_summary = (
+            f"LinkedIn Profile Data:\n"
+            f"Name: {profile_data.get('firstName', '')} {profile_data.get('lastName', '')}\n"
+            f"Headline: {profile_data.get('headline', '')}\n"
+            f"Location: {(profile_data.get('geo') or {}).get('full', '')}\n"
+            f"Experience: {linkedin_exp_years} years\n"
+            f"Companies: {', '.join(companies[:3])}\n"
+            f"Skills: {', '.join(linkedin_skills[:15])}\n"
+            f"Education: {', '.join(e['school'] for e in edu_list[:2])}\n"
+            f"Certifications: {', '.join(c['name'] for c in certifications[:5])}\n"
+            f"Recent posts: {len(recent_activity)} posts found\n"
+        )
+
+        analysis_result: dict = {"match": False, "overall_score": 50, "experience_note": "", "skills_overlap": 50}
+
+        if ANTHROPIC_API_KEY:
+            try:
+                ai_client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+                response = await ai_client.messages.create(
+                    model="claude-haiku-4-5-20251001",
+                    max_tokens=500,
+                    messages=[{
+                        "role": "user",
+                        "content": (
+                            f"Compare this LinkedIn profile with the resume and job for {job_title}.\n\n"
+                            f"LinkedIn:\n{profile_summary}\n\n"
+                            f"Resume text (first 500 chars):\n{resume_text[:500]}\n\n"
+                            f'Return ONLY valid JSON:\n{{"overall_score": 0-100, "experience_match": true/false, '
+                            f'"experience_note": "...", "skills_overlap_pct": 0-100, '
+                            f'"status": "verified_match"/"mismatch"/"partial_match", "summary": "2 sentence summary"}}'
+                        ),
+                    }],
+                )
+                raw = response.content[0].text
+                analysis_result = json.loads(_strip_code_fence(raw))
+            except Exception as e:
+                print(f"Claude LinkedIn analysis error: {e}")
+
+        # Resume skill extraction
+        resume_skills: list[str] = []
+        if resume_text:
+            common_skills = [
+                "salesforce", "apex", "lwc", "soql", "python", "javascript", "react", "java",
+                "sql", "aws", "azure", "jira", "agile", "scrum", "tableau", "power bi", "excel",
+            ]
+            resume_lower = resume_text.lower()
+            resume_skills = [s.capitalize() for s in common_skills if s in resume_lower]
+
+        matching_skills = [
+            s for s in linkedin_skills
+            if any(r.lower() in s.lower() or s.lower() in r.lower() for r in resume_skills)
+        ]
+
+        overall_score = analysis_result.get("overall_score", 50)
+        status = analysis_result.get("status", "partial_match")
+
+        if status == "verified_match":
+            status_label, status_color = "Verified Match", "#0F6E56"
+        elif status == "mismatch":
+            status_label, status_color = "Mismatch Detected", "#A32D2D"
+        else:
+            status_label, status_color = "Partial Match", "#854F0B"
+
+        return {
+            "linkedin_url": linkedin_url,
+            "status": status,
+            "status_label": status_label,
+            "status_color": status_color,
+            "overall_score": overall_score,
+            "headline": profile_data.get("headline", ""),
+            "experience_comparison": {
+                "resume_years": round(linkedin_exp_years * 0.8),
+                "linkedin_years": linkedin_exp_years,
+                "match": analysis_result.get("experience_match", False),
+                "note": analysis_result.get("experience_note", ""),
+            },
+            "education": edu_list[:3],
+            "certifications": certifications[:8],
+            "recent_activity": recent_activity[:5],
+            "skills_match": {
+                "resume_skills": resume_skills[:8],
+                "linkedin_skills": linkedin_skills[:10],
+                "overlap_percentage": analysis_result.get("skills_overlap_pct", 50),
+                "matching": matching_skills[:6],
+            },
+            "summary": analysis_result.get("summary", ""),
+            "companies": companies[:3],
+            "scanned_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    except Exception as e:
+        print(f"LinkedIn analysis error: {e}")
+        traceback.print_exc()
+        return {
+            "linkedin_url": linkedin_url,
+            "status": "error",
+            "status_label": "Analysis Error",
+            "status_color": "#854F0B",
+            "overall_score": None,
+            "error": str(e),
+            "scanned_at": datetime.now(timezone.utc).isoformat(),
+        }
 
 
-async def run_linkedin_analysis_bg(
+def run_linkedin_analysis_bg(
     ct_number: str,
     linkedin_url: str,
     resume_text: str,
     job_title: str,
     job_description: str,
 ) -> None:
+    """Sync wrapper — runs async LinkedIn analysis in a fresh event loop."""
+    import asyncio
+
+    async def _inner() -> None:
+        try:
+            analysis = await analyze_linkedin_profile(linkedin_url, resume_text, job_title, job_description)
+            candidates = await _read_candidates()
+            for i, c in enumerate(candidates):
+                if c.get("ct_number") == ct_number:
+                    candidates[i]["linkedin_analysis"] = analysis
+                    match_pct = c.get("match_percentage", 0) or 0
+                    li_score = analysis.get("overall_score")
+                    if li_score is not None:
+                        candidates[i]["combined_score"] = round(match_pct * 0.7 + li_score * 0.3)
+                    break
+            await _write_candidates(candidates)
+            print(f"LinkedIn analysis complete for {ct_number}")
+        except Exception as e:
+            print(f"LinkedIn bg analysis error: {e}")
+            traceback.print_exc()
+
     try:
-        analysis = await analyze_linkedin_profile(linkedin_url, resume_text, job_title, job_description)
-        candidates = await _read_candidates()
-        for i, c in enumerate(candidates):
-            if c.get("ct_number") == ct_number:
-                candidates[i]["linkedin_analysis"] = analysis
-                match_pct = c.get("match_percentage", 0) or 0
-                li_score = analysis.get("overall_score")
-                if li_score is not None:
-                    candidates[i]["combined_score"] = round(match_pct * 0.7 + li_score * 0.3)
-                break
-        await _write_candidates(candidates)
-        print(f"LinkedIn analysis complete for {ct_number}")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(_inner())
+        loop.close()
     except Exception as e:
-        print(f"LinkedIn bg analysis error: {e}")
+        print(f"LinkedIn bg error: {e}")
+        traceback.print_exc()
 
 
 async def _read_slots() -> dict:
@@ -696,6 +731,19 @@ async def _read_slots() -> dict:
 async def _write_slots(slots: dict) -> None:
     async with aiofiles.open(SLOTS_FILE, "w") as f:
         await f.write(json.dumps(slots, indent=2))
+
+
+async def _read_internal_applications() -> list:
+    if not INTERNAL_APPLICATIONS_FILE.exists():
+        return []
+    async with aiofiles.open(INTERNAL_APPLICATIONS_FILE, "r") as f:
+        content = await f.read()
+    return json.loads(content or "[]")
+
+
+async def _write_internal_applications(records: list) -> None:
+    async with aiofiles.open(INTERNAL_APPLICATIONS_FILE, "w") as f:
+        await f.write(json.dumps(records, indent=2))
 
 
 DEMO_BLOCKED_TIMES = {
@@ -1474,6 +1522,16 @@ async def candidate_login(body: CandidateLoginRequest) -> dict:
     }
 
 
+@app.post("/auth/internal/login")
+async def internal_login(body: InternalLoginRequest) -> dict:
+    employee_id = body.employee_id.strip().upper()
+    if not employee_id.startswith("P") or len(employee_id) != 10 or not employee_id[1:].isdigit():
+        raise HTTPException(status_code=400, detail="Enter a valid employee ID like P123456789.")
+    token = str(uuid.uuid4())
+    active_sessions[token] = {"role": "internal", "employee_id": employee_id}
+    return {"token": token, "role": "internal", "employee_id": employee_id}
+
+
 # ---------------------------------------------------------------------------
 # Recruiter endpoints
 # ---------------------------------------------------------------------------
@@ -1581,6 +1639,12 @@ async def list_candidates(
         else:
             rows = [r for r in rows if not r.get("linkedin_url")]
     return rows
+
+
+@app.get("/recruiter/internal-applications")
+async def list_internal_applications(_auth: dict = Depends(verify_recruiter_token)) -> list:
+    records = await _read_internal_applications()
+    return sorted(records, key=lambda r: r.get("created_at", ""), reverse=True)
 
 
 @app.get("/recruiter/candidates/{ct_number}/scorecard")
@@ -2437,6 +2501,89 @@ async def get_job(job_id: str) -> dict:
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+
+@app.get("/internal/activity")
+async def get_internal_activity(_auth: dict = Depends(verify_internal_token)) -> list:
+    employee_id = _auth["employee_id"]
+    records = await _read_internal_applications()
+    return sorted(
+        [r for r in records if r.get("employee_id") == employee_id],
+        key=lambda r: r.get("created_at", ""),
+        reverse=True,
+    )
+
+
+@app.post("/internal/jobs/{job_id}/apply")
+async def internal_apply_for_job(
+    job_id: str,
+    body: InternalApplyRequest,
+    _auth: dict = Depends(verify_internal_token),
+) -> dict:
+    employee_id = _auth["employee_id"]
+    jobs = await _read_jobs()
+    job = next((j for j in jobs if j["id"] == job_id), None)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.get("status") != "open":
+        raise HTTPException(status_code=400, detail="This position is no longer accepting applications")
+
+    records = await _read_internal_applications()
+    if any(r.get("employee_id") == employee_id and r.get("job_id") == job_id and r.get("type") == "internal_apply" for r in records):
+        raise HTTPException(status_code=409, detail="You have already internally applied for this job.")
+
+    record = {
+        "id": str(uuid.uuid4()),
+        "type": "internal_apply",
+        "employee_id": employee_id,
+        "job_id": job_id,
+        "job_title": job["title"],
+        "job_department": job.get("department", ""),
+        "job_location": job.get("location", ""),
+        "status": "submitted",
+        "note": body.note.strip(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    records.append(record)
+    await _write_internal_applications(records)
+    return {"success": True, "message": "You have applied for the job.", "record": record}
+
+
+@app.post("/internal/jobs/{job_id}/refer")
+async def internal_refer_candidate(
+    job_id: str,
+    body: InternalReferRequest,
+    _auth: dict = Depends(verify_internal_token),
+) -> dict:
+    employee_id = _auth["employee_id"]
+    jobs = await _read_jobs()
+    job = next((j for j in jobs if j["id"] == job_id), None)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.get("status") != "open":
+        raise HTTPException(status_code=400, detail="This position is no longer accepting referrals")
+    if not body.candidate_name.strip() or not body.candidate_email.strip():
+        raise HTTPException(status_code=400, detail="Candidate name and email are required.")
+
+    records = await _read_internal_applications()
+    record = {
+        "id": str(uuid.uuid4()),
+        "type": "referral",
+        "employee_id": employee_id,
+        "job_id": job_id,
+        "job_title": job["title"],
+        "job_department": job.get("department", ""),
+        "job_location": job.get("location", ""),
+        "candidate_name": body.candidate_name.strip(),
+        "candidate_email": body.candidate_email.strip(),
+        "candidate_phone": body.candidate_phone.strip(),
+        "status": "submitted",
+        "note": body.note.strip(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    records.append(record)
+    await _write_internal_applications(records)
+    return {"success": True, "message": "Your referral has been submitted.", "record": record}
 
 
 def _recommendation_from_pct(pct: int | float | None) -> str | None:

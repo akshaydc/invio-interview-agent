@@ -4,15 +4,16 @@ type Props = {
   onBrowseAll: () => void
   onCandidateLoginClick: () => void
   onRecruiterLoginClick: () => void
+  onInternalLoginClick: () => void
 }
 
-const FLOW_TILES = [
-  { step: '01', title: 'Upload resume', copy: 'Rina reads your PDF or TXT profile.' },
-  { step: '02', title: 'Review matches', copy: 'Roles are ranked with reasons and gaps.' },
-  { step: '03', title: 'Apply faster', copy: 'Resume details carry into the form.' },
+const FLOW_POINTERS = [
+  { title: 'Upload resume', copy: 'Rina reads your PDF or TXT profile.' },
+  { title: 'Review matches', copy: 'Roles are ranked with reasons and gaps.' },
+  { title: 'Apply faster', copy: 'Resume details carry into the form.' },
 ]
 
-export default function LandingPage({ onCandidateLoginClick, onRecruiterLoginClick }: Props) {
+export default function LandingPage({ onCandidateLoginClick, onRecruiterLoginClick, onInternalLoginClick }: Props) {
   return (
     <PageLayout
       className="landing-page-main"
@@ -20,6 +21,7 @@ export default function LandingPage({ onCandidateLoginClick, onRecruiterLoginCli
         showLoginButtons: true,
         onCandidateLogin: onCandidateLoginClick,
         onRecruiterLogin: onRecruiterLoginClick,
+        onInternalLogin: onInternalLoginClick,
       }}
     >
       <section className="landing-shell" aria-label="ASTRA landing">
@@ -31,15 +33,17 @@ export default function LandingPage({ onCandidateLoginClick, onRecruiterLoginCli
               Rina is ready in the lower-right corner. Start with a resume match for ranked job recommendations,
               or browse every open role from her panel.
             </p>
-            <div className="landing-flow-tiles" aria-label="Resume matching steps">
-              {FLOW_TILES.map(({ step, title, copy }) => (
-                <div className="landing-flow-tile" key={step}>
-                  <span className="landing-flow-tile__step">{step}</span>
-                  <strong>{title}</strong>
-                  <small>{copy}</small>
-                </div>
+            <ul className="landing-flow-pointers" aria-label="Resume matching steps">
+              {FLOW_POINTERS.map(({ title, copy }) => (
+                <li className="landing-flow-pointer" key={title}>
+                  <span className="landing-flow-bullet" aria-hidden="true" />
+                  <span>
+                    <strong>{title}</strong>
+                    <small>{copy}</small>
+                  </span>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
         </div>

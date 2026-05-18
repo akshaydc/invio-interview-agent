@@ -78,6 +78,22 @@ type Job = {
   created_at: string
 }
 
+type InternalRecord = {
+  id: string
+  type: 'internal_apply' | 'referral'
+  employee_id: string
+  job_id: string
+  job_title: string
+  job_department?: string
+  job_location?: string
+  candidate_name?: string
+  candidate_email?: string
+  candidate_phone?: string
+  status: string
+  note?: string
+  created_at: string
+}
+
 type Props = {
   token: string
   onLogout: () => void
@@ -145,7 +161,7 @@ function formatSlotDisplay(slot: string): string {
   }
 }
 
-type Tab = 'candidates' | 'jobs'
+type Tab = 'candidates' | 'jobs' | 'internal'
 
 export default function RecruiterDashboard({ token, onLogout, onViewScorecard }: Props) {
   const [tab, setTab] = useState<Tab>('candidates')
@@ -174,6 +190,8 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   const [jobs, setJobs] = useState<Job[]>([])
   const [jobsLoading, setJobsLoading] = useState(true)
+  const [internalRecords, setInternalRecords] = useState<InternalRecord[]>([])
+  const [internalLoading, setInternalLoading] = useState(true)
   const [showJobForm, setShowJobForm] = useState(false)
   const [jobFormError, setJobFormError] = useState('')
   const [jobFormLoading, setJobFormLoading] = useState(false)
@@ -363,8 +381,21 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     }
   }
 
+  async function fetchInternalRecords() {
+    setInternalLoading(true)
+    try {
+      const res = await axios.get<InternalRecord[]>(`${API}/recruiter/internal-applications`, { headers })
+      setInternalRecords(res.data)
+    } catch {
+      // silent
+    } finally {
+      setInternalLoading(false)
+    }
+  }
+
   useEffect(() => { fetchCandidates(); fetchAnalytics() }, [])
   useEffect(() => { if (tab === 'jobs') fetchJobs() }, [tab])
+  useEffect(() => { if (tab === 'internal') fetchInternalRecords() }, [tab])
   useEffect(() => {
     axios.get<Job[]>(`${API}/jobs`).then(res => setOpenJobs(res.data.filter(j => j.status === 'open'))).catch(() => {})
   }, [])
@@ -1139,6 +1170,9 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
               </button>
             </>
           )}
+          {tab === 'internal' && (
+            <button className="btn btn-secondary" onClick={fetchInternalRecords}>Refresh</button>
+          )}
         </div>
       </div>
 
@@ -1148,6 +1182,9 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
         </button>
         <button className={`tab-btn${tab === 'jobs' ? ' tab-btn--active' : ''}`} onClick={() => setTab('jobs')}>
           Manage Jobs
+        </button>
+        <button className={`tab-btn${tab === 'internal' ? ' tab-btn--active' : ''}`} onClick={() => setTab('internal')}>
+          Internal Apply
         </button>
       </div>
 
@@ -1687,6 +1724,65 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
           </div>
 
         </>
+      )}
+
+      {tab === 'internal' && (
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
+            <h3 style={{ color: 'var(--text)' }}>Internal Applications &amp; Referrals ({internalRecords.length})</h3>
+            <p className="muted" style={{ fontSize: '0.85rem', marginTop: 4 }}>
+              Employee-submitted internal applications and referrals. These do not trigger AI interview calls.
+            </p>
+          </div>
+          {internalLoading ? (
+            <p className="muted" style={{ padding: 24 }}>Loading...</p>
+          ) : internalRecords.length === 0 ? (
+            <p className="muted" style={{ padding: 24 }}>No internal applications or referrals yet.</p>
+          ) : (
+            <div className="table-wrapper">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Employee</th>
+                    <th>Role</th>
+                    <th>Candidate</th>
+                    <th>Note</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {internalRecords.map(item => (
+                    <tr key={item.id}>
+                      <td>{item.type === 'internal_apply' ? 'Internal Apply' : 'Referral'}</td>
+                      <td style={{ fontWeight: 600 }}>{item.employee_id}</td>
+                      <td>
+                        <strong>{item.job_title}</strong>
+                        <div className="muted" style={{ fontSize: '0.78rem' }}>{item.job_id}</div>
+                      </td>
+                      <td>
+                        {item.type === 'referral' ? (
+                          <>
+                            <strong>{item.candidate_name}</strong>
+                            <div className="muted" style={{ fontSize: '0.78rem' }}>
+                              {item.candidate_email}{item.candidate_phone ? ` / ${item.candidate_phone}` : ''}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="muted">Employee self-apply</span>
+                        )}
+                      </td>
+                      <td style={{ color: 'var(--muted)', maxWidth: 260 }}>{item.note || '-'}</td>
+                      <td><span className="badge badge--blue">{item.status}</span></td>
+                      <td>{new Date(item.created_at).toLocaleDateString('en-IN')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       )}
 
       {tab === 'jobs' && (
