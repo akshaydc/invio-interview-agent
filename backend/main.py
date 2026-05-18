@@ -3260,7 +3260,7 @@ def _seed_demo_data() -> None:
         CANDIDATES_FILE.write_text(json.dumps(existing_candidates, indent=2))
         print("Updated demo candidates with LinkedIn analysis data.")
 
-    # ── Job codes for demo jobs (always check) ───────────────────────────────
+    # ── Job codes for all jobs (always check) ────────────────────────────────
     _current_jobs = json.loads(JOBS_FILE.read_text()) if JOBS_FILE.exists() else []
     _job_codes_map = {
         DEMO_JOB_IDS["sf_admin"]: "ASTRA-2026-0001",
@@ -3269,19 +3269,30 @@ def _seed_demo_data() -> None:
         DEMO_JOB_IDS["ba"]:       "ASTRA-2026-0004",
     }
     _jobs_code_changed = False
-    for _job in _current_jobs:
-        code = _job_codes_map.get(_job["id"])
-        if code and "job_code" not in _job:
-            _job["job_code"] = code
+    for _i, _job in enumerate(_current_jobs):
+        if "job_code" not in _job:
+            _job["job_code"] = _job_codes_map.get(_job["id"]) or f"ASTRA-2026-{_i+1:04d}"
             _jobs_code_changed = True
     if _jobs_code_changed:
         JOBS_FILE.write_text(json.dumps(_current_jobs, indent=2))
-        print("Updated demo jobs with job codes.")
+        print("Updated jobs with job codes.")
 
 
 @app.on_event("startup")
 async def on_startup() -> None:
     _seed_demo_data()
+    # Migration: ensure every job has a job_code
+    if JOBS_FILE.exists():
+        _startup_jobs = json.loads(JOBS_FILE.read_text())
+        _startup_changed = False
+        for _idx, _j in enumerate(_startup_jobs):
+            if "job_code" not in _j:
+                _year = datetime.now().year
+                _j["job_code"] = f"ASTRA-{_year}-{_idx+1:04d}"
+                _startup_changed = True
+        if _startup_changed:
+            JOBS_FILE.write_text(json.dumps(_startup_jobs, indent=2))
+            print(f"Startup migration: added job_code to {sum(1 for j in _startup_jobs if 'job_code' in j)} jobs.")
 
 
 # ---------------------------------------------------------------------------

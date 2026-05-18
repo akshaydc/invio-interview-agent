@@ -216,16 +216,6 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [showFilterPanel, setShowFilterPanel] = useState(false)
   const filterBtnRef = useRef<HTMLDivElement>(null)
 
-  // Staged filter values (in-panel, applied on "Apply Filters")
-  const [panelMinMatch, setPanelMinMatch] = useState(0)
-  const [panelRole, setPanelRole] = useState('')
-  const [panelSkill, setPanelSkill] = useState('')
-  const [panelLocation, setPanelLocation] = useState('')
-  const [panelStatus, setPanelStatus] = useState('All')
-  const [panelRecommendation, setPanelRecommendation] = useState('All')
-  const [panelLinkedInStatus, setPanelLinkedInStatus] = useState('All')
-  const [panelHasLinkedin, setPanelHasLinkedin] = useState(false)
-
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleModalCt, setScheduleModalCt] = useState('')
   const [scheduleModalJobId, setScheduleModalJobId] = useState<string | null>(null)
@@ -685,40 +675,15 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     setEpError('')
   }
 
-  function openFilterPanel() {
-    setPanelMinMatch(filterMinMatch)
-    setPanelRole(filterRole)
-    setPanelSkill(filterSkill)
-    setPanelLocation(filterLocation)
-    setPanelStatus(filterStatus)
-    setPanelRecommendation(filterRecommendation)
-    setPanelLinkedInStatus(filterLinkedInStatus)
-    setPanelHasLinkedin(filterHasLinkedin)
-    setShowFilterPanel(true)
-  }
-
-  function applyFilters() {
-    setFilterMinMatch(panelMinMatch)
-    setFilterRole(panelRole)
-    setFilterSkill(panelSkill)
-    setFilterLocation(panelLocation)
-    setFilterStatus(panelStatus)
-    setFilterRecommendation(panelRecommendation)
-    setFilterLinkedInStatus(panelLinkedInStatus)
-    setFilterHasLinkedin(panelHasLinkedin)
-    setShowFilterPanel(false)
-  }
-
   function clearAllFilters() {
-    setPanelMinMatch(0); setFilterMinMatch(0)
-    setPanelRole(''); setFilterRole('')
-    setPanelSkill(''); setFilterSkill('')
-    setPanelLocation(''); setFilterLocation('')
-    setPanelStatus('All'); setFilterStatus('All')
-    setPanelRecommendation('All'); setFilterRecommendation('All')
-    setPanelLinkedInStatus('All'); setFilterLinkedInStatus('All')
-    setPanelHasLinkedin(false); setFilterHasLinkedin(false)
-    setShowFilterPanel(false)
+    setFilterMinMatch(0)
+    setFilterRole('')
+    setFilterSkill('')
+    setFilterLocation('')
+    setFilterStatus('All')
+    setFilterRecommendation('All')
+    setFilterLinkedInStatus('All')
+    setFilterHasLinkedin(false)
   }
 
   const activeFilterCount = [
@@ -1171,7 +1136,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
             </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: -8 }}>
           {!analyticsLoading && analytics && <PipelineWidget analytics={analytics} />}
 
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -1182,11 +1147,11 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                   </h3>
                   <div ref={filterBtnRef} style={{ position: 'relative', flexShrink: 0 }}>
                     <button
-                      onClick={() => showFilterPanel ? setShowFilterPanel(false) : openFilterPanel()}
+                      onClick={() => setShowFilterPanel(v => !v)}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 6,
                         padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
-                        border: `1.5px solid ${activeFilterCount > 0 ? '#0C447C' : '#0C447C'}`,
+                        border: '1.5px solid #0C447C',
                         background: activeFilterCount > 0 ? '#0C447C' : 'transparent',
                         color: activeFilterCount > 0 ? '#fff' : '#0C447C',
                         fontWeight: 600, fontSize: '0.85rem',
@@ -1201,32 +1166,38 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
                     {showFilterPanel && (
                       <div style={{
-                        position: 'absolute', right: 0, top: 'calc(100% + 6px)',
+                        position: 'fixed',
+                        right: 40,
+                        top: filterBtnRef.current ? filterBtnRef.current.getBoundingClientRect().bottom + 6 : 60,
                         background: '#fff', border: '1px solid #e2e8f0',
                         borderRadius: 12, padding: 20,
                         boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                        zIndex: 100, width: 320,
+                        zIndex: 1000, width: 300, maxWidth: 'calc(100vw - 48px)',
+                        maxHeight: '80vh', overflowY: 'auto',
                         display: 'flex', flexDirection: 'column', gap: 14,
                       }}>
                         <div>
-                          <label className="role-label">Minimum Match %: {panelMinMatch}%</label>
-                          <input type="range" min={0} max={100} value={panelMinMatch} onChange={e => setPanelMinMatch(Number(e.target.value))} style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary)', marginTop: 4 }} />
+                          <label className="role-label">Minimum Match %: {filterMinMatch}%</label>
+                          <input type="range" min={0} max={100} value={filterMinMatch}
+                            onChange={e => setFilterMinMatch(Number(e.target.value))}
+                            onInput={e => setFilterMinMatch(Number((e.target as HTMLInputElement).value))}
+                            style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary)', marginTop: 4 }} />
                         </div>
                         <div>
                           <label className="role-label">Role</label>
-                          <input className="role-input" placeholder="e.g. Salesforce" value={panelRole} onChange={e => setPanelRole(e.target.value)} style={{ marginTop: 4 }} />
+                          <input className="role-input" placeholder="e.g. Salesforce" value={filterRole} onChange={e => setFilterRole(e.target.value)} style={{ marginTop: 4 }} />
                         </div>
                         <div>
                           <label className="role-label">Skill</label>
-                          <input className="role-input" placeholder="e.g. Apex, React" value={panelSkill} onChange={e => setPanelSkill(e.target.value)} style={{ marginTop: 4 }} />
+                          <input className="role-input" placeholder="e.g. Apex, React" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} style={{ marginTop: 4 }} />
                         </div>
                         <div>
                           <label className="role-label">Location</label>
-                          <input className="role-input" placeholder="e.g. Bangalore" value={panelLocation} onChange={e => setPanelLocation(e.target.value)} style={{ marginTop: 4 }} />
+                          <input className="role-input" placeholder="e.g. Bangalore" value={filterLocation} onChange={e => setFilterLocation(e.target.value)} style={{ marginTop: 4 }} />
                         </div>
                         <div>
                           <label className="role-label">Status</label>
-                          <select className="role-select" value={panelStatus} onChange={e => setPanelStatus(e.target.value)} style={{ marginTop: 4 }}>
+                          <select className="role-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ marginTop: 4 }}>
                             <option>All</option>
                             <option>Applied</option>
                             <option>Shortlisted</option>
@@ -1237,7 +1208,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                         </div>
                         <div>
                           <label className="role-label">AI Recommendation</label>
-                          <select className="role-select" value={panelRecommendation} onChange={e => setPanelRecommendation(e.target.value)} style={{ marginTop: 4 }}>
+                          <select className="role-select" value={filterRecommendation} onChange={e => setFilterRecommendation(e.target.value)} style={{ marginTop: 4 }}>
                             <option>All</option>
                             <option>Strong Hire</option>
                             <option>Hire</option>
@@ -1247,7 +1218,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                         </div>
                         <div>
                           <label className="role-label">LinkedIn Status</label>
-                          <select className="role-select" value={panelLinkedInStatus} onChange={e => setPanelLinkedInStatus(e.target.value)} style={{ marginTop: 4 }}>
+                          <select className="role-select" value={filterLinkedInStatus} onChange={e => setFilterLinkedInStatus(e.target.value)} style={{ marginTop: 4 }}>
                             <option>All</option>
                             <option>Verified Match</option>
                             <option>Mismatch Detected</option>
@@ -1258,31 +1229,24 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <label className="role-label" style={{ margin: 0 }}>Has LinkedIn URL</label>
                           <div
-                            onClick={() => setPanelHasLinkedin(v => !v)}
+                            onClick={() => setFilterHasLinkedin(v => !v)}
                             style={{
                               width: 36, height: 20, borderRadius: 10, cursor: 'pointer',
-                              background: panelHasLinkedin ? '#0C447C' : '#cbd5e1',
+                              background: filterHasLinkedin ? '#0C447C' : '#cbd5e1',
                               position: 'relative', transition: 'background 0.2s', flexShrink: 0,
                             }}
                           >
                             <div style={{
-                              position: 'absolute', top: 2, left: panelHasLinkedin ? 18 : 2,
+                              position: 'absolute', top: 2, left: filterHasLinkedin ? 18 : 2,
                               width: 16, height: 16, borderRadius: '50%', background: '#fff',
                               transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                             }} />
                           </div>
                         </div>
-                        <div style={{ display: 'flex', gap: 8, paddingTop: 4, borderTop: '1px solid #e2e8f0' }}>
-                          <button
-                            className="btn btn-primary"
-                            style={{ flex: 1, fontSize: '0.85rem', padding: '8px 0' }}
-                            onClick={applyFilters}
-                          >
-                            Apply Filters
-                          </button>
+                        <div style={{ paddingTop: 4, borderTop: '1px solid #e2e8f0' }}>
                           <button
                             className="btn btn-secondary"
-                            style={{ flex: 1, fontSize: '0.85rem', padding: '8px 0' }}
+                            style={{ width: '100%', fontSize: '0.85rem', padding: '8px 0' }}
                             onClick={clearAllFilters}
                           >
                             Clear All
