@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 type LinkedInCertification = {
   name: string
+  issuer?: string
   verified: boolean
 }
 
@@ -9,6 +10,7 @@ type LinkedInSkillsMatch = {
   resume_skills: string[]
   linkedin_skills: string[]
   overlap_percentage: number
+  matching?: string[]
 }
 
 type LinkedInExperienceComparison = {
@@ -18,16 +20,26 @@ type LinkedInExperienceComparison = {
   note: string
 }
 
+type LinkedInEducation = {
+  school: string
+  degree: string
+  field: string
+}
+
 export type LinkedInAnalysis = {
   linkedin_url: string | null
-  status: 'verified_match' | 'mismatch' | 'no_match' | 'no_url'
+  status: 'verified_match' | 'mismatch' | 'no_match' | 'no_url' | 'error' | 'no_api_key' | 'partial_match'
   status_label: string
   status_color: string
   overall_score: number | null
+  headline?: string
   experience_comparison: LinkedInExperienceComparison | null
+  education?: LinkedInEducation[]
   certifications: LinkedInCertification[]
   recent_activity: string[]
   skills_match: LinkedInSkillsMatch | null
+  summary?: string
+  companies?: string[]
   scanned_at: string | null
 }
 
@@ -35,6 +47,8 @@ type Props = {
   linkedin_analysis: LinkedInAnalysis | null | undefined
   combined_score?: number | null
   match_percentage?: number | null
+  onScan?: () => void
+  scanning?: boolean
 }
 
 function statusIcon(status: string) {
@@ -44,7 +58,7 @@ function statusIcon(status: string) {
   return '—'
 }
 
-export default function LinkedInWidget({ linkedin_analysis: li, combined_score, match_percentage }: Props) {
+export default function LinkedInWidget({ linkedin_analysis: li, combined_score, match_percentage, onScan, scanning }: Props) {
   const [expanded, setExpanded] = useState(false)
 
   if (!li) return null
@@ -53,13 +67,22 @@ export default function LinkedInWidget({ linkedin_analysis: li, combined_score, 
 
   const resumeSkills = li.skills_match?.resume_skills ?? []
   const linkedinSkills = li.skills_match?.linkedin_skills ?? []
-  const matchingSkills = resumeSkills.filter(s =>
+  const matchingSkills = li.skills_match?.matching ?? resumeSkills.filter(s =>
     linkedinSkills.some(ls => ls.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(ls.toLowerCase()))
   )
   const missingSkills = resumeSkills.filter(s => !matchingSkills.includes(s))
 
   const overlapPct = li.skills_match?.overlap_percentage ?? 0
   const skillBarColor = overlapPct >= 70 ? '#0F6E56' : overlapPct >= 50 ? '#854F0B' : '#A32D2D'
+
+  function formatScannedAt(iso: string) {
+    try {
+      const d = new Date(iso)
+      return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    } catch {
+      return iso
+    }
+  }
 
   return (
     <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
@@ -95,10 +118,29 @@ export default function LinkedInWidget({ linkedin_analysis: li, combined_score, 
         )}
 
         <div style={{ flex: 1 }} />
+        {onScan && (
+          <button
+            onClick={e => { e.stopPropagation(); onScan() }}
+            disabled={scanning}
+            style={{
+              background: 'none', border: '1px solid #0C447C', color: '#0C447C',
+              borderRadius: 6, padding: '3px 10px', fontSize: '0.78rem', fontWeight: 600,
+              cursor: scanning ? 'not-allowed' : 'pointer', opacity: scanning ? 0.6 : 1,
+              flexShrink: 0,
+            }}
+          >
+            {scanning ? 'Scanning...' : '🔍 Scan LinkedIn'}
+          </button>
+        )}
         <span style={{ color: '#94a3b8', fontSize: '0.78rem', flexShrink: 0 }}>
           {expanded ? 'Hide Details ▲' : 'View Details ▼'}
         </span>
       </div>
+      {li.scanned_at && (
+        <div style={{ padding: '4px 16px 8px', fontSize: '0.73rem', color: '#94a3b8' }}>
+          Last scanned: {formatScannedAt(li.scanned_at)}
+        </div>
+      )}
 
       {expanded && (
         <div style={{ borderTop: '1px solid #e2e8f0' }}>
@@ -124,6 +166,22 @@ export default function LinkedInWidget({ linkedin_analysis: li, combined_score, 
                 </div>
               </div>
               <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', fontStyle: 'italic' }}>{li.experience_comparison.note}</p>
+            </div>
+          )}
+
+          {li.education && li.education.length > 0 && (
+            <div style={{ padding: '16px 18px', borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
+              <p style={{ margin: '0 0 10px', fontSize: '0.78rem', fontWeight: 700, color: '#042C53', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Education</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {li.education.map((edu, i) => (
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#042C53' }}>
+                      {[edu.degree, edu.field].filter(Boolean).join(' in ') || 'Degree'}
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{edu.school}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

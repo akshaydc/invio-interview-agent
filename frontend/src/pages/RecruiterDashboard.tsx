@@ -259,6 +259,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   const [shortlistConfirm, setShortlistConfirm] = useState<ShortlistConfirm | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [scanningCt, setScanningCt] = useState<string | null>(null)
 
   const schedulePopularSlots = useMemo(() => {
     const popular = new Set<string>()
@@ -411,6 +412,25 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     setToast(message)
     toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+  }
+
+  async function scanLinkedIn(ctNumber: string) {
+    setScanningCt(ctNumber)
+    try {
+      const res = await axios.post(
+        `${API}/recruiter/candidates/${ctNumber}/scan-linkedin`,
+        null,
+        { headers: { 'x-auth-token': token } },
+      )
+      setCandidates(prev => prev.map(c =>
+        c.ct_number === ctNumber ? { ...c, linkedin_analysis: res.data } : c
+      ))
+      showToast('LinkedIn analysis complete')
+    } catch {
+      showToast('LinkedIn scan failed. Please try again.')
+    } finally {
+      setScanningCt(null)
+    }
   }
 
   async function handleShortlist(ct: string) {
@@ -1513,15 +1533,38 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                         )}
 
                                         {/* LinkedIn Analysis Widget */}
-                                        {c.linkedin_analysis && (
-                                          <div style={{ marginTop: 16 }}>
+                                        <div style={{ marginTop: 16 }}>
+                                          {c.linkedin_analysis ? (
                                             <LinkedInWidget
                                               linkedin_analysis={c.linkedin_analysis}
                                               combined_score={c.combined_score}
                                               match_percentage={c.match_percentage}
+                                              onScan={c.linkedin_url ? () => scanLinkedIn(c.ct_number) : undefined}
+                                              scanning={scanningCt === c.ct_number}
                                             />
-                                          </div>
-                                        )}
+                                          ) : c.linkedin_url ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: 10, background: '#fff' }}>
+                                              <div style={{
+                                                width: 26, height: 26, borderRadius: 4, background: '#0A66C2', color: '#fff',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontWeight: 700, fontSize: 13, flexShrink: 0, fontFamily: 'Georgia, serif',
+                                              }}>in</div>
+                                              <span style={{ fontSize: '0.85rem', color: '#042C53', fontWeight: 500, flex: 1 }}>LinkedIn not yet scanned</span>
+                                              <button
+                                                onClick={() => scanLinkedIn(c.ct_number)}
+                                                disabled={scanningCt === c.ct_number}
+                                                style={{
+                                                  background: 'none', border: '1px solid #0C447C', color: '#0C447C',
+                                                  borderRadius: 6, padding: '4px 12px', fontSize: '0.8rem', fontWeight: 600,
+                                                  cursor: scanningCt === c.ct_number ? 'not-allowed' : 'pointer',
+                                                  opacity: scanningCt === c.ct_number ? 0.6 : 1,
+                                                }}
+                                              >
+                                                {scanningCt === c.ct_number ? 'Scanning...' : '🔍 Scan LinkedIn'}
+                                              </button>
+                                            </div>
+                                          ) : null}
+                                        </div>
 
                                         {c.recommendation && (
                                           <div style={{ marginTop: 16 }}>
