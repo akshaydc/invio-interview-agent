@@ -234,6 +234,19 @@ class UpdateJobRequest(BaseModel):
     status: str | None = None
 
 
+class CandidateUpdateRequest(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    current_role: str | None = None
+    current_ctc: str | None = None
+    expected_ctc: str | None = None
+    notice_period: str | None = None
+    location: str | None = None
+    linkedin_url: str | None = None
+    additional_comments: str | None = None
+
+
 class ApplyRequest(BaseModel):
     name: str
     email: str
@@ -490,10 +503,17 @@ def _flatten_for_recruiter(candidate: dict) -> list[dict]:
         "current_role", "current_ctc", "expected_ctc", "notice_period",
     )}
     identity["call_status"] = candidate.get("call_status", {})
+    identity["linkedin_analysis"] = candidate.get("linkedin_analysis")
+    li_score = (candidate.get("linkedin_analysis") or {}).get("overall_score")
     rows = []
     for app in _get_applications(candidate):
         row = {**identity, **app}
         row["job_role"] = app.get("job_title") or app.get("job_role", "")
+        match_pct = app.get("match_percentage") if app.get("match_percentage") is not None else candidate.get("match_percentage")
+        if li_score is not None and match_pct is not None:
+            row["combined_score"] = round(match_pct * 0.7 + li_score * 0.3)
+        else:
+            row["combined_score"] = match_pct
         rows.append(row)
     return rows
 
@@ -1339,6 +1359,37 @@ async def get_candidate_match(
         "strengths": candidate.get("match_strengths", []),
         "gaps": candidate.get("match_gaps", []),
     }
+
+
+@app.get("/recruiter/candidates/{ct_number}/linkedin")
+async def get_candidate_linkedin(
+    ct_number: str,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    linkedin = candidate.get("linkedin_analysis")
+    if not linkedin:
+        return {"status": "no_url", "status_label": "No LinkedIn URL", "status_color": "#64748b", "overall_score": None}
+    return linkedin
+
+
+@app.put("/recruiter/candidates/{ct_number}")
+async def update_candidate(
+    ct_number: str,
+    body: CandidateUpdateRequest,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> dict:
+    candidates = await _read_candidates()
+    candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    update_fields = body.model_dump(exclude_none=True)
+    candidate.update(update_fields)
+    await _write_candidates(candidates)
+    return {"success": True, "candidate": candidate}
 
 
 async def _set_candidate_status(ct_number: str, status: str, ts_key: str) -> dict:
@@ -3035,6 +3086,119 @@ def _seed_demo_data() -> None:
     if candidates_updated:
         CANDIDATES_FILE.write_text(json.dumps(existing_candidates, indent=2))
         print("Candidate records updated with session IDs.")
+
+    # ── Mock LinkedIn analysis for demo candidates (always check) ────────────
+    _no_url_li: dict = {
+        "linkedin_url": None, "status": "no_url", "status_label": "No LinkedIn URL",
+        "status_color": "#64748b", "overall_score": None, "experience_comparison": None,
+        "certifications": [], "recent_activity": [], "skills_match": None, "scanned_at": None,
+    }
+    _demo_linkedin: dict[str, dict] = {
+        "CT20260001": {
+            "linkedin_url": "https://linkedin.com/in/priyasharma-sf",
+            "status": "verified_match", "status_label": "Verified Match",
+            "status_color": "#0F6E56", "overall_score": 91,
+            "experience_comparison": {
+                "resume_years": 4, "linkedin_years": 4.2, "match": True,
+                "note": "LinkedIn confirms 4+ years at TCS as Salesforce Admin. Consistent with resume.",
+            },
+            "certifications": [
+                {"name": "Salesforce Certified Administrator", "verified": True},
+                {"name": "Sales Cloud Consultant", "verified": True},
+                {"name": "Service Cloud Consultant", "verified": False},
+            ],
+            "recent_activity": [
+                "Shared Salesforce Winter 24 release highlights",
+                "Posted about Flow Builder best practices",
+                "Completed Trailhead Superbadge: Business Administration",
+            ],
+            "skills_match": {
+                "resume_skills": ["Salesforce Admin", "Sales Cloud", "Flows", "Reports"],
+                "linkedin_skills": ["Salesforce", "Sales Cloud", "Service Cloud", "Flow Builder", "SOQL"],
+                "overlap_percentage": 88,
+            },
+            "scanned_at": "2026-05-13T09:00:00+00:00",
+        },
+        "CT20260002": {
+            "linkedin_url": "https://linkedin.com/in/rahulmehta-dev",
+            "status": "mismatch", "status_label": "Mismatch Detected",
+            "status_color": "#A32D2D", "overall_score": 52,
+            "experience_comparison": {
+                "resume_years": 3, "linkedin_years": 1.5, "match": False,
+                "note": "Resume claims 3 years experience but LinkedIn shows only 1.5 years in Salesforce roles. Discrepancy detected.",
+            },
+            "certifications": [
+                {"name": "Salesforce Platform Developer I", "verified": False},
+                {"name": "JavaScript Developer I", "verified": False},
+            ],
+            "recent_activity": [
+                "No recent Salesforce-related posts",
+                "Last activity: 8 months ago",
+            ],
+            "skills_match": {
+                "resume_skills": ["Apex", "LWC", "SOQL", "REST APIs", "Integration"],
+                "linkedin_skills": ["JavaScript", "React", "Node.js"],
+                "overlap_percentage": 25,
+            },
+            "scanned_at": "2026-05-13T10:00:00+00:00",
+        },
+        "CT20260013": {
+            "linkedin_url": "https://linkedin.com/in/ananyak-qa",
+            "status": "no_match", "status_label": "Profile Not Found",
+            "status_color": "#854F0B", "overall_score": 0,
+            "experience_comparison": {
+                "resume_years": 2, "linkedin_years": 0, "match": False,
+                "note": "LinkedIn profile URL provided but profile appears to be private or deleted. Unable to verify experience.",
+            },
+            "certifications": [],
+            "recent_activity": ["Profile is private or unavailable"],
+            "skills_match": {
+                "resume_skills": ["Manual Testing", "Selenium", "JIRA"],
+                "linkedin_skills": [],
+                "overlap_percentage": 0,
+            },
+            "scanned_at": "2026-05-13T11:00:00+00:00",
+        },
+        "CT20260014": {
+            "linkedin_url": "https://linkedin.com/in/vikramnair-sf",
+            "status": "verified_match", "status_label": "Strong Verified Match",
+            "status_color": "#0F6E56", "overall_score": 96,
+            "experience_comparison": {
+                "resume_years": 5, "linkedin_years": 5.5, "match": True,
+                "note": "LinkedIn shows additional experience not on resume. Senior roles at Infosys and TCS confirmed.",
+            },
+            "certifications": [
+                {"name": "Salesforce Platform Developer I", "verified": True},
+                {"name": "Salesforce Platform Developer II", "verified": True},
+                {"name": "Application Architect", "verified": True},
+            ],
+            "recent_activity": [
+                "Published article: CI/CD Best Practices in Salesforce",
+                "Earned Trailhead Ranger status",
+                "Spoke at Salesforce Mumbai User Group",
+                "Completed Salesforce Architect certification",
+            ],
+            "skills_match": {
+                "resume_skills": ["Apex", "LWC", "SOQL", "Platform Events", "MuleSoft"],
+                "linkedin_skills": ["Apex", "LWC", "SOQL", "Platform Events", "REST APIs", "CI/CD", "Git"],
+                "overlap_percentage": 94,
+            },
+            "scanned_at": "2026-05-13T14:00:00+00:00",
+        },
+        "CT20260003": _no_url_li,
+        "CT20260006": _no_url_li,
+        "CT20260009": _no_url_li,
+        "CT20260012": _no_url_li,
+    }
+    _linkedin_changed = False
+    for _ct, _li in _demo_linkedin.items():
+        _cand = next((c for c in existing_candidates if c["ct_number"] == _ct), None)
+        if _cand and "linkedin_analysis" not in _cand:
+            _cand["linkedin_analysis"] = _li
+            _linkedin_changed = True
+    if _linkedin_changed:
+        CANDIDATES_FILE.write_text(json.dumps(existing_candidates, indent=2))
+        print("Updated demo candidates with LinkedIn analysis data.")
 
 
 @app.on_event("startup")
