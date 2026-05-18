@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import axios from 'axios'
+import type { DailyCall } from '@daily-co/daily-js'
 import { API_BASE_URL as API } from '../config'
 
 type TranscriptEntry = { q: string; a: string; score: number | null }
@@ -21,7 +22,7 @@ const END_LOCKOUT_MS = 5 * 60 * 1000
 export default function InterviewRoom({ token, candidateName, jobRole, jobDescription, onDone }: Props) {
   const [stage, setStage] = useState<Stage>('ready')
   const [recordingState, setRecordingState] = useState<RecordingState>('listening')
-  const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
+  const [, setTranscript] = useState<TranscriptEntry[]>([])
   const [errorMsg, setErrorMsg] = useState('')
   const [proctorEndMsg, setProctorEndMsg] = useState('')
   const [volumeLevel, setVolumeLevel] = useState(0)
@@ -39,12 +40,12 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
   const lockoutTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const taraContainerRef = useRef<HTMLDivElement | null>(null)
+  const taraFrameRef = useRef<DailyCall | null>(null)
   const isAISpeakingRef = useRef(false)
   const stageRef = useRef<Stage>('ready')
   const recordingStateRef = useRef<RecordingState>('listening')
   const violationsRef = useRef<Violation[]>([])
-  const transcriptListRef = useRef<HTMLDivElement | null>(null)
-  const currentQuestionRef = useRef<HTMLDivElement | null>(null)
   const startTimeRef = useRef(0)
   const endingRef = useRef(false)
   const shouldAutoEndRef = useRef(false)
@@ -52,6 +53,53 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
   useEffect(() => { stageRef.current = stage }, [stage])
   useEffect(() => { recordingStateRef.current = recordingState }, [recordingState])
   useEffect(() => { violationsRef.current = violations }, [violations])
+
+  useEffect(() => {
+    if (!taraUrl || (stage !== 'active' && stage !== 'ending') || !taraContainerRef.current) return
+
+    let disposed = false
+    const displayName = candidateName.trim() || 'Candidate'
+
+    async function joinTaraRoom() {
+      const { default: DailyIframe } = await import('@daily-co/daily-js')
+      if (disposed || !taraContainerRef.current) return
+
+      if (taraFrameRef.current) {
+        taraFrameRef.current.destroy()
+        taraFrameRef.current = null
+      }
+
+      taraContainerRef.current.innerHTML = ''
+      const frame = DailyIframe.createFrame(taraContainerRef.current, {
+        iframeStyle: {
+          width: '100%',
+          height: '100%',
+          border: '0',
+          borderRadius: '12px',
+        },
+        showLeaveButton: false,
+        userName: displayName,
+      })
+
+      taraFrameRef.current = frame
+      frame.on('loaded', () => setTaraLoaded(true))
+      frame.on('joined-meeting', () => setTaraLoaded(true))
+      await frame.join({ url: taraUrl, userName: displayName })
+    }
+
+    joinTaraRoom().catch((err) => {
+      console.log('Tara join error:', err)
+      if (!disposed) setErrorMsg('Failed to connect to Tara. Please try again.')
+    })
+
+    return () => {
+      disposed = true
+      if (taraFrameRef.current) {
+        taraFrameRef.current.destroy()
+        taraFrameRef.current = null
+      }
+    }
+  }, [candidateName, stage, taraUrl])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: addViolation is stable within the session
   useEffect(() => {
@@ -117,17 +165,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
         { ...prev[prev.length - 1], a: candidateAnswer },
         { q: nextQuestion, a: '', score: null },
       ])
-
-      setTimeout(() => {
-        if (transcriptListRef.current) {
-          transcriptListRef.current.scrollTop = transcriptListRef.current.scrollHeight
-        }
-        const el = currentQuestionRef.current
-        if (el) {
-          el.classList.add('question-flash')
-          setTimeout(() => el.classList.remove('question-flash'), 1000)
-        }
-      }, 0)
 
       speakQuestion(nextQuestion)
 
@@ -480,12 +517,10 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
         <div className="interview-layout">
           {taraUrl && (
             <div style={{ position: 'relative', width: '100%', height: 'min(68vh, 620px)', minHeight: 460, borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
-              <iframe
-                src={taraUrl}
-                style={{ width: '100%', height: '100%', border: 'none' }}
-                allow="camera; microphone; autoplay"
-                title="Tara AI Interviewer"
-                onLoad={() => setTaraLoaded(true)}
+              <div
+                ref={taraContainerRef}
+                aria-label="Tara AI Interviewer"
+                style={{ width: '100%', height: '100%' }}
               />
               {!taraLoaded && (
                 <div style={{
@@ -513,6 +548,11 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
               )}
             </div>
           )}
+          {!taraUrl && (
+            <div className="card center-card">
+              <p className="muted">Connecting you to Tara...</p>
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="card status-card" style={{ flex: 1 }}>
               <span className="status-dot" />
@@ -522,13 +562,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
               {violations.length === 0 ? '🛡 Monitored' : `⚠ ${violations.length} warning${violations.length !== 1 ? 's' : ''}`}
             </div>
           </div>
-
-          {transcript.length > 0 && (
-            <div className="current-question" ref={currentQuestionRef}>
-              <p className="current-question-label">Current Question</p>
-              <p className="current-question-text">{transcript[transcript.length - 1].q}</p>
-            </div>
-          )}
 
           <div className="audio-visualizer">
             {[0.35, 0.65, 1.0, 0.65, 0.35].map((scale, i) => (
@@ -552,22 +585,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
             )}
             {recordingState === 'ai_speaking' && (
               <span className="listen-text listen-text--ai">AI is speaking…</span>
-            )}
-          </div>
-
-          <div className="card transcript-card">
-            <h3>Transcript</h3>
-            {transcript.slice(0, -1).length === 0 ? (
-              <p className="muted">Answered questions will appear here.</p>
-            ) : (
-              <div className="transcript-list" ref={transcriptListRef}>
-                {transcript.slice(0, -1).map((entry, i) => (
-                  <div key={i} className="transcript-entry">
-                    <p className="transcript-q"><strong>Q:</strong> {entry.q}</p>
-                    {entry.a && <p className="transcript-a"><strong>A:</strong> {entry.a}</p>}
-                  </div>
-                ))}
-              </div>
             )}
           </div>
 
