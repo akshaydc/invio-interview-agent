@@ -469,7 +469,7 @@ async def analyze_linkedin_profile(
     posts_data = None
 
     try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             profile_resp = await client.get(
                 "https://fresh-linkedin-profile-data.p.rapidapi.com/enrich-lead",
                 headers=headers,
@@ -488,18 +488,6 @@ async def analyze_linkedin_profile(
                 print(f"Profile sample: {str(profile_data)[:600]}")
             else:
                 print(f"LinkedIn error: {profile_resp.text[:200]}")
-
-            try:
-                posts_resp = await client.get(
-                    "https://fresh-linkedin-profile-data.p.rapidapi.com/get-profile-posts",
-                    headers=headers,
-                    params={"linkedin_url": linkedin_url, "type": "posts"},
-                )
-                if posts_resp.status_code == 200:
-                    posts_data = posts_resp.json()
-            except Exception as e:
-                print(f"Posts fetch error: {e}")
-
     except Exception as e:
         print(f"LinkedIn API error: {e}")
         traceback.print_exc()
@@ -512,6 +500,18 @@ async def analyze_linkedin_profile(
             "error": str(e),
             "scanned_at": datetime.now(timezone.utc).isoformat(),
         }
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            posts_resp = await client.get(
+                "https://fresh-linkedin-profile-data.p.rapidapi.com/get-profile-posts",
+                headers=headers,
+                params={"linkedin_url": linkedin_url, "type": "posts"},
+            )
+            if posts_resp.status_code == 200:
+                posts_data = posts_resp.json()
+    except Exception as e:
+        print(f"Posts fetch error: {e}")
 
     if not isinstance(profile_data, dict):
         print(f"Invalid profile data type: {type(profile_data)}")
