@@ -3,6 +3,7 @@ import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
 import Navbar from '../components/Navbar'
 import PipelineWidget, { type Analytics } from '../components/PipelineWidget'
+import LinkedInWidget, { type LinkedInAnalysis } from '../components/LinkedInWidget'
 
 const TIMEZONE_OPTIONS = [
   { value: 'Asia/Kolkata', label: 'Asia/Kolkata (IST)', sub: 'UTC+5:30' },
@@ -45,6 +46,7 @@ type Candidate = {
   session_id: string | null
   status: CandidateStatus
   match_percentage?: number | null
+  combined_score?: number | null
   match_summary?: string
   match_strengths?: string[]
   match_gaps?: string[]
@@ -54,6 +56,8 @@ type Candidate = {
   applied_at?: string
   interview_slot?: string
   call_status?: CallStatus
+  linkedin_analysis?: LinkedInAnalysis | null
+  additional_comments?: string
 }
 
 type SlotInfo = { slot: string; display: string; available: boolean; booked_by: string | null }
@@ -103,10 +107,25 @@ function recommendationBadge(rec: string | undefined) {
   return <span className={`rec-badge rec-badge--${key}`}>{rec}</span>
 }
 
-function matchBadge(pct: number | null | undefined) {
+function matchBadge(pct: number | null | undefined, hasLinkedIn?: boolean) {
   if (pct == null) return <span className="muted" style={{ fontSize: '0.85rem' }}>—</span>
   const cls = pct >= 70 ? 'match-badge match-badge--green' : pct >= 50 ? 'match-badge match-badge--amber' : 'match-badge match-badge--red'
-  return <span className={cls}>{pct}%</span>
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <span className={cls}>{pct}%</span>
+      {hasLinkedIn && (
+        <span
+          title="Includes LinkedIn verification (30%)"
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 16, height: 16, background: '#0A66C2', color: '#fff',
+            borderRadius: 3, fontSize: 9, fontWeight: 700, fontFamily: 'Georgia, serif',
+            cursor: 'default', flexShrink: 0,
+          }}
+        >in</span>
+      )}
+    </span>
+  )
 }
 
 function formatSlotDisplay(slot: string): string {
@@ -207,6 +226,20 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [analyticsLoading, setAnalyticsLoading] = useState(true)
+
+  const [editingProfileCt, setEditingProfileCt] = useState<string | null>(null)
+  const [epName, setEpName] = useState('')
+  const [epEmail, setEpEmail] = useState('')
+  const [epPhone, setEpPhone] = useState('')
+  const [epCurrentRole, setEpCurrentRole] = useState('')
+  const [epLocation, setEpLocation] = useState('')
+  const [epCurrentCtc, setEpCurrentCtc] = useState('')
+  const [epExpectedCtc, setEpExpectedCtc] = useState('')
+  const [epNoticePeriod, setEpNoticePeriod] = useState('Immediate')
+  const [epLinkedinUrl, setEpLinkedinUrl] = useState('')
+  const [epAdditionalComments, setEpAdditionalComments] = useState('')
+  const [epLoading, setEpLoading] = useState(false)
+  const [epError, setEpError] = useState('')
 
   type ShortlistConfirm = {
     name: string
@@ -592,6 +625,61 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
   function handleViewResume(c: Candidate) {
     if (c.resume_text) {
       setResumeModal({ name: c.name, text: c.resume_text, filename: '' })
+    }
+  }
+
+  function openEditProfile(c: Candidate) {
+    setEditingProfileCt(c.ct_number)
+    setEpName(c.name)
+    setEpEmail(c.email ?? '')
+    setEpPhone(c.phone ?? '')
+    setEpCurrentRole(c.current_role ?? '')
+    setEpLocation(c.location ?? '')
+    setEpCurrentCtc(c.current_ctc ?? '')
+    setEpExpectedCtc(c.expected_ctc ?? '')
+    setEpNoticePeriod(c.notice_period ?? 'Immediate')
+    setEpLinkedinUrl(c.linkedin_url ?? '')
+    setEpAdditionalComments(c.additional_comments ?? '')
+    setEpError('')
+  }
+
+  function cancelEditProfile() {
+    setEditingProfileCt(null)
+    setEpError('')
+  }
+
+  async function saveEditProfile(ct: string) {
+    setEpLoading(true)
+    setEpError('')
+    try {
+      const res = await axios.put<{ success: boolean; candidate: Candidate }>(
+        `${API}/recruiter/candidates/${ct}`,
+        {
+          name: epName.trim() || undefined,
+          email: epEmail.trim() || undefined,
+          phone: epPhone.trim() || undefined,
+          current_role: epCurrentRole.trim() || undefined,
+          location: epLocation.trim() || undefined,
+          current_ctc: epCurrentCtc.trim() || undefined,
+          expected_ctc: epExpectedCtc.trim() || undefined,
+          notice_period: epNoticePeriod || undefined,
+          linkedin_url: epLinkedinUrl.trim() || undefined,
+          additional_comments: epAdditionalComments.trim() || undefined,
+        },
+        { headers }
+      )
+      setCandidates(prev => prev.map(c => {
+        if (c.ct_number !== ct) return c
+        const updated = res.data.candidate
+        return { ...c, ...updated }
+      }))
+      setEditingProfileCt(null)
+      showToast('Profile updated successfully')
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.detail ?? 'Failed to save.' : 'Failed to save.'
+      setEpError(String(msg))
+    } finally {
+      setEpLoading(false)
     }
   }
 
@@ -1089,7 +1177,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                               <td style={{ fontWeight: 500 }}>{c.name}</td>
                               <td style={{ color: 'var(--muted)', fontFamily: 'monospace' }}>{c.ct_number}</td>
                               <td>{c.job_role}</td>
-                              <td onClick={e => e.stopPropagation()}>{matchBadge(c.match_percentage)}</td>
+                              <td onClick={e => e.stopPropagation()}>{matchBadge(c.combined_score ?? c.match_percentage, !!c.linkedin_analysis?.overall_score)}</td>
                               <td onClick={e => e.stopPropagation()}>{recommendationBadge(c.recommendation)}</td>
                               <td onClick={e => e.stopPropagation()}>
                                 <span className={STATUS_CLASSES[c.status] ?? 'badge badge--muted'}>
@@ -1130,209 +1218,300 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                 <td colSpan={6} style={{ padding: 0, background: 'var(--surface-2)' }}>
                                   <div className="candidate-panel">
 
-                                    <div className="candidate-details-grid">
-                                      {c.email && (
-                                        <div className="candidate-detail-item">
-                                          <span className="role-label">Email</span>
-                                          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.email}</span>
+                                    {editingProfileCt === c.ct_number ? (
+                                      /* ── Edit Profile Form ── */
+                                      <div>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                                          <h4 style={{ margin: 0, color: 'var(--text)' }}>Edit Profile — {c.name}</h4>
+                                          <button className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '5px 12px' }} onClick={cancelEditProfile}>Cancel</button>
                                         </div>
-                                      )}
-                                      {c.phone && (
-                                        <div className="candidate-detail-item">
-                                          <span className="role-label">Phone</span>
-                                          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.phone}</span>
-                                        </div>
-                                      )}
-                                      {c.current_role && (
-                                        <div className="candidate-detail-item">
-                                          <span className="role-label">Current Role</span>
-                                          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.current_role}</span>
-                                        </div>
-                                      )}
-                                      {c.notice_period && (
-                                        <div className="candidate-detail-item">
-                                          <span className="role-label">Notice Period</span>
-                                          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.notice_period}</span>
-                                        </div>
-                                      )}
-                                      {(c.current_ctc || c.expected_ctc) && (
-                                        <div className="candidate-detail-item">
-                                          <span className="role-label">CTC (Current → Expected)</span>
-                                          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>
-                                            {c.current_ctc || '—'} → {c.expected_ctc || '—'}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {c.match_percentage != null ? (
-                                      <>
-                                        <div className="candidate-panel-match" style={{ marginTop: 20 }}>
-                                          <div
-                                            className="candidate-match-score"
-                                            style={{
-                                              color: c.match_percentage >= 70
-                                                ? 'var(--green)'
-                                                : c.match_percentage >= 50
-                                                ? 'var(--amber)'
-                                                : 'var(--red)',
-                                            }}
-                                          >
-                                            {c.match_percentage}%
+                                        <div className="form-grid">
+                                          <div className="role-select-group">
+                                            <label className="role-label">Full Name</label>
+                                            <input className="role-input" value={epName} onChange={e => setEpName(e.target.value)} />
                                           </div>
-                                          <div style={{ flex: 1 }}>
-                                            <p className="role-label" style={{ marginBottom: 6 }}>Match Summary</p>
-                                            <p style={{ color: 'var(--text)', fontSize: '0.9rem', lineHeight: 1.6 }}>
-                                              {c.match_summary || '—'}
-                                            </p>
-                                            {(c.compensation_fit || c.notice_fit) && (
-                                              <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                                                {c.compensation_fit && (
-                                                  <span className={`fit-badge fit-badge--${c.compensation_fit === 'good' ? 'good' : c.compensation_fit === 'partial' ? 'partial' : 'mismatch'}`}>
-                                                    Compensation: {c.compensation_fit}
-                                                  </span>
-                                                )}
-                                                {c.notice_fit && (
-                                                  <span className={`fit-badge fit-badge--${c.notice_fit === 'good' ? 'good' : c.notice_fit === 'partial' ? 'partial' : 'mismatch'}`}>
-                                                    Notice: {c.notice_fit}
-                                                  </span>
-                                                )}
-                                              </div>
-                                            )}
+                                          <div className="role-select-group">
+                                            <label className="role-label">Email</label>
+                                            <input className="role-input" type="email" value={epEmail} onChange={e => setEpEmail(e.target.value)} />
+                                          </div>
+                                          <div className="role-select-group">
+                                            <label className="role-label">Phone</label>
+                                            <input className="role-input" value={epPhone} onChange={e => setEpPhone(e.target.value)} />
+                                          </div>
+                                          <div className="role-select-group">
+                                            <label className="role-label">Current Role</label>
+                                            <input className="role-input" value={epCurrentRole} onChange={e => setEpCurrentRole(e.target.value)} />
+                                          </div>
+                                          <div className="role-select-group">
+                                            <label className="role-label">Location</label>
+                                            <input className="role-input" value={epLocation} onChange={e => setEpLocation(e.target.value)} />
+                                          </div>
+                                          <div className="role-select-group">
+                                            <label className="role-label">Current CTC</label>
+                                            <input className="role-input" value={epCurrentCtc} onChange={e => setEpCurrentCtc(e.target.value)} />
+                                          </div>
+                                          <div className="role-select-group">
+                                            <label className="role-label">Expected CTC</label>
+                                            <input className="role-input" value={epExpectedCtc} onChange={e => setEpExpectedCtc(e.target.value)} />
+                                          </div>
+                                          <div className="role-select-group">
+                                            <label className="role-label">Notice Period</label>
+                                            <select className="role-select" value={epNoticePeriod} onChange={e => setEpNoticePeriod(e.target.value)}>
+                                              <option>Immediate</option>
+                                              <option>Up to 15 days</option>
+                                              <option>Up to 30 days</option>
+                                              <option>Up to 60 days</option>
+                                              <option>Up to 90 days</option>
+                                              <option>Flexible</option>
+                                            </select>
+                                          </div>
+                                          <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
+                                            <label className="role-label">LinkedIn URL</label>
+                                            <input className="role-input" placeholder="https://linkedin.com/in/..." value={epLinkedinUrl} onChange={e => setEpLinkedinUrl(e.target.value)} />
+                                          </div>
+                                          <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
+                                            <label className="role-label">Additional Comments</label>
+                                            <textarea className="role-textarea" rows={3} value={epAdditionalComments} onChange={e => setEpAdditionalComments(e.target.value)} />
                                           </div>
                                         </div>
-
-                                        {(c.match_strengths?.length || c.match_gaps?.length) ? (
-                                          <div className="two-col" style={{ marginTop: 16 }}>
-                                            {c.match_strengths && c.match_strengths.length > 0 && (
-                                              <div>
-                                                <p className="role-label" style={{ marginBottom: 8 }}>Strengths</p>
-                                                <ul className="tag-list tag-list--green">
-                                                  {c.match_strengths.map((s, i) => <li key={i}>{s}</li>)}
-                                                </ul>
-                                              </div>
-                                            )}
-                                            {c.match_gaps && c.match_gaps.length > 0 && (
-                                              <div>
-                                                <p className="role-label" style={{ marginBottom: 8 }}>Gaps</p>
-                                                <ul className="tag-list tag-list--red">
-                                                  {c.match_gaps.map((g, i) => <li key={i}>{g}</li>)}
-                                                </ul>
-                                              </div>
-                                            )}
-                                          </div>
-                                        ) : null}
-                                      </>
-                                    ) : (
-                                      <p className="muted" style={{ fontSize: '0.875rem', marginTop: 12 }}>
-                                        No resume analysis available.
-                                      </p>
-                                    )}
-
-                                    {c.recommendation && (
-                                      <div style={{ marginTop: 16 }}>
-                                        <p className="role-label" style={{ marginBottom: 6 }}>AI Recommendation</p>
-                                        {recommendationBadge(c.recommendation)}
-                                      </div>
-                                    )}
-
-                                    {c.interview_slot && (
-                                      <div style={{ marginTop: 16 }}>
-                                        <p className="role-label" style={{ marginBottom: 6 }}>Scheduled Interview</p>
-                                        <span style={{ color: 'var(--primary-light)', fontWeight: 600, fontSize: '0.9rem' }}>
-                                          {formatSlotDisplay(c.interview_slot)}
-                                        </span>
-                                      </div>
-                                    )}
-
-                                    {c.call_status && (() => {
-                                      const cs = c.call_status
-                                      const steps = [
-                                        { label: 'Call Made', done: cs.call_made === true, ts: cs.call_made_at },
-                                        { label: 'Call Answered', done: cs.call_answered === true, ts: cs.call_answered_at },
-                                        { label: 'Call Complete', done: cs.call_complete === true && cs.call_answered === true, ts: cs.call_complete_at },
-                                      ]
-                                      return (
-                                        <div style={{ marginTop: 16, border: '1px solid #e2e8f0', borderRadius: 10, padding: '16px 18px', background: '#fff' }}>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
-                                            <span style={{ fontSize: '0.95rem' }}>📞</span>
-                                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#042C53' }}>Call Status</span>
-                                          </div>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-                                            {steps.map((step, i) => (
-                                              <>
-                                                <div key={step.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 80 }}>
-                                                  <div style={{
-                                                    width: 28, height: 28, borderRadius: '50%',
-                                                    background: step.done ? '#0F6E56' : 'transparent',
-                                                    border: step.done ? 'none' : '2px solid #cbd5e1',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    flexShrink: 0,
-                                                  }}>
-                                                    {step.done && <span style={{ color: '#fff', fontSize: 13, lineHeight: 1 }}>✓</span>}
-                                                  </div>
-                                                  <span style={{ fontSize: 11, fontWeight: step.done ? 600 : 400, color: step.done ? '#042C53' : '#94a3b8', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                                    {step.label}
-                                                  </span>
-                                                  {step.done && step.ts && (
-                                                    <span style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>
-                                                      {new Date(step.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                  )}
-                                                </div>
-                                                {i < steps.length - 1 && (
-                                                  <div key={`line-${i}`} style={{
-                                                    flex: 1, height: 2, marginBottom: 20,
-                                                    background: (step.done && steps[i + 1].done) ? '#0F6E56' : '#e2e8f0',
-                                                  }} />
-                                                )}
-                                              </>
-                                            ))}
-                                          </div>
-                                          {cs.note && !cs.call_answered && (
-                                            <div style={{ marginTop: 12, background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 7, padding: '8px 12px', fontSize: '0.8rem', color: '#92400E' }}>
-                                              Candidate did not answer. Email sent with slot booking link.
-                                            </div>
-                                          )}
-                                          {cs.message_delivered && (
-                                            <div style={{ marginTop: 12, background: '#E1F5EE', border: '1px solid #BBF7D0', borderRadius: 7, padding: '8px 12px', fontSize: '0.8rem', color: '#0F6E56', fontWeight: 500 }}>
-                                              Core message delivered successfully.
-                                            </div>
-                                          )}
-                                        </div>
-                                      )
-                                    })()}
-
-                                    <div className="candidate-panel-actions">
-                                      {c.status === 'applied' && (
-                                        <>
-                                          <button
-                                            className="btn"
-                                            style={{ background: '#5B21B6', color: '#fff', fontSize: '0.875rem', padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer' }}
-                                            disabled={shortlistingCt === c.ct_number}
-                                            onClick={e => { e.stopPropagation(); handleShortlist(c.ct_number) }}
-                                          >
-                                            {shortlistingCt === c.ct_number ? 'Shortlisting…' : 'Shortlist'}
+                                        {epError && <p className="error-text" style={{ marginTop: 10 }}>{epError}</p>}
+                                        <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                                          <button className="btn btn-primary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} disabled={epLoading} onClick={() => saveEditProfile(c.ct_number)}>
+                                            {epLoading ? 'Saving…' : 'Save Changes'}
                                           </button>
-                                          <button className="btn btn-danger" style={{ fontSize: '0.875rem', padding: '8px 20px', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={e => { e.stopPropagation(); handleReject(c.ct_number) }}>Reject</button>
-                                        </>
-                                      )}
-                                      {c.status === 'shortlisted' && (
-                                        <>
-                                          <button className="btn btn-primary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); openScheduleModal(c.ct_number) }}>Schedule Interview</button>
-                                          <button className="btn btn-danger" style={{ fontSize: '0.875rem', padding: '8px 20px', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={e => { e.stopPropagation(); handleReject(c.ct_number) }}>Reject</button>
-                                        </>
-                                      )}
-                                      {c.status === 'interview_scheduled' && (
-                                        <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); openScheduleModal(c.ct_number) }}>Reschedule</button>
-                                      )}
-                                      {c.status === 'interview_complete' && (
-                                        <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); onViewScorecard(c.ct_number) }}>View Feedback</button>
-                                      )}
-                                      {c.resume_text && (
-                                        <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); handleViewResume(c) }}>View Resume</button>
-                                      )}
-                                    </div>
+                                          <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={cancelEditProfile}>Cancel</button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      /* ── Detail View ── */
+                                      <>
+                                        {/* Header row with Edit Profile button */}
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+                                          <button
+                                            className="btn btn-secondary"
+                                            style={{ fontSize: '0.8rem', padding: '5px 14px' }}
+                                            onClick={e => { e.stopPropagation(); openEditProfile(c) }}
+                                          >
+                                            Edit Profile
+                                          </button>
+                                        </div>
+
+                                        <div className="candidate-details-grid">
+                                          {c.email && (
+                                            <div className="candidate-detail-item">
+                                              <span className="role-label">Email</span>
+                                              <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.email}</span>
+                                            </div>
+                                          )}
+                                          {c.phone && (
+                                            <div className="candidate-detail-item">
+                                              <span className="role-label">Phone</span>
+                                              <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.phone}</span>
+                                            </div>
+                                          )}
+                                          {c.current_role && (
+                                            <div className="candidate-detail-item">
+                                              <span className="role-label">Current Role</span>
+                                              <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.current_role}</span>
+                                            </div>
+                                          )}
+                                          {c.notice_period && (
+                                            <div className="candidate-detail-item">
+                                              <span className="role-label">Notice Period</span>
+                                              <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{c.notice_period}</span>
+                                            </div>
+                                          )}
+                                          {(c.current_ctc || c.expected_ctc) && (
+                                            <div className="candidate-detail-item">
+                                              <span className="role-label">CTC (Current → Expected)</span>
+                                              <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>
+                                                {c.current_ctc || '—'} → {c.expected_ctc || '—'}
+                                              </span>
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {c.match_percentage != null ? (
+                                          <>
+                                            <div className="candidate-panel-match" style={{ marginTop: 20 }}>
+                                              <div
+                                                className="candidate-match-score"
+                                                style={{
+                                                  color: c.match_percentage >= 70
+                                                    ? 'var(--green)'
+                                                    : c.match_percentage >= 50
+                                                    ? 'var(--amber)'
+                                                    : 'var(--red)',
+                                                }}
+                                              >
+                                                {c.combined_score ?? c.match_percentage}%
+                                              </div>
+                                              <div style={{ flex: 1 }}>
+                                                <p className="role-label" style={{ marginBottom: 6 }}>Match Summary</p>
+                                                <p style={{ color: 'var(--text)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                                                  {c.match_summary || '—'}
+                                                </p>
+                                                {(c.compensation_fit || c.notice_fit) && (
+                                                  <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                                                    {c.compensation_fit && (
+                                                      <span className={`fit-badge fit-badge--${c.compensation_fit === 'good' ? 'good' : c.compensation_fit === 'partial' ? 'partial' : 'mismatch'}`}>
+                                                        Compensation: {c.compensation_fit}
+                                                      </span>
+                                                    )}
+                                                    {c.notice_fit && (
+                                                      <span className={`fit-badge fit-badge--${c.notice_fit === 'good' ? 'good' : c.notice_fit === 'partial' ? 'partial' : 'mismatch'}`}>
+                                                        Notice: {c.notice_fit}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+
+                                            {(c.match_strengths?.length || c.match_gaps?.length) ? (
+                                              <div className="two-col" style={{ marginTop: 16 }}>
+                                                {c.match_strengths && c.match_strengths.length > 0 && (
+                                                  <div>
+                                                    <p className="role-label" style={{ marginBottom: 8 }}>Strengths</p>
+                                                    <ul className="tag-list tag-list--green">
+                                                      {c.match_strengths.map((s, i) => <li key={i}>{s}</li>)}
+                                                    </ul>
+                                                  </div>
+                                                )}
+                                                {c.match_gaps && c.match_gaps.length > 0 && (
+                                                  <div>
+                                                    <p className="role-label" style={{ marginBottom: 8 }}>Gaps</p>
+                                                    <ul className="tag-list tag-list--red">
+                                                      {c.match_gaps.map((g, i) => <li key={i}>{g}</li>)}
+                                                    </ul>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            ) : null}
+                                          </>
+                                        ) : (
+                                          <p className="muted" style={{ fontSize: '0.875rem', marginTop: 12 }}>
+                                            No resume analysis available.
+                                          </p>
+                                        )}
+
+                                        {/* LinkedIn Analysis Widget */}
+                                        {c.linkedin_analysis && (
+                                          <div style={{ marginTop: 16 }}>
+                                            <LinkedInWidget
+                                              linkedin_analysis={c.linkedin_analysis}
+                                              combined_score={c.combined_score}
+                                              match_percentage={c.match_percentage}
+                                            />
+                                          </div>
+                                        )}
+
+                                        {c.recommendation && (
+                                          <div style={{ marginTop: 16 }}>
+                                            <p className="role-label" style={{ marginBottom: 6 }}>AI Recommendation</p>
+                                            {recommendationBadge(c.recommendation)}
+                                          </div>
+                                        )}
+
+                                        {c.interview_slot && (
+                                          <div style={{ marginTop: 16 }}>
+                                            <p className="role-label" style={{ marginBottom: 6 }}>Scheduled Interview</p>
+                                            <span style={{ color: 'var(--primary-light)', fontWeight: 600, fontSize: '0.9rem' }}>
+                                              {formatSlotDisplay(c.interview_slot)}
+                                            </span>
+                                          </div>
+                                        )}
+
+                                        {c.call_status && (() => {
+                                          const cs = c.call_status
+                                          const steps = [
+                                            { label: 'Call Made', done: cs.call_made === true, ts: cs.call_made_at },
+                                            { label: 'Call Answered', done: cs.call_answered === true, ts: cs.call_answered_at },
+                                            { label: 'Call Complete', done: cs.call_complete === true && cs.call_answered === true, ts: cs.call_complete_at },
+                                          ]
+                                          return (
+                                            <div style={{ marginTop: 16, border: '1px solid #e2e8f0', borderRadius: 10, padding: '16px 18px', background: '#fff' }}>
+                                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                                                <span style={{ fontSize: '0.95rem' }}>📞</span>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#042C53' }}>Call Status</span>
+                                              </div>
+                                              <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                                                {steps.map((step, i) => (
+                                                  <>
+                                                    <div key={step.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 80 }}>
+                                                      <div style={{
+                                                        width: 28, height: 28, borderRadius: '50%',
+                                                        background: step.done ? '#0F6E56' : 'transparent',
+                                                        border: step.done ? 'none' : '2px solid #cbd5e1',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        flexShrink: 0,
+                                                      }}>
+                                                        {step.done && <span style={{ color: '#fff', fontSize: 13, lineHeight: 1 }}>✓</span>}
+                                                      </div>
+                                                      <span style={{ fontSize: 11, fontWeight: step.done ? 600 : 400, color: step.done ? '#042C53' : '#94a3b8', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                                        {step.label}
+                                                      </span>
+                                                      {step.done && step.ts && (
+                                                        <span style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>
+                                                          {new Date(step.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                    {i < steps.length - 1 && (
+                                                      <div key={`line-${i}`} style={{
+                                                        flex: 1, height: 2, marginBottom: 20,
+                                                        background: (step.done && steps[i + 1].done) ? '#0F6E56' : '#e2e8f0',
+                                                      }} />
+                                                    )}
+                                                  </>
+                                                ))}
+                                              </div>
+                                              {cs.note && !cs.call_answered && (
+                                                <div style={{ marginTop: 12, background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 7, padding: '8px 12px', fontSize: '0.8rem', color: '#92400E' }}>
+                                                  Candidate did not answer. Email sent with slot booking link.
+                                                </div>
+                                              )}
+                                              {cs.message_delivered && (
+                                                <div style={{ marginTop: 12, background: '#E1F5EE', border: '1px solid #BBF7D0', borderRadius: 7, padding: '8px 12px', fontSize: '0.8rem', color: '#0F6E56', fontWeight: 500 }}>
+                                                  Core message delivered successfully.
+                                                </div>
+                                              )}
+                                            </div>
+                                          )
+                                        })()}
+
+                                        <div className="candidate-panel-actions">
+                                          {c.status === 'applied' && (
+                                            <>
+                                              <button
+                                                className="btn"
+                                                style={{ background: '#5B21B6', color: '#fff', fontSize: '0.875rem', padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer' }}
+                                                disabled={shortlistingCt === c.ct_number}
+                                                onClick={e => { e.stopPropagation(); handleShortlist(c.ct_number) }}
+                                              >
+                                                {shortlistingCt === c.ct_number ? 'Shortlisting…' : 'Shortlist'}
+                                              </button>
+                                              <button className="btn btn-danger" style={{ fontSize: '0.875rem', padding: '8px 20px', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={e => { e.stopPropagation(); handleReject(c.ct_number) }}>Reject</button>
+                                            </>
+                                          )}
+                                          {c.status === 'shortlisted' && (
+                                            <>
+                                              <button className="btn btn-primary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); openScheduleModal(c.ct_number) }}>Schedule Interview</button>
+                                              <button className="btn btn-danger" style={{ fontSize: '0.875rem', padding: '8px 20px', alignSelf: 'unset' }} disabled={actionCt === c.ct_number} onClick={e => { e.stopPropagation(); handleReject(c.ct_number) }}>Reject</button>
+                                            </>
+                                          )}
+                                          {c.status === 'interview_scheduled' && (
+                                            <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); openScheduleModal(c.ct_number) }}>Reschedule</button>
+                                          )}
+                                          {c.status === 'interview_complete' && (
+                                            <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); onViewScorecard(c.ct_number) }}>View Feedback</button>
+                                          )}
+                                          {c.resume_text && (
+                                            <button className="btn btn-secondary" style={{ fontSize: '0.875rem', padding: '8px 20px' }} onClick={e => { e.stopPropagation(); handleViewResume(c) }}>View Resume</button>
+                                          )}
+                                        </div>
+                                      </>
+                                    )}
 
                                   </div>
                                 </td>

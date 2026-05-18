@@ -56,6 +56,55 @@
       "message_delivered": true,
       "call_sid": "CAxxxx001",
       "note": "Candidate confirmed receipt of email"
+    },
+    "linkedin_analysis": {
+      "linkedin_url": "https://linkedin.com/in/priyasharma-sf",
+      "status": "verified_match",
+      "status_label": "Verified Match",
+      "status_color": "#0F6E56",
+      "overall_score": 91,
+      "experience_comparison": {
+        "resume_years": 4,
+        "linkedin_years": 4.2,
+        "match": true,
+        "note": "LinkedIn confirms 4+ years at TCS as Salesforce Admin. Consistent with resume."
+      },
+      "certifications": [
+        {
+          "name": "Salesforce Certified Administrator",
+          "verified": true
+        },
+        {
+          "name": "Sales Cloud Consultant",
+          "verified": true
+        },
+        {
+          "name": "Service Cloud Consultant",
+          "verified": false
+        }
+      ],
+      "recent_activity": [
+        "Shared Salesforce Winter 24 release highlights",
+        "Posted about Flow Builder best practices",
+        "Completed Trailhead Superbadge: Business Administration"
+      ],
+      "skills_match": {
+        "resume_skills": [
+          "Salesforce Admin",
+          "Sales Cloud",
+          "Flows",
+          "Reports"
+        ],
+        "linkedin_skills": [
+          "Salesforce",
+          "Sales Cloud",
+          "Service Cloud",
+          "Flow Builder",
+          "SOQL"
+        ],
+        "overlap_percentage": 88
+      },
+      "scanned_at": "2026-05-13T09:00:00+00:00"
     }
   },
   {
@@ -100,6 +149,49 @@
       "message_delivered": false,
       "call_sid": "CAxxxx002",
       "note": "Candidate did not answer. Email sent."
+    },
+    "linkedin_analysis": {
+      "linkedin_url": "https://linkedin.com/in/rahulmehta-dev",
+      "status": "mismatch",
+      "status_label": "Mismatch Detected",
+      "status_color": "#A32D2D",
+      "overall_score": 52,
+      "experience_comparison": {
+        "resume_years": 3,
+        "linkedin_years": 1.5,
+        "match": false,
+        "note": "Resume claims 3 years experience but LinkedIn shows only 1.5 years in Salesforce roles. Discrepancy detected."
+      },
+      "certifications": [
+        {
+          "name": "Salesforce Platform Developer I",
+          "verified": false
+        },
+        {
+          "name": "JavaScript Developer I",
+          "verified": false
+        }
+      ],
+      "recent_activity": [
+        "No recent Salesforce-related posts",
+        "Last activity: 8 months ago"
+      ],
+      "skills_match": {
+        "resume_skills": [
+          "Apex",
+          "LWC",
+          "SOQL",
+          "REST APIs",
+          "Integration"
+        ],
+        "linkedin_skills": [
+          "JavaScript",
+          "React",
+          "Node.js"
+        ],
+        "overlap_percentage": 25
+      },
+      "scanned_at": "2026-05-13T10:00:00+00:00"
     }
   },
   {
@@ -134,7 +226,19 @@
     "notice_fit": "good",
     "session_id": null,
     "status": "applied",
-    "applied_at": "2026-04-12T14:00:00+00:00"
+    "applied_at": "2026-04-12T14:00:00+00:00",
+    "linkedin_analysis": {
+      "linkedin_url": null,
+      "status": "no_url",
+      "status_label": "No LinkedIn URL",
+      "status_color": "#64748b",
+      "overall_score": null,
+      "experience_comparison": null,
+      "certifications": [],
+      "recent_activity": [],
+      "skills_match": null,
+      "scanned_at": null
+    }
   },
   {
     "name": "Arjun Kumar",
@@ -233,7 +337,19 @@
     "notice_fit": "mismatch",
     "session_id": null,
     "status": "applied",
-    "applied_at": "2026-04-13T16:00:00+00:00"
+    "applied_at": "2026-04-13T16:00:00+00:00",
+    "linkedin_analysis": {
+      "linkedin_url": null,
+      "status": "no_url",
+      "status_label": "No LinkedIn URL",
+      "status_color": "#64748b",
+      "overall_score": null,
+      "experience_comparison": null,
+      "certifications": [],
+      "recent_activity": [],
+      "skills_match": null,
+      "scanned_at": null
+    }
   },
   {
     "name": "Anita Desai",
@@ -332,7 +448,19 @@
     "notice_fit": "good",
     "session_id": null,
     "status": "applied",
-    "applied_at": "2026-04-15T09:30:00+00:00"
+    "applied_at": "2026-04-15T09:30:00+00:00",
+    "linkedin_analysis": {
+      "linkedin_url": null,
+      "status": "no_url",
+      "status_label": "No LinkedIn URL",
+      "status_color": "#64748b",
+      "overall_score": null,
+      "experience_comparison": null,
+      "certifications": [],
+      "recent_activity": [],
+      "skills_match": null,
+      "scanned_at": null
+    }
   },
   {
     "name": "Deepak Verma",
@@ -431,7 +559,19 @@
     "notice_fit": "good",
     "session_id": null,
     "status": "applied",
-    "applied_at": "2026-04-16T10:00:00+00:00"
+    "applied_at": "2026-04-16T10:00:00+00:00",
+    "linkedin_analysis": {
+      "linkedin_url": null,
+      "status": "no_url",
+      "status_label": "No LinkedIn URL",
+      "status_color": "#64748b",
+      "overall_score": null,
+      "experience_comparison": null,
+      "certifications": [],
+      "recent_activity": [],
+      "skills_match": null,
+      "scanned_at": null
+    }
   },
   {
     "name": "Ananya Krishnan",
@@ -475,6 +615,33 @@
       "message_delivered": false,
       "call_sid": "CAxxxx003",
       "note": "Call disconnected before message delivered"
+    },
+    "linkedin_analysis": {
+      "linkedin_url": "https://linkedin.com/in/ananyak-qa",
+      "status": "no_match",
+      "status_label": "Profile Not Found",
+      "status_color": "#854F0B",
+      "overall_score": 0,
+      "experience_comparison": {
+        "resume_years": 2,
+        "linkedin_years": 0,
+        "match": false,
+        "note": "LinkedIn profile URL provided but profile appears to be private or deleted. Unable to verify experience."
+      },
+      "certifications": [],
+      "recent_activity": [
+        "Profile is private or unavailable"
+      ],
+      "skills_match": {
+        "resume_skills": [
+          "Manual Testing",
+          "Selenium",
+          "JIRA"
+        ],
+        "linkedin_skills": [],
+        "overlap_percentage": 0
+      },
+      "scanned_at": "2026-05-13T11:00:00+00:00"
     }
   },
   {
@@ -519,6 +686,59 @@
       "message_delivered": true,
       "call_sid": "CAxxxx004",
       "note": "Candidate asked about interview format. Informed about AI interview."
+    },
+    "linkedin_analysis": {
+      "linkedin_url": "https://linkedin.com/in/vikramnair-sf",
+      "status": "verified_match",
+      "status_label": "Strong Verified Match",
+      "status_color": "#0F6E56",
+      "overall_score": 96,
+      "experience_comparison": {
+        "resume_years": 5,
+        "linkedin_years": 5.5,
+        "match": true,
+        "note": "LinkedIn shows additional experience not on resume. Senior roles at Infosys and TCS confirmed."
+      },
+      "certifications": [
+        {
+          "name": "Salesforce Platform Developer I",
+          "verified": true
+        },
+        {
+          "name": "Salesforce Platform Developer II",
+          "verified": true
+        },
+        {
+          "name": "Application Architect",
+          "verified": true
+        }
+      ],
+      "recent_activity": [
+        "Published article: CI/CD Best Practices in Salesforce",
+        "Earned Trailhead Ranger status",
+        "Spoke at Salesforce Mumbai User Group",
+        "Completed Salesforce Architect certification"
+      ],
+      "skills_match": {
+        "resume_skills": [
+          "Apex",
+          "LWC",
+          "SOQL",
+          "Platform Events",
+          "MuleSoft"
+        ],
+        "linkedin_skills": [
+          "Apex",
+          "LWC",
+          "SOQL",
+          "Platform Events",
+          "REST APIs",
+          "CI/CD",
+          "Git"
+        ],
+        "overlap_percentage": 94
+      },
+      "scanned_at": "2026-05-13T14:00:00+00:00"
     }
   }
 ]
