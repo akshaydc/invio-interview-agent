@@ -76,7 +76,8 @@
     "role_budget": "8-15 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
-    "created_at": "2026-01-15T00:00:00+00:00"
+    "created_at": "2026-01-15T00:00:00+00:00",
+    "job_code": "ASTRA-2026-0001"
   },
   {
     "id": "d1e2f3a4-0002-0000-0000-000000000002",
@@ -100,7 +101,8 @@
     "role_budget": "15-25 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
-    "created_at": "2026-01-20T00:00:00+00:00"
+    "created_at": "2026-01-20T00:00:00+00:00",
+    "job_code": "ASTRA-2026-0002"
   },
   {
     "id": "d1e2f3a4-0003-0000-0000-000000000003",
@@ -124,7 +126,8 @@
     "role_budget": "8-14 LPA",
     "preferred_notice": "Immediate to 30 days",
     "status": "open",
-    "created_at": "2026-02-01T00:00:00+00:00"
+    "created_at": "2026-02-01T00:00:00+00:00",
+    "job_code": "ASTRA-2026-0003"
   },
   {
     "id": "d1e2f3a4-0004-0000-0000-000000000004",
@@ -148,6 +151,7 @@
     "role_budget": "12-20 LPA",
     "preferred_notice": "Up to 45 days",
     "status": "open",
-    "created_at": "2026-02-10T00:00:00+00:00"
+    "created_at": "2026-02-10T00:00:00+00:00",
+    "job_code": "ASTRA-2026-0004"
   }
 ]

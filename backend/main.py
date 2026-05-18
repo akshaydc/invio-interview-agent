@@ -1257,11 +1257,25 @@ async def get_analytics(_auth: dict = Depends(verify_recruiter_token)) -> dict:
 
 
 @app.get("/recruiter/candidates")
-async def list_candidates(_auth: dict = Depends(verify_recruiter_token)) -> list:
+async def list_candidates(
+    linkedin_verified: bool | None = None,
+    has_linkedin: bool | None = None,
+    _auth: dict = Depends(verify_recruiter_token),
+) -> list:
     candidates = await _read_candidates()
     rows = []
     for c in candidates:
         rows.extend(_flatten_for_recruiter(c))
+    if linkedin_verified is not None:
+        if linkedin_verified:
+            rows = [r for r in rows if (r.get("linkedin_analysis") or {}).get("status") == "verified_match"]
+        else:
+            rows = [r for r in rows if (r.get("linkedin_analysis") or {}).get("status") != "verified_match"]
+    if has_linkedin is not None:
+        if has_linkedin:
+            rows = [r for r in rows if r.get("linkedin_url")]
+        else:
+            rows = [r for r in rows if not r.get("linkedin_url")]
     return rows
 
 
@@ -1500,13 +1514,18 @@ async def shortlist_candidate(
     cand_email = candidate.get("email", "")
     cand_name = candidate.get("name", "Candidate")
     job_title = app.get("job_title") or app.get("job_role", "the role")
+    _sl_job_id = app.get("job_id") or body.job_id
+    _sl_jobs = await _read_jobs()
+    _sl_job_obj = next((j for j in _sl_jobs if j["id"] == _sl_job_id), None) if _sl_job_id else None
+    sl_job_code = _sl_job_obj.get("job_code", "") if _sl_job_obj else ""
+    sl_job_code_str = f" (Job ID: {sl_job_code})" if sl_job_code else ""
     slot_booking_url = f"{FRONTEND_URL}/book-slot?token={slot_booking_token}&ct={ct_number}"
     email_queued = False
     if cand_email:
         shortlist_html = (
             f"<h2>Congratulations! You have been shortlisted.</h2>"
             f"<p>Dear {cand_name},</p>"
-            f"<p>We are pleased to inform you that your profile has been shortlisted for <b>{job_title}</b>.</p>"
+            f"<p>We are pleased to inform you that your profile has been shortlisted for <b>{job_title}</b>{sl_job_code_str}.</p>"
             f"<p>Please click the link below to choose your preferred interview slot:</p>"
             f'<p><a href="{slot_booking_url}" style="background:#0C447C;color:white;padding:12px 24px;'
             f'border-radius:6px;text-decoration:none;display:inline-block">Book Your Interview Slot →</a></p>'
@@ -1572,11 +1591,16 @@ async def reject_candidate(
     cand_email = candidate.get("email", "")
     cand_name = candidate.get("name", "Candidate")
     job_title = app.get("job_title") or app.get("job_role", "the role")
+    _rj_job_id = app.get("job_id") or body.job_id
+    _rj_jobs = await _read_jobs()
+    _rj_job_obj = next((j for j in _rj_jobs if j["id"] == _rj_job_id), None) if _rj_job_id else None
+    rj_job_code = _rj_job_obj.get("job_code", "") if _rj_job_obj else ""
+    rj_job_code_str = f" (Job ID: {rj_job_code})" if rj_job_code else ""
     if cand_email:
         reject_html = (
             f"<h2>Application Status Update</h2>"
             f"<p>Dear {cand_name},</p>"
-            f"<p>Thank you for your interest in {job_title}.</p>"
+            f"<p>Thank you for your interest in {job_title}{rj_job_code_str}.</p>"
             f"<p>After careful review, we will not be moving forward with your application at this time.</p>"
             f"<p>We encourage you to apply for future openings.</p>"
             f"<p>Best regards,<br>Invio Recruitment Team</p>"
@@ -2030,9 +2054,39 @@ async def match_resume_to_jobs(
 
 
 @app.get("/jobs")
-async def list_jobs() -> list:
+async def list_jobs(
+    job_type: str | None = None,
+    location_type: str | None = None,
+    location: str | None = None,
+    department: str | None = None,
+    experience: str | None = None,
+    search: str | None = None,
+) -> list:
     jobs = await _read_jobs()
-    return [j for j in jobs if j.get("status") == "open"]
+    result = [j for j in jobs if j.get("status") == "open"]
+    if job_type:
+        jt = job_type.lower()
+        result = [j for j in result if j.get("job_type", "").lower() == jt]
+    if location_type:
+        lt = location_type.lower()
+        result = [j for j in result if lt in j.get("location", "").lower()]
+    if location:
+        loc = location.lower()
+        result = [j for j in result if loc in j.get("location", "").lower()]
+    if department:
+        dept = department.lower()
+        result = [j for j in result if dept in j.get("department", "").lower()]
+    if experience:
+        exp = experience.lower()
+        result = [j for j in result if exp in j.get("experience", "").lower()]
+    if search:
+        s = search.lower()
+        result = [j for j in result if (
+            s in j.get("title", "").lower()
+            or s in j.get("description", "").lower()
+            or any(s in r.lower() for r in j.get("requirements", []))
+        )]
+    return result
 
 
 @app.get("/jobs/{job_id}")
@@ -2195,11 +2249,13 @@ async def apply_for_job(
 
     await _write_candidates(candidates)
 
+    ap_job_code = job.get("job_code", "")
+    ap_job_code_str = f" (Job ID: {ap_job_code})" if ap_job_code else ""
     if is_new:
         apply_html = (
             f"<h2>Application Received</h2>"
             f"<p>Dear {name},</p>"
-            f"<p>Thank you for applying for <b>{job['title']}</b>.</p>"
+            f"<p>Thank you for applying for <b>{job['title']}</b>{ap_job_code_str}.</p>"
             f"<p>Your CT Number is: <b style=\"color:#0C447C\">{ct_number}</b></p>"
             f"<p>Use this CT number to login and track all your applications.</p>"
             f"<p>We will be in touch if your profile matches our requirements.</p>"
@@ -2209,7 +2265,7 @@ async def apply_for_job(
         apply_html = (
             f"<h2>New Application Received</h2>"
             f"<p>Dear {name},</p>"
-            f"<p>Thank you for applying for <b>{job['title']}</b>.</p>"
+            f"<p>Thank you for applying for <b>{job['title']}</b>{ap_job_code_str}.</p>"
             f"<p>This application has been added to your existing account. "
             f"Log in with your CT Number <b style=\"color:#0C447C\">{ct_number}</b> to track all your applications.</p>"
             f"<p>Best regards,<br>ASTRA Recruitment Team</p>"
@@ -2261,8 +2317,12 @@ async def create_job(
 
     requirements_list = [r.strip() for r in requirements.split(",") if r.strip()]
 
+    year = datetime.now().year
+    job_code = f"ASTRA-{year}-{len(jobs) + 1:04d}"
+
     job = {
         "id": str(uuid.uuid4()),
+        "job_code": job_code,
         "title": title,
         "department": department,
         "location": location,
@@ -3199,6 +3259,24 @@ def _seed_demo_data() -> None:
     if _linkedin_changed:
         CANDIDATES_FILE.write_text(json.dumps(existing_candidates, indent=2))
         print("Updated demo candidates with LinkedIn analysis data.")
+
+    # ── Job codes for demo jobs (always check) ───────────────────────────────
+    _current_jobs = json.loads(JOBS_FILE.read_text()) if JOBS_FILE.exists() else []
+    _job_codes_map = {
+        DEMO_JOB_IDS["sf_admin"]: "ASTRA-2026-0001",
+        DEMO_JOB_IDS["sf_dev"]:   "ASTRA-2026-0002",
+        DEMO_JOB_IDS["qa_eng"]:   "ASTRA-2026-0003",
+        DEMO_JOB_IDS["ba"]:       "ASTRA-2026-0004",
+    }
+    _jobs_code_changed = False
+    for _job in _current_jobs:
+        code = _job_codes_map.get(_job["id"])
+        if code and "job_code" not in _job:
+            _job["job_code"] = code
+            _jobs_code_changed = True
+    if _jobs_code_changed:
+        JOBS_FILE.write_text(json.dumps(_current_jobs, indent=2))
+        print("Updated demo jobs with job codes.")
 
 
 @app.on_event("startup")
