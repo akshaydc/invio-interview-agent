@@ -4397,7 +4397,7 @@ async def create_tara_session(job_role: str = "Software Engineer"):
                 "Content-Type": "application/json"
             },
             json={
-                "persona_id": "p2f1c5c55e2a",
+                "persona_id": "p28bac8181b4",
                 "replica_id": "r9664272580d",
                 "conversation_name": f"{job_role} Interview",
                 "custom_greeting": f"Hi! I'm Tara, your AI interviewer today for the {job_role} position. Let's get started!"
