@@ -122,7 +122,7 @@ _SEED_JOBS = [
     {
         "id": "b1e2c3d4-0002-0000-0000-000000000002",
         "title": "Salesforce Administrator",
-        "department": "Sales Operations",
+        "department": "Salesforce",
         "location": "Hybrid – Mumbai",
         "job_type": "Full-time",
         "experience": "2-4 years",
@@ -167,6 +167,330 @@ _SEED_JOBS = [
         "status": "open",
         "created_at": "2026-02-15T00:00:00+00:00",
     },
+    {
+        "id": "e1f2a3b4-0001-0000-0000-000000000001",
+        "title": "Data Engineer",
+        "department": "Engineering",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "3-5 years",
+        "description": (
+            "We are looking for a Data Engineer to build and maintain our data infrastructure. "
+            "You will design and implement scalable data pipelines, maintain data warehouses, and collaborate "
+            "with data analysts and scientists to support business intelligence initiatives. "
+            "Experience with cloud platforms and modern data stack tools is essential."
+        ),
+        "requirements": ["Python", "SQL", "Apache Spark", "dbt", "Apache Airflow", "AWS or GCP", "Data Warehousing", "ETL Pipelines", "Git"],
+        "role_budget": "18-28 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-01T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0002-0000-0000-000000000002",
+        "title": "UX Designer",
+        "department": "Design",
+        "location": "Hybrid - Bangalore",
+        "job_type": "Full-time",
+        "experience": "2-4 years",
+        "description": (
+            "We are seeking a creative and user-focused UX Designer to craft intuitive product experiences. "
+            "You will conduct user research, create wireframes and interactive prototypes, and partner with "
+            "product managers and engineers to deliver polished, accessible interfaces. "
+            "A strong portfolio demonstrating end-to-end design process is required."
+        ),
+        "requirements": ["Figma", "User Research", "Wireframing", "Prototyping", "Design Systems", "Usability Testing", "Accessibility Standards"],
+        "role_budget": "12-20 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-05T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0003-0000-0000-000000000003",
+        "title": "DevOps Engineer",
+        "department": "Engineering",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "4-6 years",
+        "description": (
+            "We are hiring a DevOps Engineer to build and maintain our cloud infrastructure and CI/CD pipelines. "
+            "You will manage Kubernetes clusters, automate deployments, implement infrastructure-as-code, "
+            "and monitor system health. You will collaborate closely with engineering teams to improve "
+            "release velocity and system reliability."
+        ),
+        "requirements": ["Kubernetes", "Docker", "CI/CD (GitHub Actions/Jenkins)", "Terraform", "AWS or GCP", "Linux", "Bash/Python scripting", "Prometheus/Grafana"],
+        "role_budget": "20-32 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-10T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0004-0000-0000-000000000004",
+        "title": "Marketing Manager",
+        "department": "Marketing",
+        "location": "Mumbai",
+        "job_type": "Full-time",
+        "experience": "5-8 years",
+        "description": (
+            "We are looking for a Marketing Manager to lead our go-to-market strategy and brand presence. "
+            "You will own digital marketing campaigns, manage content strategy across channels, drive lead "
+            "generation, and collaborate with sales to optimize the full funnel. "
+            "Experience in SaaS or B2B marketing is strongly preferred."
+        ),
+        "requirements": ["Digital Marketing", "Content Strategy", "SEO/SEM", "HubSpot or Marketo", "Lead Generation", "Google Analytics", "B2B/SaaS Marketing", "Campaign Management", "Team Leadership"],
+        "role_budget": "20-30 LPA",
+        "preferred_notice": "Up to 45 days",
+        "status": "open",
+        "created_at": "2026-03-12T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0005-0000-0000-000000000005",
+        "title": "Business Analyst",
+        "department": "Operations",
+        "location": "Hybrid - Delhi",
+        "job_type": "Full-time",
+        "experience": "2-4 years",
+        "description": (
+            "We are seeking a Business Analyst with a focus on operations and process improvement. "
+            "You will work with cross-functional teams to identify process inefficiencies, document workflows, "
+            "and implement data-driven solutions. Experience with ERP or CRM systems is a plus."
+        ),
+        "requirements": ["Requirements Gathering", "Process Mapping", "Data Analysis", "User Stories", "Stakeholder Management", "SQL", "JIRA", "Agile/Scrum"],
+        "role_budget": "10-16 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-15T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0006-0000-0000-000000000006",
+        "title": "React Frontend Developer",
+        "department": "Engineering",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "2-5 years",
+        "description": (
+            "We are looking for a React Frontend Developer to build responsive, high-performance web applications. "
+            "You will translate Figma designs into pixel-perfect UI components, write clean TypeScript and React code, "
+            "and optimize application performance. Strong attention to detail and experience with modern frontend "
+            "tooling is required."
+        ),
+        "requirements": ["React", "TypeScript", "JavaScript", "CSS/Tailwind", "REST APIs", "Git", "Webpack/Vite", "Jest or Cypress", "Responsive Design"],
+        "role_budget": "14-22 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-18T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0007-0000-0000-000000000007",
+        "title": "HR Business Partner",
+        "department": "HR",
+        "location": "Bangalore",
+        "job_type": "Full-time",
+        "experience": "4-7 years",
+        "description": (
+            "We are hiring an HR Business Partner to align HR strategies with our business objectives. "
+            "You will partner with senior leadership to manage talent acquisition, employee relations, "
+            "performance management, and learning & development initiatives. "
+            "Strong interpersonal skills and experience in a fast-paced startup environment are essential."
+        ),
+        "requirements": ["HR Business Partnering", "Talent Management", "Employee Relations", "Performance Management", "HRIS (Workday or SAP)", "Learning & Development", "HR Analytics", "Stakeholder Management"],
+        "role_budget": "15-22 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-20T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0008-0000-0000-000000000008",
+        "title": "Python Backend Developer",
+        "department": "Engineering",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "3-6 years",
+        "description": (
+            "We are looking for a Python Backend Developer to design and build robust APIs and microservices. "
+            "You will architect scalable backend systems, optimize database queries, implement integrations "
+            "with third-party services, and write well-tested code. "
+            "Experience with async programming and containerized deployments is highly valued."
+        ),
+        "requirements": ["Python", "FastAPI or Django", "PostgreSQL", "REST APIs", "Docker", "Git", "Redis", "Async programming", "Microservices", "Unit testing"],
+        "role_budget": "16-26 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-22T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0009-0000-0000-000000000009",
+        "title": "Finance Analyst",
+        "department": "Finance",
+        "location": "Mumbai",
+        "job_type": "Full-time",
+        "experience": "3-5 years",
+        "description": (
+            "We are seeking a Finance Analyst to support financial planning, reporting, and analysis. "
+            "You will build financial models, prepare MIS reports, analyze business performance against budget, "
+            "and partner with department heads to drive cost efficiency. CA inter or MBA Finance is preferred."
+        ),
+        "requirements": ["Financial Modelling", "MIS Reporting", "Excel/Google Sheets", "Tally or SAP", "Budget Planning", "Variance Analysis", "PowerBI or Tableau", "Stakeholder Reporting"],
+        "role_budget": "12-18 LPA",
+        "preferred_notice": "Up to 45 days",
+        "status": "open",
+        "created_at": "2026-03-25T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0010-0000-0000-000000000010",
+        "title": "Salesforce Developer",
+        "department": "Salesforce",
+        "location": "Hybrid - Bangalore",
+        "job_type": "Full-time",
+        "experience": "3-6 years",
+        "description": (
+            "We are looking for a Salesforce Developer to build and customize solutions on the Salesforce platform. "
+            "You will develop Apex classes, trigger frameworks, Lightning Web Components, and REST API integrations. "
+            "Experience with Experience Cloud and DevOps-driven release pipelines is a strong plus."
+        ),
+        "requirements": ["Apex", "LWC", "SOQL", "REST APIs", "Salesforce DX", "Git", "Experience Cloud", "Platform Events", "Integration patterns", "CI/CD"],
+        "role_budget": "15-25 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-28T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0011-0000-0000-000000000011",
+        "title": "AI/ML Engineer",
+        "department": "Engineering",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "4-7 years",
+        "description": (
+            "We are hiring an AI/ML Engineer to build intelligent features into our product. "
+            "You will design and deploy machine learning models, work on NLP and recommendation systems, "
+            "and collaborate with product and data teams to translate business problems into ML solutions. "
+            "Experience with LLM APIs, vector databases, and MLOps is a strong plus."
+        ),
+        "requirements": ["Python", "Machine Learning", "NLP", "Scikit-learn or PyTorch", "MLOps", "SQL", "LLM APIs (OpenAI/Anthropic)", "Docker", "Cloud (AWS/GCP)", "Vector Databases"],
+        "role_budget": "25-40 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-04-01T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0012-0000-0000-000000000012",
+        "title": "Customer Success Manager",
+        "department": "Operations",
+        "location": "Bangalore",
+        "job_type": "Full-time",
+        "experience": "2-5 years",
+        "description": (
+            "We are seeking a Customer Success Manager to build lasting relationships with our enterprise clients. "
+            "You will drive product adoption, manage onboarding, handle renewals, prevent churn, and act as the "
+            "voice of the customer internally. Experience in SaaS customer success with strong communication "
+            "skills is required."
+        ),
+        "requirements": ["Customer Success", "Relationship Management", "Product Adoption", "Churn Prevention", "CRM (Salesforce or HubSpot)", "Data Analysis", "Executive Communication", "Stakeholder Management"],
+        "role_budget": "12-20 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-04-05T00:00:00+00:00",
+    },
+]
+
+_SEED_INTERNAL = [
+    {
+        "id": "ref-0001-0000-0000-000000000001",
+        "type": "referral",
+        "employee_id": "EMP001",
+        "employee_name": "Rahul Verma",
+        "employee_department": "Engineering",
+        "job_id": "e1f2a3b4-0006-0000-0000-000000000006",
+        "job_title": "React Frontend Developer",
+        "job_department": "Engineering",
+        "job_location": "Remote",
+        "candidate_name": "Manish Gupta",
+        "candidate_email": "manish.gupta@gmail.com",
+        "candidate_phone": "9876501234",
+        "status": "Interview Scheduled",
+        "note": "Manish is a close friend from college and an incredibly sharp React developer. He has 3 years at Byju's building their interactive learning UI, handles TypeScript like a pro, and wrote one of the most elegant component library architectures I've seen. Strongly recommend scheduling an interview ASAP — he has other offers in play.",
+        "match_score": 89,
+        "pipeline_stage": "Interview Scheduled",
+        "interview_slot": "2026-05-24 11:00",
+        "created_at": "2026-05-01T09:00:00+00:00",
+    },
+    {
+        "id": "ref-0002-0000-0000-000000000002",
+        "type": "referral",
+        "employee_id": "EMP002",
+        "employee_name": "Sneha Reddy",
+        "employee_department": "HR",
+        "job_id": "e1f2a3b4-0007-0000-0000-000000000007",
+        "job_title": "HR Business Partner",
+        "job_department": "HR",
+        "job_location": "Bangalore",
+        "candidate_name": "Amrita Singh",
+        "candidate_email": "amrita.singh@gmail.com",
+        "candidate_phone": "9823045678",
+        "status": "Pending Review",
+        "note": "Amrita was my colleague at Razorpay where she served as HRBP for the engineering division of ~150 people. She was exceptional at navigating complex employee relations situations and was deeply respected by both leadership and employees. Her people skills and startup savvy make her a natural fit for our HRBP role.",
+        "match_score": 82,
+        "pipeline_stage": "Applied",
+        "created_at": "2026-05-03T10:00:00+00:00",
+    },
+    {
+        "id": "ref-0003-0000-0000-000000000003",
+        "type": "referral",
+        "employee_id": "EMP003",
+        "employee_name": "Karthik Nair",
+        "employee_department": "Engineering",
+        "job_id": "e1f2a3b4-0008-0000-0000-000000000008",
+        "job_title": "Python Backend Developer",
+        "job_department": "Engineering",
+        "job_location": "Remote",
+        "candidate_name": "Rohit Chandrasekhar",
+        "candidate_email": "rohit.cs@gmail.com",
+        "candidate_phone": "9901123456",
+        "status": "Hired",
+        "note": "Rohit and I worked on the same backend squad at Zepto for two years. He built our order management microservice from scratch using FastAPI and PostgreSQL and it has been rock solid ever since. He's deeply comfortable with async Python, knows Redis well, and writes incredibly clean, well-tested code. I am very confident he will exceed expectations.",
+        "match_score": 94,
+        "pipeline_stage": "Hired",
+        "created_at": "2026-04-15T09:00:00+00:00",
+    },
+    {
+        "id": "ref-0004-0000-0000-000000000004",
+        "type": "referral",
+        "employee_id": "EMP004",
+        "employee_name": "Priya Shetty",
+        "employee_department": "Finance",
+        "job_id": "e1f2a3b4-0009-0000-0000-000000000009",
+        "job_title": "Finance Analyst",
+        "job_department": "Finance",
+        "job_location": "Mumbai",
+        "candidate_name": "Neeraj Sharma",
+        "candidate_email": "neeraj.sharma@gmail.com",
+        "candidate_phone": "9812890123",
+        "status": "Pending Review",
+        "note": "Neeraj is a former MBA Finance classmate from NMIMS Mumbai. He has been a finance analyst at Godrej Industries for 3 years handling MIS, budgeting, and variance analysis. He is methodical, highly dependable, and has strong Excel modeling skills. I believe his analytical rigor and structured thinking would fit our finance function very well.",
+        "match_score": 76,
+        "pipeline_stage": "Applied",
+        "created_at": "2026-05-05T11:00:00+00:00",
+    },
+    {
+        "id": "ref-0005-0000-0000-000000000005",
+        "type": "referral",
+        "employee_id": "EMP005",
+        "employee_name": "Vijay Kumar",
+        "employee_department": "Operations",
+        "job_id": "e1f2a3b4-0012-0000-0000-000000000012",
+        "job_title": "Customer Success Manager",
+        "job_department": "Operations",
+        "job_location": "Bangalore",
+        "candidate_name": "Lalita Prasad",
+        "candidate_email": "lalita.p@gmail.com",
+        "candidate_phone": "9765789012",
+        "status": "Rejected",
+        "note": "Lalita is a friend from my previous company in operations. She has been in account management for about 2 years and expressed interest in transitioning into customer success. She is a hard worker and eager to grow, though she is still building the technical depth expected for a CSM role here.",
+        "match_score": 52,
+        "pipeline_stage": "Rejected",
+        "created_at": "2026-04-28T14:00:00+00:00",
+    },
 ]
 
 if not CANDIDATES_FILE.exists():
@@ -174,11 +498,19 @@ if not CANDIDATES_FILE.exists():
 
 if not INTERNAL_APPLICATIONS_FILE.exists():
     INTERNAL_APPLICATIONS_FILE.write_text("[]")
+_existing_internal = json.loads(INTERNAL_APPLICATIONS_FILE.read_text()) or []
+_existing_internal_ids = {r.get("id") for r in _existing_internal if r.get("id")}
+_new_seed_internal = [r for r in _SEED_INTERNAL if r["id"] not in _existing_internal_ids]
+if _new_seed_internal:
+    INTERNAL_APPLICATIONS_FILE.write_text(json.dumps(_existing_internal + _new_seed_internal, indent=2))
 
 if not JOBS_FILE.exists():
     JOBS_FILE.write_text("[]")
-if not json.loads(JOBS_FILE.read_text()):
-    JOBS_FILE.write_text(json.dumps(_SEED_JOBS, indent=2))
+_existing_jobs = json.loads(JOBS_FILE.read_text()) or []
+_existing_job_ids = {j["id"] for j in _existing_jobs}
+_new_seed_jobs = [j for j in _SEED_JOBS if j["id"] not in _existing_job_ids]
+if _new_seed_jobs:
+    JOBS_FILE.write_text(json.dumps(_existing_jobs + _new_seed_jobs, indent=2))
 
 MOCK_SCORECARD = {
     "communication": 7,

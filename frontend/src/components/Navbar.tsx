@@ -53,10 +53,6 @@ export default function Navbar({ onHome, rightContent, showLoginButtons, onCandi
               </button>
               {loginOpen && (
                 <div className="login-menu__panel" role="menu">
-                  <button type="button" role="menuitem" onClick={() => selectLogin(onRecruiterLogin)}>
-                    <strong>Recruiter Login</strong>
-                    <small>Hiring dashboard</small>
-                  </button>
                   <button type="button" role="menuitem" onClick={() => selectLogin(onCandidateLogin)}>
                     <strong>Candidate Login</strong>
                     <small>Application status</small>
@@ -64,6 +60,10 @@ export default function Navbar({ onHome, rightContent, showLoginButtons, onCandi
                   <button type="button" role="menuitem" onClick={() => selectLogin(onInternalLogin)}>
                     <strong>Internal Employee Login</strong>
                     <small>Apply or refer</small>
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => selectLogin(onRecruiterLogin)}>
+                    <strong>Recruiter Login</strong>
+                    <small>Hiring dashboard</small>
                   </button>
                 </div>
               )}
