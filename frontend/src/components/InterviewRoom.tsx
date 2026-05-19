@@ -17,8 +17,6 @@ type Props = {
   onDone: () => void
 }
 
-const END_LOCKOUT_MS = 5 * 60 * 1000
-
 export default function InterviewRoom({ token, candidateName, jobRole, jobDescription, onDone }: Props) {
   const [stage, setStage] = useState<Stage>('ready')
   const [recordingState, setRecordingState] = useState<RecordingState>('listening')
@@ -28,8 +26,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
   const [volumeLevel, setVolumeLevel] = useState(0)
   const [violations, setViolations] = useState<Violation[]>([])
   const [showWarningModal, setShowWarningModal] = useState(false)
-  const [endLockout, setEndLockout] = useState(true)
-  const [lockoutSecsLeft, setLockoutSecsLeft] = useState(END_LOCKOUT_MS / 1000)
   const [autoEndMsg, setAutoEndMsg] = useState('')
   const [taraLoaded, setTaraLoaded] = useState<boolean>(false)
   const [taraUrl, setTaraUrl] = useState<string>('')
@@ -37,7 +33,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
   const sessionIdRef = useRef<string | null>(null)
   const audioCleanupRef = useRef<(() => void) | null>(null)
   const proctorIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const lockoutTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const taraContainerRef = useRef<HTMLDivElement | null>(null)
@@ -46,7 +41,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
   const stageRef = useRef<Stage>('ready')
   const recordingStateRef = useRef<RecordingState>('listening')
   const violationsRef = useRef<Violation[]>([])
-  const startTimeRef = useRef(0)
   const endingRef = useRef(false)
   const shouldAutoEndRef = useRef(false)
 
@@ -331,21 +325,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
       .catch(() => {})
   }
 
-  function startLockoutCountdown() {
-    startTimeRef.current = Date.now()
-    setEndLockout(true)
-    setLockoutSecsLeft(END_LOCKOUT_MS / 1000)
-    lockoutTimerRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTimeRef.current
-      const remaining = Math.max(0, END_LOCKOUT_MS - elapsed)
-      setLockoutSecsLeft(Math.ceil(remaining / 1000))
-      if (remaining <= 0) {
-        setEndLockout(false)
-        if (lockoutTimerRef.current) clearInterval(lockoutTimerRef.current)
-      }
-    }, 1000)
-  }
-
   async function startInterview() {
     setTaraLoaded(false)
     setStage('starting')
@@ -387,7 +366,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
       stageRef.current = 'active'
       console.log('Session started:', res.data.session_id)
       proctorIntervalRef.current = setInterval(captureProctorFrame, 3000)
-      startLockoutCountdown()
       speakQuestion(res.data.first_question)
     } catch (err) {
       console.log('Start error:', axios.isAxiosError(err) ? err.response?.data : err)
@@ -412,7 +390,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
   function cleanup() {
     if (audioCleanupRef.current) { audioCleanupRef.current(); audioCleanupRef.current = null }
     if (proctorIntervalRef.current) { clearInterval(proctorIntervalRef.current); proctorIntervalRef.current = null }
-    if (lockoutTimerRef.current) { clearInterval(lockoutTimerRef.current); lockoutTimerRef.current = null }
     window.speechSynthesis.cancel()
   }
 
@@ -454,10 +431,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
       }
     }, 2000)
   }
-
-  const lockoutMins = Math.floor(lockoutSecsLeft / 60)
-  const lockoutSecs = lockoutSecsLeft % 60
-  const lockoutDisplay = `${lockoutMins}:${String(lockoutSecs).padStart(2, '0')}`
 
   return (
     <div className="page">
@@ -553,13 +526,22 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
               <p className="muted">Connecting you to Tara...</p>
             </div>
           )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             <div className="card status-card" style={{ flex: 1 }}>
               <span className="status-dot" />
               <span>Interview in progress · {candidateName} · {jobRole}</span>
             </div>
-            <div className={`proctor-badge${violations.length > 0 ? ' proctor-badge--warn' : ''}`}>
-              {violations.length === 0 ? '🛡 Monitored' : `⚠ ${violations.length} warning${violations.length !== 1 ? 's' : ''}`}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+              <div className={`proctor-badge${violations.length > 0 ? ' proctor-badge--warn' : ''}`}>
+                {violations.length === 0 ? '🛡 Monitored' : `⚠ ${violations.length} warning${violations.length !== 1 ? 's' : ''}`}
+              </div>
+              <button
+                className="btn btn-danger"
+                onClick={() => endInterview()}
+                disabled={stage === 'ending' || recordingState === 'processing'}
+              >
+                {stage === 'ending' ? 'Ending...' : 'End Interview'}
+              </button>
             </div>
           </div>
 
@@ -600,17 +582,6 @@ export default function InterviewRoom({ token, candidateName, jobRole, jobDescri
           )}
           {errorMsg && <p className="interview-error">{errorMsg}</p>}
 
-          <button
-            className="btn btn-danger"
-            onClick={() => endInterview()}
-            disabled={stage === 'ending' || recordingState === 'processing' || endLockout}
-          >
-            {stage === 'ending'
-              ? 'Ending…'
-              : endLockout
-              ? `End Interview (${lockoutDisplay})`
-              : 'End Interview'}
-          </button>
         </div>
       )}
     </div>
