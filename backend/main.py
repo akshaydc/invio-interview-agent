@@ -1028,20 +1028,25 @@ async def analyze_linkedin_profile(
                 response = await ai_client.messages.create(
                     model="claude-haiku-4-5-20251001",
                     max_tokens=500,
+                    system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
                     messages=[{
                         "role": "user",
                         "content": (
+                            "You must respond with ONLY a valid JSON object. "
+                            "No explanation, no markdown, no code blocks, no preamble. "
+                            "Start your response with { and end with }. "
+                            "Do not include ```json or ``` anywhere.\n\n"
                             f"Compare this LinkedIn profile with the resume and job for {job_title}.\n\n"
                             f"LinkedIn:\n{profile_summary}\n\n"
                             f"Resume text (first 500 chars):\n{resume_text[:500]}\n\n"
-                            f'Return ONLY valid JSON:\n{{"overall_score": 0-100, "experience_match": true/false, '
+                            f'Return this JSON shape:\n{{"overall_score": 0-100, "experience_match": true/false, '
                             f'"experience_note": "...", "skills_overlap_pct": 0-100, '
                             f'"status": "verified_match"/"mismatch"/"partial_match", "summary": "2 sentence summary"}}'
                         ),
                     }],
                 )
                 raw = response.content[0].text
-                analysis_result = json.loads(_strip_code_fence(raw))
+                analysis_result = _safe_parse_json(raw)
             except Exception as e:
                 print(f"Claude LinkedIn analysis error: {e}")
 
@@ -1309,24 +1314,40 @@ def _strip_code_fence(text: str) -> str:
 
 
 def _safe_parse_json(text: str) -> dict:
-    text = _strip_code_fence(text)
+    import re as _re
+
+    # Try 1: direct parse after stripping code fences
     try:
-        return json.loads(text)
-    except json.JSONDecodeError:
+        return json.loads(_strip_code_fence(text))
+    except (json.JSONDecodeError, ValueError):
         pass
+
+    # Try 2: find JSON block between ```json and ``` markers
     try:
-        import re as _re
-        fixed = _re.sub(r"'([^']*)'", r'"\1"', text)
-        return json.loads(fixed)
-    except json.JSONDecodeError:
+        m = _re.search(r"```json\s*([\s\S]*?)```", text)
+        if m:
+            return json.loads(m.group(1).strip())
+    except (json.JSONDecodeError, ValueError):
         pass
+
+    # Try 3: first { to last }
     try:
         start = text.index('{')
         end = text.rindex('}') + 1
         return json.loads(text[start:end])
     except (ValueError, json.JSONDecodeError):
         pass
-    raise ValueError("Could not parse JSON from Claude response")
+
+    # Try 4: regex to extract any JSON object
+    try:
+        m = _re.search(r"\{[\s\S]*\}", text)
+        if m:
+            return json.loads(m.group(0))
+    except (json.JSONDecodeError, ValueError):
+        pass
+
+    print(f"_safe_parse_json: all attempts failed. Raw (first 500): {text[:500]}")
+    return {}
 
 
 def _extract_resume_text(file_bytes: bytes, filename: str) -> str:
@@ -1390,6 +1411,10 @@ async def _analyze_resume_match(
         )
 
     prompt = (
+        "You must respond with ONLY a valid JSON object. "
+        "No explanation, no markdown, no code blocks, no preamble. "
+        "Start your response with { and end with }. "
+        "Do not include ```json or ``` anywhere.\n\n"
         f"Compare this resume with the job description.{compensation_instruction}"
         f"{fit_instructions}"
         "Based on the overall match, also provide a hiring recommendation: "
@@ -1397,7 +1422,7 @@ async def _analyze_resume_match(
         "'Hire' (65-79% match, good overall fit), "
         "'Consider' (50-64% match, some gaps but potential), "
         "'Reject' (below 50% match, significant gaps). "
-        "Return ONLY valid JSON with no extra text:\n"
+        "Return this JSON shape:\n"
         '{"match_percentage": 75, "match_summary": "...", '
         '"strengths": ["...", "..."], "gaps": ["...", "..."], '
         '"compensation_fit": "good", "notice_fit": "good", '
@@ -1411,10 +1436,11 @@ async def _analyze_resume_match(
         response = await client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=512,
+            system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
             messages=[{"role": "user", "content": prompt}],
         )
         raw = response.content[0].text
-        return json.loads(_strip_code_fence(raw))
+        return _safe_parse_json(raw)
     except Exception:
         return {}
 
@@ -2772,15 +2798,16 @@ async def match_resume_to_jobs(
             try:
                 client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
                 response = await client.messages.create(
-                    model="claude-sonnet-4-6",
-                    max_tokens=2000,
+                    model="claude-sonnet-4-20250514",
+                    max_tokens=1000,
+                    system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
                     messages=[{
                         "role": "user",
                         "content": (
                             "You must respond with ONLY a valid JSON object. "
-                            "Use double quotes for all keys and string values. "
-                            "No single quotes. No markdown. No explanation. "
-                            "Start your response with { and end with }.\n\n"
+                            "No explanation, no markdown, no code blocks, no preamble. "
+                            "Start your response with { and end with }. "
+                            "Do not include ```json or ``` anywhere.\n\n"
                             "You are a recruitment AI. Analyse this resume "
                             "and match it against these job openings. "
                             "For each job calculate a match percentage. "
@@ -2792,7 +2819,7 @@ async def match_resume_to_jobs(
                             "- phone: phone number if found, else \"\"\n"
                             "- linkedin: LinkedIn URL if found, else \"\"\n"
                             "- location: city/location if found, else \"\"\n\n"
-                            "Return ONLY valid JSON with no markdown:\n"
+                            "Return this JSON shape:\n"
                             "{\n"
                             '  "candidate_profile": {\n'
                             '    "skills": ["skill1", "skill2"],\n'
@@ -2848,7 +2875,13 @@ async def match_resume_to_jobs(
             except Exception as e:
                 print(f"Claude error in resume match: {e}")
                 traceback.print_exc()
-                raise HTTPException(status_code=500, detail=f"AI matching error: {str(e)}")
+                return {
+                    "match_score": 0,
+                    "matching_skills": [],
+                    "missing_skills": [],
+                    "recommendation": "Unable to analyze at this time",
+                    "error": True,
+                }
         else:
             return {
                 "candidate_profile": {
@@ -4581,6 +4614,7 @@ async def proctor_frame(session_id: str, body: ProctorRequest) -> dict:
             response = await client.messages.create(
                 model="claude-sonnet-4-6",
                 max_tokens=256,
+                system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
                 messages=[{
                     "role": "user",
                     "content": [
@@ -4595,8 +4629,12 @@ async def proctor_frame(session_id: str, body: ProctorRequest) -> dict:
                         {
                             "type": "text",
                             "text": (
+                                "You must respond with ONLY a valid JSON object. "
+                                "No explanation, no markdown, no code blocks, no preamble. "
+                                "Start your response with { and end with }. "
+                                "Do not include ```json or ``` anywhere.\n\n"
                                 "Is there exactly one person visible and looking at the screen? "
-                                "Return ONLY valid JSON: "
+                                "Return this JSON shape: "
                                 "{\"faces\": 0, \"looking_at_screen\": true, \"flag\": false, \"reason\": \"\"}"
                             ),
                         },
@@ -4604,7 +4642,7 @@ async def proctor_frame(session_id: str, body: ProctorRequest) -> dict:
                 }],
             )
             raw = response.content[0].text.strip()
-            result = json.loads(_strip_code_fence(raw))
+            result = _safe_parse_json(raw)
         except Exception:
             pass  # never block interview for proctoring errors
 
@@ -4657,22 +4695,26 @@ async def end_session(
                 response = await client.messages.create(
                     model="claude-sonnet-4-6",
                     max_tokens=1024,
+                    system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
                     messages=[{
                         "role": "user",
                         "content": (
+                            "You must respond with ONLY a valid JSON object. "
+                            "No explanation, no markdown, no code blocks, no preamble. "
+                            "Start your response with { and end with }. "
+                            "Do not include ```json or ``` anywhere.\n\n"
                             f"Based on this interview transcript for the role of {job_role}, "
-                            "provide a scorecard in valid JSON format only with these exact fields: "
+                            "provide a scorecard with these exact fields: "
                             "communication (1-10), technical_depth (1-10), problem_solving (1-10), "
                             "cultural_fit (1-10), summary (string), strengths (array of strings), "
                             "red_flags (array of strings). "
-                            "Return ONLY valid JSON, no markdown, no explanation. "
                             f"\n\nTranscript:\n{transcript_text}"
                         ),
                     }],
                 )
                 raw = response.content[0].text
                 print(f"Claude response: {raw[:200]}")
-                scorecard = json.loads(_strip_code_fence(raw))
+                scorecard = _safe_parse_json(raw)
             except Exception as e:
                 print(f"CLAUDE ERROR in end_session: {type(e).__name__}: {e}")
                 traceback.print_exc()
