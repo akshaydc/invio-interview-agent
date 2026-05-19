@@ -43,12 +43,45 @@ export default function JobDetail({ job, onApply, onBack, onHome }: Props) {
           {job.description}
         </p>
 
-        <p className="role-label" style={{ marginBottom: 12 }}>Requirements</p>
-        <ul className="job-requirements">
-          {job.requirements.map((req, i) => (
-            <li key={i} className="job-req-tag">{req}</li>
-          ))}
-        </ul>
+        {(job.must_have_skills?.length || job.good_to_have_skills?.length) ? (
+          <>
+            {job.must_have_skills && job.must_have_skills.length > 0 && (
+              <>
+                <p className="role-label" style={{ marginBottom: 8 }}>
+                  Must-Have Skills
+                  <span style={{ background: '#FEE2E2', color: '#B91C1C', fontSize: '0.7rem', fontWeight: 600, padding: '1px 7px', borderRadius: 10, marginLeft: 8 }}>Required</span>
+                </p>
+                <ul className="job-requirements" style={{ marginBottom: 16 }}>
+                  {job.must_have_skills.map((s, i) => (
+                    <li key={i} className="job-req-tag" style={{ borderColor: '#FCA5A5', color: '#B91C1C', background: '#FFF5F5' }}>{s}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {job.good_to_have_skills && job.good_to_have_skills.length > 0 && (
+              <>
+                <p className="role-label" style={{ marginBottom: 8 }}>
+                  Good-to-Have Skills
+                  <span style={{ background: '#DBEAFE', color: '#1D4ED8', fontSize: '0.7rem', fontWeight: 600, padding: '1px 7px', borderRadius: 10, marginLeft: 8 }}>Optional</span>
+                </p>
+                <ul className="job-requirements">
+                  {job.good_to_have_skills.map((s, i) => (
+                    <li key={i} className="job-req-tag" style={{ borderColor: '#93C5FD', color: '#1D4ED8', background: '#EFF6FF' }}>{s}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="role-label" style={{ marginBottom: 12 }}>Requirements</p>
+            <ul className="job-requirements">
+              {job.requirements.map((req, i) => (
+                <li key={i} className="job-req-tag">{req}</li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: 16 }}>

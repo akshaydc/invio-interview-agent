@@ -7,10 +7,31 @@
     "job_type": "Full-time",
     "experience": "3-5 years",
     "description": "We are looking for a Software Engineer to join our growing engineering team. You will design, develop, and maintain scalable backend and frontend systems. You will work closely with product managers and designers to ship high-quality features that impact thousands of users. Strong problem-solving skills and a passion for clean code are a must.",
-    "requirements": ["Python", "React", "FastAPI", "PostgreSQL", "REST APIs", "Git"],
+    "requirements": [
+      "Python",
+      "React",
+      "FastAPI",
+      "PostgreSQL",
+      "REST APIs",
+      "Git"
+    ],
     "status": "open",
     "created_at": "2026-01-15T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0008"
+    "job_code": "ASTRA-2026-0008",
+    "must_have_skills": [
+      "Python",
+      "React",
+      "FastAPI",
+      "REST APIs",
+      "Git"
+    ],
+    "good_to_have_skills": [
+      "Docker",
+      "PostgreSQL",
+      "TypeScript",
+      "AWS",
+      "Redis"
+    ]
   },
   {
     "id": "b1e2c3d4-0002-0000-0000-000000000002",
@@ -20,10 +41,30 @@
     "job_type": "Full-time",
     "experience": "2-4 years",
     "description": "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform. You will configure Salesforce to meet evolving business requirements, maintain data integrity, build reports and dashboards, and support sales and operations teams with day-to-day needs. Salesforce Admin certification is highly preferred.",
-    "requirements": ["Salesforce Administration", "Flows & Process Builder", "Reports & Dashboards", "Data Loader", "Apex basics", "Salesforce Admin Certification"],
+    "requirements": [
+      "Salesforce Administration",
+      "Flows & Process Builder",
+      "Reports & Dashboards",
+      "Data Loader",
+      "Apex basics",
+      "Salesforce Admin Certification"
+    ],
     "status": "open",
     "created_at": "2026-02-01T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0009"
+    "job_code": "ASTRA-2026-0009",
+    "must_have_skills": [
+      "Salesforce Administration",
+      "Flows & Process Builder",
+      "Reports & Dashboards",
+      "User Management"
+    ],
+    "good_to_have_skills": [
+      "Sales Cloud",
+      "Service Cloud",
+      "Data Loader",
+      "Salesforce Lightning",
+      "CPQ"
+    ]
   },
   {
     "id": "b1e2c3d4-0003-0000-0000-000000000003",
@@ -33,10 +74,31 @@
     "job_type": "Full-time",
     "experience": "4-7 years",
     "description": "We are seeking a Product Manager to drive strategy and execution for our core platform. You will gather requirements from stakeholders, define the product roadmap, write PRDs, and work cross-functionally with engineering, design, and sales to deliver impactful products. Experience in SaaS or HR-tech is a plus.",
-    "requirements": ["Product Roadmapping", "Stakeholder Management", "Data-driven Decision Making", "Agile / Scrum", "User Research", "PRD Writing"],
+    "requirements": [
+      "Product Roadmapping",
+      "Stakeholder Management",
+      "Data-driven Decision Making",
+      "Agile / Scrum",
+      "User Research",
+      "PRD Writing"
+    ],
     "status": "open",
     "created_at": "2026-02-15T00:00:00+00:00",
-    "job_code": "ASTRA-2026-00012"
+    "job_code": "ASTRA-2026-00012",
+    "must_have_skills": [
+      "Product Roadmapping",
+      "Stakeholder Management",
+      "Data-driven Decision Making",
+      "User Stories",
+      "Agile"
+    ],
+    "good_to_have_skills": [
+      "JIRA",
+      "Figma",
+      "A/B Testing",
+      "SQL",
+      "Go-to-market Strategy"
+    ]
   },
   {
     "id": "d1e2f3a4-0001-0000-0000-000000000001",
@@ -46,12 +108,31 @@
     "job_type": "Full-time",
     "experience": "2-4 years",
     "description": "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform. You will be responsible for user management, configuration, and customization of Salesforce to meet business needs. You will work closely with sales and service teams to optimize workflows and reporting.",
-    "requirements": ["Salesforce Admin", "Sales Cloud", "Service Cloud", "Flow Builder", "Reports & Dashboards", "User Management", "Data Management"],
+    "requirements": [
+      "Salesforce Admin",
+      "Sales Cloud",
+      "Service Cloud",
+      "Flow Builder",
+      "Reports & Dashboards",
+      "User Management",
+      "Data Management"
+    ],
     "role_budget": "8-15 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-01-15T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0001"
+    "job_code": "ASTRA-2026-0001",
+    "must_have_skills": [
+      "Salesforce Admin",
+      "Sales Cloud",
+      "Service Cloud",
+      "Flow Builder"
+    ],
+    "good_to_have_skills": [
+      "Reports & Dashboards",
+      "User Management",
+      "Data Management"
+    ]
   },
   {
     "id": "d1e2f3a4-0002-0000-0000-000000000002",
@@ -61,12 +142,35 @@
     "job_type": "Full-time",
     "experience": "3-5 years",
     "description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform. You will develop Apex classes, Lightning Web Components, and integrations with third-party systems. Experience with DevOps and CI/CD pipelines is a plus.",
-    "requirements": ["Apex", "LWC", "SOQL", "REST APIs", "Integration", "Sales Cloud", "Experience Cloud", "Git", "Agile"],
+    "requirements": [
+      "Apex",
+      "LWC",
+      "SOQL",
+      "REST APIs",
+      "Integration",
+      "Sales Cloud",
+      "Experience Cloud",
+      "Git",
+      "Agile"
+    ],
     "role_budget": "15-25 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-01-20T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0002"
+    "job_code": "ASTRA-2026-0002",
+    "must_have_skills": [
+      "Apex",
+      "LWC",
+      "SOQL",
+      "Salesforce Administration",
+      "Sales Cloud"
+    ],
+    "good_to_have_skills": [
+      "Copado",
+      "Einstein Analytics",
+      "Python",
+      "Agile"
+    ]
   },
   {
     "id": "d1e2f3a4-0003-0000-0000-000000000003",
@@ -76,12 +180,34 @@
     "job_type": "Full-time",
     "experience": "2-4 years",
     "description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products. You will design test plans, execute test cases, and report bugs. You will work closely with developers to ensure timely resolution of issues and maintain high product quality standards.",
-    "requirements": ["Manual Testing", "Selenium", "JIRA", "Test Cases", "API Testing", "Postman", "Regression Testing", "Agile", "SQL"],
+    "requirements": [
+      "Manual Testing",
+      "Selenium",
+      "JIRA",
+      "Test Cases",
+      "API Testing",
+      "Postman",
+      "Regression Testing",
+      "Agile",
+      "SQL"
+    ],
     "role_budget": "8-14 LPA",
     "preferred_notice": "Immediate to 30 days",
     "status": "open",
     "created_at": "2026-02-01T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0003"
+    "job_code": "ASTRA-2026-0003",
+    "must_have_skills": [
+      "Manual Testing",
+      "Selenium",
+      "JIRA",
+      "API Testing"
+    ],
+    "good_to_have_skills": [
+      "Postman",
+      "Regression Testing",
+      "Agile",
+      "SQL"
+    ]
   },
   {
     "id": "d1e2f3a4-0004-0000-0000-000000000004",
@@ -91,12 +217,35 @@
     "job_type": "Full-time",
     "experience": "3-6 years",
     "description": "We are looking for a Business Analyst to bridge the gap between business needs and technical solutions. You will gather requirements, create user stories, and work with development teams to deliver solutions. Experience with Salesforce or CRM systems is a plus.",
-    "requirements": ["Requirements Gathering", "Process Mapping", "User Stories", "JIRA", "Stakeholder Management", "SQL", "Agile", "Wireframing", "Data Analysis"],
+    "requirements": [
+      "Requirements Gathering",
+      "Process Mapping",
+      "User Stories",
+      "JIRA",
+      "Stakeholder Management",
+      "SQL",
+      "Agile",
+      "Wireframing",
+      "Data Analysis"
+    ],
     "role_budget": "12-20 LPA",
     "preferred_notice": "Up to 45 days",
     "status": "open",
     "created_at": "2026-02-10T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0004"
+    "job_code": "ASTRA-2026-0004",
+    "must_have_skills": [
+      "Requirements Gathering",
+      "User Stories",
+      "JIRA",
+      "Stakeholder Management",
+      "SQL"
+    ],
+    "good_to_have_skills": [
+      "Process Mapping",
+      "Agile",
+      "Wireframing",
+      "Data Analysis"
+    ]
   },
   {
     "id": "e1f2a3b4-0001-0000-0000-000000000001",
@@ -106,12 +255,36 @@
     "job_type": "Full-time",
     "experience": "3-5 years",
     "description": "We are looking for a Data Engineer to build and maintain our data infrastructure. You will design and implement scalable data pipelines, maintain data warehouses, and collaborate with data analysts and scientists to support business intelligence initiatives. You will also be responsible for data quality, monitoring, and documentation. Experience with cloud platforms and modern data stack tools is essential.",
-    "requirements": ["Python", "SQL", "Apache Spark", "dbt", "Apache Airflow", "AWS or GCP", "Data Warehousing", "ETL Pipelines", "Git"],
+    "requirements": [
+      "Python",
+      "SQL",
+      "Apache Spark",
+      "dbt",
+      "Apache Airflow",
+      "AWS or GCP",
+      "Data Warehousing",
+      "ETL Pipelines",
+      "Git"
+    ],
     "role_budget": "18-28 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-03-01T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0013"
+    "job_code": "ASTRA-2026-0013",
+    "must_have_skills": [
+      "Python",
+      "SQL",
+      "Apache Spark",
+      "ETL Pipelines",
+      "Data Warehousing"
+    ],
+    "good_to_have_skills": [
+      "AWS/GCP",
+      "Kafka",
+      "Airflow",
+      "dbt",
+      "Hadoop"
+    ]
   },
   {
     "id": "e1f2a3b4-0002-0000-0000-000000000002",
@@ -121,12 +294,33 @@
     "job_type": "Full-time",
     "experience": "2-4 years",
     "description": "We are seeking a creative and user-focused UX Designer to craft intuitive product experiences. You will conduct user research, create wireframes and interactive prototypes, and partner with product managers and engineers to deliver polished, accessible interfaces. You will also contribute to and maintain our design system. A strong portfolio demonstrating end-to-end design process is required.",
-    "requirements": ["Figma", "User Research", "Wireframing", "Prototyping", "Design Systems", "Usability Testing", "Accessibility Standards", "Collaboration with Engineering"],
+    "requirements": [
+      "Figma",
+      "User Research",
+      "Wireframing",
+      "Prototyping",
+      "Design Systems",
+      "Usability Testing",
+      "Accessibility Standards",
+      "Collaboration with Engineering"
+    ],
     "role_budget": "12-20 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-03-05T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0014"
+    "job_code": "ASTRA-2026-0014",
+    "must_have_skills": [
+      "Figma",
+      "User Research",
+      "Wireframing",
+      "Prototyping"
+    ],
+    "good_to_have_skills": [
+      "Adobe XD",
+      "Design Systems",
+      "Accessibility",
+      "HTML/CSS"
+    ]
   },
   {
     "id": "e1f2a3b4-0003-0000-0000-000000000003",
@@ -136,12 +330,35 @@
     "job_type": "Full-time",
     "experience": "4-6 years",
     "description": "We are hiring a DevOps Engineer to build and maintain our cloud infrastructure and CI/CD pipelines. You will manage Kubernetes clusters, automate deployments, implement infrastructure-as-code, and monitor system health. You will collaborate closely with engineering teams to improve release velocity and system reliability. Experience with multi-cloud environments is a strong plus.",
-    "requirements": ["Kubernetes", "Docker", "CI/CD (GitHub Actions/Jenkins)", "Terraform", "AWS or GCP", "Linux", "Bash/Python scripting", "Prometheus/Grafana", "Infrastructure-as-Code"],
+    "requirements": [
+      "Kubernetes",
+      "Docker",
+      "CI/CD (GitHub Actions/Jenkins)",
+      "Terraform",
+      "AWS or GCP",
+      "Linux",
+      "Bash/Python scripting",
+      "Prometheus/Grafana",
+      "Infrastructure-as-Code"
+    ],
     "role_budget": "20-32 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-03-10T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0015"
+    "job_code": "ASTRA-2026-0015",
+    "must_have_skills": [
+      "Kubernetes",
+      "Docker",
+      "CI/CD (GitHub Actions/Jenkins)",
+      "Linux",
+      "AWS/GCP/Azure"
+    ],
+    "good_to_have_skills": [
+      "Terraform",
+      "Prometheus/Grafana",
+      "Ansible",
+      "Helm"
+    ]
   },
   {
     "id": "e1f2a3b4-0004-0000-0000-000000000004",
@@ -151,12 +368,34 @@
     "job_type": "Full-time",
     "experience": "5-8 years",
     "description": "We are looking for a Marketing Manager to lead our go-to-market strategy and brand presence. You will own digital marketing campaigns, manage content strategy across channels, drive lead generation, and collaborate with sales to optimize the full funnel. You will also manage a team of 2-3 marketing specialists and report directly to the VP of Marketing. Experience in SaaS or B2B marketing is strongly preferred.",
-    "requirements": ["Digital Marketing", "Content Strategy", "SEO/SEM", "HubSpot or Marketo", "Lead Generation", "Google Analytics", "B2B/SaaS Marketing", "Campaign Management", "Team Leadership"],
+    "requirements": [
+      "Digital Marketing",
+      "Content Strategy",
+      "SEO/SEM",
+      "HubSpot or Marketo",
+      "Lead Generation",
+      "Google Analytics",
+      "B2B/SaaS Marketing",
+      "Campaign Management",
+      "Team Leadership"
+    ],
     "role_budget": "20-30 LPA",
     "preferred_notice": "Up to 45 days",
     "status": "open",
     "created_at": "2026-03-12T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0016"
+    "job_code": "ASTRA-2026-0016",
+    "must_have_skills": [
+      "Digital Marketing",
+      "Content Strategy",
+      "SEO/SEM",
+      "Google Analytics"
+    ],
+    "good_to_have_skills": [
+      "HubSpot",
+      "Email Marketing",
+      "Social Media",
+      "Brand Management"
+    ]
   },
   {
     "id": "e1f2a3b4-0005-0000-0000-000000000005",
@@ -166,12 +405,34 @@
     "job_type": "Full-time",
     "experience": "2-4 years",
     "description": "We are seeking a Business Analyst with a focus on operations and process improvement. You will work with cross-functional teams to identify process inefficiencies, document workflows, and implement data-driven solutions. You will be responsible for translating business requirements into technical specifications and managing stakeholder expectations throughout the project lifecycle. Experience with ERP or CRM systems is a plus.",
-    "requirements": ["Requirements Gathering", "Process Mapping", "Data Analysis", "User Stories", "Stakeholder Management", "SQL", "JIRA", "Agile/Scrum", "Process Documentation"],
+    "requirements": [
+      "Requirements Gathering",
+      "Process Mapping",
+      "Data Analysis",
+      "User Stories",
+      "Stakeholder Management",
+      "SQL",
+      "JIRA",
+      "Agile/Scrum",
+      "Process Documentation"
+    ],
     "role_budget": "10-16 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-03-15T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0017"
+    "job_code": "ASTRA-2026-0017",
+    "must_have_skills": [
+      "Requirements Gathering",
+      "Process Mapping",
+      "Data Analysis",
+      "JIRA"
+    ],
+    "good_to_have_skills": [
+      "SQL",
+      "Tableau",
+      "Agile",
+      "Stakeholder Management"
+    ]
   },
   {
     "id": "e1f2a3b4-0006-0000-0000-000000000006",
@@ -181,12 +442,36 @@
     "job_type": "Full-time",
     "experience": "2-5 years",
     "description": "We are looking for a React Frontend Developer to build responsive, high-performance web applications. You will translate Figma designs into pixel-perfect UI components, write clean TypeScript and React code, and optimize application performance. You will collaborate closely with backend engineers and designers and contribute to our shared component library. Strong attention to detail and experience with modern frontend tooling is required.",
-    "requirements": ["React", "TypeScript", "JavaScript", "CSS/Tailwind", "REST APIs", "Git", "Webpack/Vite", "Jest or Cypress", "Responsive Design"],
+    "requirements": [
+      "React",
+      "TypeScript",
+      "JavaScript",
+      "CSS/Tailwind",
+      "REST APIs",
+      "Git",
+      "Webpack/Vite",
+      "Jest or Cypress",
+      "Responsive Design"
+    ],
     "role_budget": "14-22 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-03-18T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0018"
+    "job_code": "ASTRA-2026-0018",
+    "must_have_skills": [
+      "React",
+      "TypeScript",
+      "JavaScript",
+      "HTML/CSS",
+      "REST APIs"
+    ],
+    "good_to_have_skills": [
+      "Redux",
+      "Next.js",
+      "Testing (Jest)",
+      "Git",
+      "Performance Optimization"
+    ]
   },
   {
     "id": "e1f2a3b4-0007-0000-0000-000000000007",
@@ -196,12 +481,32 @@
     "job_type": "Full-time",
     "experience": "4-7 years",
     "description": "We are hiring an HR Business Partner to align HR strategies with our business objectives. You will partner with senior leadership to manage talent acquisition, employee relations, performance management, and learning & development initiatives. You will also drive HR analytics and help build a data-driven people function. Strong interpersonal skills and experience navigating a fast-paced startup environment are essential.",
-    "requirements": ["HR Business Partnering", "Talent Management", "Employee Relations", "Performance Management", "HRIS (Workday or SAP)", "Learning & Development", "HR Analytics", "Stakeholder Management"],
+    "requirements": [
+      "HR Business Partnering",
+      "Talent Management",
+      "Employee Relations",
+      "Performance Management",
+      "HRIS (Workday or SAP)",
+      "Learning & Development",
+      "HR Analytics",
+      "Stakeholder Management"
+    ],
     "role_budget": "15-22 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-03-20T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0019"
+    "job_code": "ASTRA-2026-0019",
+    "must_have_skills": [
+      "HR Business Partnering",
+      "Talent Management",
+      "Employee Relations"
+    ],
+    "good_to_have_skills": [
+      "HRIS Systems",
+      "L&D",
+      "Compensation & Benefits",
+      "HR Analytics"
+    ]
   },
   {
     "id": "e1f2a3b4-0008-0000-0000-000000000008",
@@ -211,12 +516,37 @@
     "job_type": "Full-time",
     "experience": "3-6 years",
     "description": "We are looking for a Python Backend Developer to design and build robust APIs and microservices that power our platform. You will architect scalable backend systems, optimize database queries, implement integrations with third-party services, and write well-tested code. Experience with async programming and containerized deployments is highly valued. You will work closely with frontend engineers and DevOps to ship reliable features.",
-    "requirements": ["Python", "FastAPI or Django", "PostgreSQL", "REST APIs", "Docker", "Git", "Redis", "Async programming", "Microservices", "Unit testing"],
+    "requirements": [
+      "Python",
+      "FastAPI or Django",
+      "PostgreSQL",
+      "REST APIs",
+      "Docker",
+      "Git",
+      "Redis",
+      "Async programming",
+      "Microservices",
+      "Unit testing"
+    ],
     "role_budget": "16-26 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-03-22T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0020"
+    "job_code": "ASTRA-2026-0020",
+    "must_have_skills": [
+      "Python",
+      "FastAPI or Django",
+      "PostgreSQL",
+      "REST APIs",
+      "Git"
+    ],
+    "good_to_have_skills": [
+      "Docker",
+      "Redis",
+      "Celery",
+      "AWS",
+      "Microservices"
+    ]
   },
   {
     "id": "e1f2a3b4-0009-0000-0000-000000000009",
@@ -226,12 +556,35 @@
     "job_type": "Full-time",
     "experience": "3-5 years",
     "description": "We are seeking a Finance Analyst to support financial planning, reporting, and analysis across the organization. You will build financial models, prepare MIS reports, analyze business performance against budget, and partner with department heads to drive cost efficiency. You will also support month-end close processes and board-level reporting. CA inter or MBA Finance is preferred.",
-    "requirements": ["Financial Modelling", "MIS Reporting", "Excel/Google Sheets", "Tally or SAP", "Budget Planning", "Variance Analysis", "PowerBI or Tableau", "Stakeholder Reporting", "Month-end Close"],
+    "requirements": [
+      "Financial Modelling",
+      "MIS Reporting",
+      "Excel/Google Sheets",
+      "Tally or SAP",
+      "Budget Planning",
+      "Variance Analysis",
+      "PowerBI or Tableau",
+      "Stakeholder Reporting",
+      "Month-end Close"
+    ],
     "role_budget": "12-18 LPA",
     "preferred_notice": "Up to 45 days",
     "status": "open",
     "created_at": "2026-03-25T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0021"
+    "job_code": "ASTRA-2026-0021",
+    "must_have_skills": [
+      "Financial Modelling",
+      "MIS Reporting",
+      "Excel/Google Sheets",
+      "Budget Analysis"
+    ],
+    "good_to_have_skills": [
+      "SAP",
+      "Power BI",
+      "SQL",
+      "Tableau",
+      "Financial Planning"
+    ]
   },
   {
     "id": "e1f2a3b4-0010-0000-0000-000000000010",
@@ -241,12 +594,37 @@
     "job_type": "Full-time",
     "experience": "3-6 years",
     "description": "We are looking for a Salesforce Developer to build and customize solutions on the Salesforce platform for our enterprise clients. You will develop Apex classes, trigger frameworks, Lightning Web Components, and REST/SOAP API integrations. You will follow Salesforce best practices, participate in code reviews, and contribute to a DevOps-driven release pipeline. Experience with Experience Cloud and multi-org architecture is a strong plus.",
-    "requirements": ["Apex", "LWC", "SOQL", "REST APIs", "Salesforce DX", "Git", "Experience Cloud", "Platform Events", "Integration patterns", "CI/CD"],
+    "requirements": [
+      "Apex",
+      "LWC",
+      "SOQL",
+      "REST APIs",
+      "Salesforce DX",
+      "Git",
+      "Experience Cloud",
+      "Platform Events",
+      "Integration patterns",
+      "CI/CD"
+    ],
     "role_budget": "15-25 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-03-28T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0022"
+    "job_code": "ASTRA-2026-0022",
+    "must_have_skills": [
+      "Apex",
+      "LWC",
+      "SOQL",
+      "Sales Cloud",
+      "Integration"
+    ],
+    "good_to_have_skills": [
+      "Experience Cloud",
+      "Einstein Analytics",
+      "JIRA",
+      "Agile",
+      "Git"
+    ]
   },
   {
     "id": "e1f2a3b4-0011-0000-0000-000000000011",
@@ -256,12 +634,37 @@
     "job_type": "Full-time",
     "experience": "4-7 years",
     "description": "We are hiring an AI/ML Engineer to build intelligent features into our product. You will design and deploy machine learning models, work on NLP and recommendation systems, and collaborate with product and data teams to translate business problems into ML solutions. You will also own model evaluation, monitoring, and continuous improvement in production. Experience with LLM APIs, vector databases, and MLOps practices is a strong plus.",
-    "requirements": ["Python", "Machine Learning", "NLP", "Scikit-learn or PyTorch", "MLOps", "SQL", "LLM APIs (OpenAI/Anthropic)", "Docker", "Cloud (AWS/GCP)", "Vector Databases"],
+    "requirements": [
+      "Python",
+      "Machine Learning",
+      "NLP",
+      "Scikit-learn or PyTorch",
+      "MLOps",
+      "SQL",
+      "LLM APIs (OpenAI/Anthropic)",
+      "Docker",
+      "Cloud (AWS/GCP)",
+      "Vector Databases"
+    ],
     "role_budget": "25-40 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-04-01T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0023"
+    "job_code": "ASTRA-2026-0023",
+    "must_have_skills": [
+      "Python",
+      "Machine Learning",
+      "NLP",
+      "Deep Learning",
+      "Model Deployment"
+    ],
+    "good_to_have_skills": [
+      "TensorFlow/PyTorch",
+      "Hugging Face",
+      "MLOps",
+      "AWS SageMaker",
+      "LLMs"
+    ]
   },
   {
     "id": "e1f2a3b4-0012-0000-0000-000000000012",
@@ -271,11 +674,33 @@
     "job_type": "Full-time",
     "experience": "2-5 years",
     "description": "We are seeking a Customer Success Manager to build lasting relationships with our enterprise clients and ensure they derive maximum value from our platform. You will drive product adoption, manage onboarding, handle renewals, proactively prevent churn, and act as the voice of the customer internally. You will manage a portfolio of 30-40 accounts and collaborate closely with product and engineering on customer feedback loops. Experience in SaaS customer success with strong communication skills is required.",
-    "requirements": ["Customer Success", "Relationship Management", "Product Adoption", "Churn Prevention", "CRM (Salesforce or HubSpot)", "Data Analysis", "Executive Communication", "Stakeholder Management", "SaaS domain knowledge"],
+    "requirements": [
+      "Customer Success",
+      "Relationship Management",
+      "Product Adoption",
+      "Churn Prevention",
+      "CRM (Salesforce or HubSpot)",
+      "Data Analysis",
+      "Executive Communication",
+      "Stakeholder Management",
+      "SaaS domain knowledge"
+    ],
     "role_budget": "12-20 LPA",
     "preferred_notice": "Up to 30 days",
     "status": "open",
     "created_at": "2026-04-05T00:00:00+00:00",
-    "job_code": "ASTRA-2026-0024"
+    "job_code": "ASTRA-2026-0024",
+    "must_have_skills": [
+      "Customer Success",
+      "Relationship Management",
+      "Product Adoption",
+      "CRM Tools"
+    ],
+    "good_to_have_skills": [
+      "Salesforce",
+      "Data Analysis",
+      "Upselling/Cross-selling",
+      "NPS Management"
+    ]
   }
 ]

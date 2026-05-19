@@ -1,1228 +1,2393 @@
 [
   {
-    "name": "Priya Sharma",
-    "ct_number": "CT20260001",
-    "email": "priya.sharma@gmail.com",
-    "phone": "9876543210",
+    "name": "Akshay Dc",
+    "ct_number": "CT20260099",
+    "email": "arjun.mehta@demo.com",
+    "phone": "+91 98765 43210",
     "location": "Bangalore, Karnataka",
-    "linkedin_url": "https://linkedin.com/in/priyasharma",
-    "current_role": "Junior Salesforce Admin",
-    "current_ctc": "600000",
-    "expected_ctc": "900000",
-    "notice_period": "30 days",
-    "job_id": "d1e2f3a4-0001-0000-0000-000000000001",
-    "job_role": "Salesforce Administrator",
-    "job_description": "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform.",
-    "resume_text": "",
-    "match_percentage": 88,
-    "recommendation": "Strong Hire",
-    "match_summary": "Priya has 3 years of hands-on Salesforce Admin experience with Sales Cloud and Service Cloud. Holds Salesforce Admin certification. Strong fit for the role.",
-    "match_strengths": ["Certified Salesforce Admin", "Sales Cloud expertise", "Flow Builder experience"],
-    "match_gaps": ["Limited Service Cloud exposure"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": "24a71143-c8a7-47cd-b058-7f4e5ff9a1a0",
-    "status": "interview_complete",
-    "applied_at": "2026-04-10T09:00:00+00:00",
-    "additional_comments": "Priya demonstrated excellent communication throughout the interview. She articulated her Salesforce Admin experience clearly and gave specific examples of Flow Builder automations she built at her previous role. Technically solid with deep knowledge of Sales Cloud configuration. Cultural fit is excellent — she showed enthusiasm for the product and asked thoughtful questions about team structure. Recommendation: Proceed to offer stage.",
-    "call_status": {
-      "call_made": true,
-      "call_made_at": "2026-05-13T09:30:00+00:00",
-      "call_answered": true,
-      "call_answered_at": "2026-05-13T09:30:15+00:00",
-      "call_complete": true,
-      "call_complete_at": "2026-05-13T09:32:45+00:00",
-      "message_delivered": true,
-      "call_sid": "CAxxxx001",
-      "note": "Candidate confirmed receipt of email"
-    },
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/priyasharma-sf",
-      "status": "verified_match",
-      "status_label": "Verified Match",
-      "status_color": "#0F6E56",
-      "overall_score": 91,
-      "experience_comparison": {
-        "resume_years": 4,
-        "linkedin_years": 4.2,
-        "match": true,
-        "note": "LinkedIn confirms 4+ years at TCS as Salesforce Admin. Consistent with resume."
-      },
-      "certifications": [
-        {"name": "Salesforce Certified Administrator", "verified": true},
-        {"name": "Sales Cloud Consultant", "verified": true},
-        {"name": "Service Cloud Consultant", "verified": false}
-      ],
-      "recent_activity": [
-        "Shared Salesforce Winter 24 release highlights",
-        "Posted about Flow Builder best practices",
-        "Completed Trailhead Superbadge: Business Administration"
-      ],
-      "skills_match": {
-        "resume_skills": ["Salesforce Admin", "Sales Cloud", "Flows", "Reports"],
-        "linkedin_skills": ["Salesforce", "Sales Cloud", "Service Cloud", "Flow Builder", "SOQL"],
-        "overlap_percentage": 88
-      },
-      "scanned_at": "2026-05-13T09:00:00+00:00"
-    }
-  },
-  {
-    "name": "Rahul Mehta",
-    "ct_number": "CT20260002",
-    "email": "rahul.mehta@outlook.com",
-    "phone": "9823456710",
-    "location": "Bangalore, Karnataka",
-    "linkedin_url": "https://linkedin.com/in/rahulmehta",
-    "current_role": "Salesforce Support Analyst",
-    "current_ctc": "750000",
-    "expected_ctc": "1100000",
-    "notice_period": "30 days",
-    "job_id": "d1e2f3a4-0001-0000-0000-000000000001",
-    "job_role": "Salesforce Administrator",
-    "job_description": "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform.",
-    "resume_text": "",
-    "match_percentage": 72,
-    "recommendation": "Hire",
-    "match_summary": "Rahul has solid Salesforce support experience with good reporting skills. Lacks deep Flow Builder exposure but has the fundamentals.",
-    "match_strengths": ["Salesforce configuration experience", "Reports & Dashboards", "User management"],
-    "match_gaps": ["No Flow Builder experience", "Limited Sales Cloud depth"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": "80ef549d-81e3-40a3-a6f3-10a1cf64bbb1",
-    "status": "interview_complete",
-    "applied_at": "2026-04-11T10:30:00+00:00",
-    "additional_comments": "Rahul was confident and well-spoken but showed clear gaps in his technical depth. He could speak broadly about Salesforce configuration but struggled when asked about Flow Builder and automation. His support background gives him a good foundation for the Admin role, but he'll need structured onboarding on the automation side. Culture fit is decent — he's professional and collaborative. Recommend hiring with a 3-month ramp plan focusing on Flow and automation skills.",
-    "call_status": {
-      "call_made": true,
-      "call_made_at": "2026-05-13T10:00:00+00:00",
-      "call_answered": false,
-      "call_answered_at": null,
-      "call_complete": true,
-      "call_complete_at": "2026-05-13T10:00:45+00:00",
-      "message_delivered": false,
-      "call_sid": "CAxxxx002",
-      "note": "Candidate did not answer. Email sent."
-    },
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/rahulmehta-dev",
-      "status": "mismatch",
-      "status_label": "Mismatch Detected",
-      "status_color": "#A32D2D",
-      "overall_score": 52,
-      "experience_comparison": {
-        "resume_years": 3,
-        "linkedin_years": 1.5,
-        "match": false,
-        "note": "Resume claims 3 years experience but LinkedIn shows only 1.5 years in Salesforce roles. Discrepancy detected."
-      },
-      "certifications": [
-        {"name": "Salesforce Platform Developer I", "verified": false},
-        {"name": "JavaScript Developer I", "verified": false}
-      ],
-      "recent_activity": ["No recent Salesforce-related posts", "Last activity: 8 months ago"],
-      "skills_match": {
-        "resume_skills": ["Apex", "LWC", "SOQL", "REST APIs", "Integration"],
-        "linkedin_skills": ["JavaScript", "React", "Node.js"],
-        "overlap_percentage": 25
-      },
-      "scanned_at": "2026-05-13T10:00:00+00:00"
-    }
-  },
-  {
-    "name": "Sneha Patel",
-    "ct_number": "CT20260003",
-    "email": "sneha.patel@yahoo.com",
-    "phone": "9765432180",
-    "location": "Pune, Maharashtra",
-    "linkedin_url": "https://linkedin.com/in/snehapatel",
-    "current_role": "CRM Executive",
-    "current_ctc": "400000",
-    "expected_ctc": "700000",
-    "notice_period": "15 days",
-    "job_id": "d1e2f3a4-0001-0000-0000-000000000001",
-    "job_role": "Salesforce Administrator",
-    "job_description": "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform.",
-    "resume_text": "",
-    "match_percentage": 55,
-    "recommendation": "Consider",
-    "match_summary": "Sneha has basic CRM experience but limited Salesforce-specific skills. Would need significant onboarding for the Admin role.",
-    "match_strengths": ["CRM familiarity", "Quick learner", "Good communication"],
-    "match_gaps": ["No Salesforce certification", "No Apex/Flow experience", "Limited technical depth"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "applied",
-    "applied_at": "2026-04-12T14:00:00+00:00",
-    "linkedin_analysis": {
-      "linkedin_url": null,
-      "status": "no_url",
-      "status_label": "No LinkedIn URL",
-      "status_color": "#64748b",
-      "overall_score": null,
-      "experience_comparison": null,
-      "certifications": [],
-      "recent_activity": [],
-      "skills_match": null,
-      "scanned_at": null
-    }
-  },
-  {
-    "name": "Arjun Kumar",
-    "ct_number": "CT20260004",
-    "email": "arjun.kumar@gmail.com",
-    "phone": "9988776655",
-    "location": "Hyderabad, Telangana",
-    "linkedin_url": "https://linkedin.com/in/arjunkumar",
-    "current_role": "Salesforce Developer",
-    "current_ctc": "1200000",
-    "expected_ctc": "1800000",
-    "notice_period": "30 days",
-    "job_id": "d1e2f3a4-0002-0000-0000-000000000002",
-    "job_role": "Salesforce Developer",
-    "job_description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform.",
-    "resume_text": "",
-    "match_percentage": 91,
-    "recommendation": "Strong Hire",
-    "match_summary": "Arjun brings 4 years of strong Salesforce development experience including Apex, LWC, and third-party integrations. Excellent technical fit.",
-    "match_strengths": ["Apex & LWC expertise", "REST API integrations", "CI/CD with Salesforce DX"],
-    "match_gaps": ["Limited Experience Cloud exposure"],
-    "compensation_fit": "partial",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "interview_complete",
-    "applied_at": "2026-04-08T11:00:00+00:00",
-    "additional_comments": "Arjun is a standout candidate. He demonstrated deep Apex knowledge, explained complex trigger frameworks confidently, and showed a solid grasp of integration patterns using REST and Named Credentials. His LWC samples showed clean, component-driven thinking. The only minor gap was limited Experience Cloud exposure, which he acknowledged proactively. Culture fit is strong — he's collaborative, intellectually curious, and eager to mentor junior developers. Highly recommend for immediate offer."
-  },
-  {
-    "name": "Kavya Nair",
-    "ct_number": "CT20260005",
-    "email": "kavya.nair@gmail.com",
-    "phone": "9876012345",
-    "location": "Chennai, Tamil Nadu",
-    "linkedin_url": "https://linkedin.com/in/kavyanair",
-    "current_role": "Salesforce Developer",
-    "current_ctc": "1000000",
-    "expected_ctc": "1500000",
-    "notice_period": "30 days",
-    "job_id": "d1e2f3a4-0002-0000-0000-000000000002",
-    "job_role": "Salesforce Developer",
-    "job_description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform.",
-    "resume_text": "",
-    "match_percentage": 76,
-    "recommendation": "Hire",
-    "match_summary": "Kavya has strong Apex skills and good LWC experience. Integration experience is limited but she demonstrates solid fundamentals.",
-    "match_strengths": ["Strong Apex development", "LWC proficiency", "SOQL optimization"],
-    "match_gaps": ["Limited REST API integration work", "No Experience Cloud exposure"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "interview_scheduled",
-    "interview_slot": "2026-05-22 11:00",
-    "applied_at": "2026-04-09T09:45:00+00:00"
-  },
-  {
-    "name": "Vikram Singh",
-    "ct_number": "CT20260006",
-    "email": "vikram.singh@hotmail.com",
-    "phone": "9812345670",
-    "location": "Noida, Uttar Pradesh",
-    "linkedin_url": "https://linkedin.com/in/vikramsingh",
-    "current_role": "Junior Apex Developer",
-    "current_ctc": "800000",
-    "expected_ctc": "1400000",
-    "notice_period": "60 days",
-    "job_id": "d1e2f3a4-0002-0000-0000-000000000002",
-    "job_role": "Salesforce Developer",
-    "job_description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform.",
-    "resume_text": "",
-    "match_percentage": 62,
-    "recommendation": "Consider",
-    "match_summary": "Vikram has basic Apex knowledge but lacks LWC and integration experience. Long notice period may be a constraint.",
-    "match_strengths": ["Apex fundamentals", "SOQL basics", "Agile familiarity"],
-    "match_gaps": ["No LWC experience", "No REST API integrations", "60-day notice exceeds preference"],
-    "compensation_fit": "partial",
-    "notice_fit": "mismatch",
-    "session_id": null,
-    "status": "applied",
-    "applied_at": "2026-04-13T16:00:00+00:00",
-    "linkedin_analysis": {
-      "linkedin_url": null,
-      "status": "no_url",
-      "status_label": "No LinkedIn URL",
-      "status_color": "#64748b",
-      "overall_score": null,
-      "experience_comparison": null,
-      "certifications": [],
-      "recent_activity": [],
-      "skills_match": null,
-      "scanned_at": null
-    }
-  },
-  {
-    "name": "Anita Desai",
-    "ct_number": "CT20260007",
-    "email": "anita.desai@gmail.com",
-    "phone": "9765098765",
-    "location": "Mumbai, Maharashtra",
-    "linkedin_url": "https://linkedin.com/in/anitadesai",
-    "current_role": "Senior QA Engineer",
-    "current_ctc": "900000",
-    "expected_ctc": "1300000",
-    "notice_period": "30 days",
-    "job_id": "d1e2f3a4-0003-0000-0000-000000000003",
-    "job_role": "QA Engineer",
-    "job_description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products.",
-    "resume_text": "",
-    "match_percentage": 85,
-    "recommendation": "Strong Hire",
-    "match_summary": "Anita has 4 years of QA experience with strong automation and API testing skills. Excellent match for the Mumbai hybrid role.",
-    "match_strengths": ["Selenium automation", "API testing with Postman", "JIRA expertise"],
-    "match_gaps": ["Limited SQL proficiency"],
-    "compensation_fit": "partial",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "interview_complete",
-    "applied_at": "2026-04-07T10:00:00+00:00",
-    "additional_comments": "Anita came prepared with detailed examples of her automation frameworks and gave a live walkthrough of a Selenium test she wrote. Her understanding of the SDLC and defect lifecycle is thorough. She asked intelligent questions about our release cycle and CI/CD pipeline. SQL is a minor gap but she expressed willingness to upskill quickly. Very strong candidate — recommend moving to offer."
-  },
-  {
-    "name": "Rohan Sharma",
-    "ct_number": "CT20260008",
-    "email": "rohan.sharma@gmail.com",
-    "phone": "9823109876",
-    "location": "Mumbai, Maharashtra",
-    "linkedin_url": "https://linkedin.com/in/rohansharma",
-    "current_role": "QA Analyst",
-    "current_ctc": "650000",
-    "expected_ctc": "950000",
-    "notice_period": "15 days",
-    "job_id": "d1e2f3a4-0003-0000-0000-000000000003",
-    "job_role": "QA Engineer",
-    "job_description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products.",
-    "resume_text": "",
-    "match_percentage": 68,
-    "recommendation": "Hire",
-    "match_summary": "Rohan has solid manual testing background and is learning automation. Good cultural fit for a growing QA team.",
-    "match_strengths": ["Manual testing expertise", "Test case writing", "Agile experience"],
-    "match_gaps": ["Selenium still learning", "Limited API testing exposure"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "applied",
-    "applied_at": "2026-04-14T11:00:00+00:00"
-  },
-  {
-    "name": "Pooja Gupta",
-    "ct_number": "CT20260009",
-    "email": "pooja.gupta@rediffmail.com",
-    "phone": "9901234560",
-    "location": "Navi Mumbai, Maharashtra",
-    "linkedin_url": "https://linkedin.com/in/poojavgupta",
-    "current_role": "Manual Tester",
-    "current_ctc": "450000",
-    "expected_ctc": "750000",
-    "notice_period": "Immediate",
-    "job_id": "d1e2f3a4-0003-0000-0000-000000000003",
-    "job_role": "QA Engineer",
-    "job_description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products.",
-    "resume_text": "",
-    "match_percentage": 52,
-    "recommendation": "Consider",
-    "match_summary": "Pooja has basic manual testing skills but lacks automation and API testing experience required for this role.",
-    "match_strengths": ["Manual testing", "Bug reporting", "Immediate availability"],
-    "match_gaps": ["No Selenium experience", "No API testing", "No SQL knowledge"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "applied",
-    "applied_at": "2026-04-15T09:30:00+00:00",
-    "linkedin_analysis": {
-      "linkedin_url": null,
-      "status": "no_url",
-      "status_label": "No LinkedIn URL",
-      "status_color": "#64748b",
-      "overall_score": null,
-      "experience_comparison": null,
-      "certifications": [],
-      "recent_activity": [],
-      "skills_match": null,
-      "scanned_at": null
-    }
-  },
-  {
-    "name": "Deepak Verma",
-    "ct_number": "CT20260010",
-    "email": "deepak.verma@gmail.com",
-    "phone": "9876123450",
-    "location": "Pune, Maharashtra",
-    "linkedin_url": "https://linkedin.com/in/deepakverma",
-    "current_role": "Senior Business Analyst",
-    "current_ctc": "1100000",
-    "expected_ctc": "1600000",
-    "notice_period": "45 days",
-    "job_id": "d1e2f3a4-0004-0000-0000-000000000004",
-    "job_role": "Business Analyst",
-    "job_description": "We are looking for a Business Analyst to bridge the gap between business needs and technical solutions.",
-    "resume_text": "",
-    "match_percentage": 87,
-    "recommendation": "Strong Hire",
-    "match_summary": "Deepak has 5 years of BA experience with strong stakeholder management and process mapping skills. Salesforce CRM background is a bonus.",
-    "match_strengths": ["Stakeholder management", "User story writing", "Salesforce CRM experience"],
-    "match_gaps": ["Notice period slightly above preference"],
-    "compensation_fit": "partial",
-    "notice_fit": "partial",
-    "session_id": null,
-    "status": "interview_complete",
-    "applied_at": "2026-04-06T14:00:00+00:00",
-    "additional_comments": "Deepak is a polished communicator who clearly understands the BA role end-to-end. He walked through a real process improvement initiative he led at his current company and demonstrated a data-driven approach to identifying inefficiencies. His Salesforce CRM background is an unexpected plus for this role. The 45-day notice is a minor concern but he indicated flexibility if the offer is strong. Strong hire recommendation."
-  },
-  {
-    "name": "Meera Joshi",
-    "ct_number": "CT20260011",
-    "email": "meera.joshi@gmail.com",
-    "phone": "9823456780",
-    "location": "Pune, Maharashtra",
-    "linkedin_url": "https://linkedin.com/in/meerajoshi",
-    "current_role": "Business Analyst",
-    "current_ctc": "850000",
-    "expected_ctc": "1300000",
-    "notice_period": "30 days",
-    "job_id": "d1e2f3a4-0004-0000-0000-000000000004",
-    "job_role": "Business Analyst",
-    "job_description": "We are looking for a Business Analyst to bridge the gap between business needs and technical solutions.",
-    "resume_text": "",
-    "match_percentage": 74,
-    "recommendation": "Hire",
-    "match_summary": "Meera has good BA fundamentals with experience in Agile environments. Solid JIRA and user story skills.",
-    "match_strengths": ["Agile/Scrum experience", "JIRA proficiency", "Requirements gathering"],
-    "match_gaps": ["Limited data analysis skills", "No Salesforce experience"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "interview_scheduled",
-    "interview_slot": "2026-05-23 14:00",
-    "applied_at": "2026-04-11T15:00:00+00:00"
-  },
-  {
-    "name": "Sanjay Rao",
-    "ct_number": "CT20260012",
-    "email": "sanjay.rao@gmail.com",
-    "phone": "9901287650",
-    "location": "Pune, Maharashtra",
-    "linkedin_url": "https://linkedin.com/in/sanjayrao",
-    "current_role": "Jr. Business Analyst",
-    "current_ctc": "550000",
-    "expected_ctc": "900000",
-    "notice_period": "30 days",
-    "job_id": "d1e2f3a4-0004-0000-0000-000000000004",
-    "job_role": "Business Analyst",
-    "job_description": "We are looking for a Business Analyst to bridge the gap between business needs and technical solutions.",
-    "resume_text": "",
-    "match_percentage": 58,
-    "recommendation": "Consider",
-    "match_summary": "Sanjay is a junior BA with limited hands-on experience. Shows promise but needs mentoring to meet the 3-6 year experience requirement.",
-    "match_strengths": ["Eager learner", "Good communication", "Basic JIRA knowledge"],
-    "match_gaps": ["Only 1 year of experience", "No process mapping exposure", "Limited stakeholder management"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "applied",
-    "applied_at": "2026-04-16T10:00:00+00:00",
-    "linkedin_analysis": {
-      "linkedin_url": null,
-      "status": "no_url",
-      "status_label": "No LinkedIn URL",
-      "status_color": "#64748b",
-      "overall_score": null,
-      "experience_comparison": null,
-      "certifications": [],
-      "recent_activity": [],
-      "skills_match": null,
-      "scanned_at": null
-    }
-  },
-  {
-    "name": "Ananya Krishnan",
-    "ct_number": "CT20260013",
-    "email": "ananya.k@gmail.com",
-    "phone": "9812309876",
-    "location": "Chennai, Tamil Nadu",
-    "linkedin_url": "https://linkedin.com/in/ananyak",
-    "current_role": "Junior QA Analyst",
-    "current_ctc": "380000",
-    "expected_ctc": "620000",
-    "notice_period": "30 days",
-    "job_id": "d1e2f3a4-0003-0000-0000-000000000003",
-    "job_role": "QA Engineer",
-    "job_description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products.",
-    "resume_text": "",
-    "match_percentage": 48,
-    "recommendation": "Consider",
-    "match_summary": "Ananya has basic manual testing knowledge but lacks automation skills and technical depth required for the role.",
-    "match_strengths": ["Enthusiastic learner", "Basic manual testing"],
-    "match_gaps": ["No automation experience", "Limited API testing", "Short answers"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": "0f6ef23e-0d3a-475b-b32c-2337bb2acba6",
-    "status": "rejected",
-    "applied_at": "2026-04-17T09:00:00+00:00",
-    "additional_comments": "Ananya showed genuine enthusiasm but unfortunately did not demonstrate the minimum technical competency expected for the QA Engineer role. Her answers on automation were largely theoretical with no practical examples. API testing concepts were unfamiliar to her. After panel discussion, the team agreed she is better suited for a junior/internship-track role. Recommend rejection for this position but may revisit in 12-18 months if she builds her automation skills.",
-    "call_status": {
-      "call_made": true,
-      "call_made_at": "2026-05-13T11:15:00+00:00",
-      "call_answered": true,
-      "call_answered_at": "2026-05-13T11:15:08+00:00",
-      "call_complete": false,
-      "call_complete_at": null,
-      "message_delivered": false,
-      "call_sid": "CAxxxx003",
-      "note": "Call disconnected before message delivered"
-    },
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/ananyak-qa",
-      "status": "no_match",
-      "status_label": "Profile Not Found",
-      "status_color": "#854F0B",
-      "overall_score": 0,
-      "experience_comparison": {
-        "resume_years": 2,
-        "linkedin_years": 0,
-        "match": false,
-        "note": "LinkedIn profile URL provided but profile appears to be private or deleted."
-      },
-      "certifications": [],
-      "recent_activity": ["Profile is private or unavailable"],
-      "skills_match": {
-        "resume_skills": ["Manual Testing", "Selenium", "JIRA"],
-        "linkedin_skills": [],
-        "overlap_percentage": 0
-      },
-      "scanned_at": "2026-05-13T11:00:00+00:00"
-    }
-  },
-  {
-    "name": "Vikram Nair",
-    "ct_number": "CT20260014",
-    "email": "vikram.nair@gmail.com",
-    "phone": "9876540123",
-    "location": "Bangalore, Karnataka",
-    "linkedin_url": "https://linkedin.com/in/vikramnair",
-    "current_role": "Senior Salesforce Developer",
+    "linkedin_url": "https://linkedin.com/in/akshaydc-sfdev",
+    "current_role": "Salesforce Developer at Infosys",
     "current_ctc": "1400000",
-    "expected_ctc": "2000000",
-    "notice_period": "30 days",
-    "job_id": "d1e2f3a4-0002-0000-0000-000000000002",
-    "job_role": "Salesforce Developer",
-    "job_description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform.",
-    "resume_text": "",
-    "match_percentage": 79,
-    "recommendation": "Hire",
-    "match_summary": "Vikram is technically strong with real Apex and integration experience. Minor dip on system design questions but recovered well.",
-    "match_strengths": ["Strong Apex", "Platform events", "CI/CD experience"],
-    "match_gaps": ["Multi-org architecture gap", "Could improve structured delivery"],
-    "compensation_fit": "partial",
-    "notice_fit": "good",
-    "session_id": "29a8a3eb-5e8e-4ca5-a506-7bbc60cc28fe",
-    "status": "interview_complete",
-    "applied_at": "2026-04-17T11:00:00+00:00",
-    "additional_comments": "Vikram showed strong command of Apex and Platform Events. He struggled briefly with multi-org architecture questions but corrected himself and demonstrated he understood the concepts. His CI/CD experience with SFDX and GitHub Actions is a real asset. Communication was clear and structured. Compensation expectations are slightly above band but within negotiation range. Recommend hire.",
-    "call_status": {
-      "call_made": true,
-      "call_made_at": "2026-05-13T14:00:00+00:00",
-      "call_answered": true,
-      "call_answered_at": "2026-05-13T14:00:12+00:00",
-      "call_complete": true,
-      "call_complete_at": "2026-05-13T14:03:22+00:00",
-      "message_delivered": true,
-      "call_sid": "CAxxxx004",
-      "note": "Candidate asked about interview format. Informed about AI interview."
-    },
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/vikramnair-sf",
-      "status": "verified_match",
-      "status_label": "Strong Verified Match",
-      "status_color": "#0F6E56",
-      "overall_score": 96,
-      "experience_comparison": {
-        "resume_years": 5,
-        "linkedin_years": 5.5,
-        "match": true,
-        "note": "LinkedIn shows additional experience not on resume. Senior roles at Infosys and TCS confirmed."
-      },
-      "certifications": [
-        {"name": "Salesforce Platform Developer I", "verified": true},
-        {"name": "Salesforce Platform Developer II", "verified": true},
-        {"name": "Application Architect", "verified": true}
-      ],
-      "recent_activity": [
-        "Published article: CI/CD Best Practices in Salesforce",
-        "Earned Trailhead Ranger status",
-        "Spoke at Salesforce Mumbai User Group",
-        "Completed Salesforce Architect certification"
-      ],
-      "skills_match": {
-        "resume_skills": ["Apex", "LWC", "SOQL", "Platform Events", "MuleSoft"],
-        "linkedin_skills": ["Apex", "LWC", "SOQL", "Platform Events", "REST APIs", "CI/CD", "Git"],
-        "overlap_percentage": 94
-      },
-      "scanned_at": "2026-05-13T14:00:00+00:00"
-    }
-  },
-  {
-    "name": "Ishaan Patel",
-    "ct_number": "CT20260015",
-    "email": "ishaan.patel@gmail.com",
-    "phone": "9870123456",
-    "location": "Bangalore, Karnataka",
-    "linkedin_url": "https://linkedin.com/in/ishaanpatel-de",
-    "current_role": "Senior Data Engineer",
-    "current_ctc": "1600000",
-    "expected_ctc": "2200000",
-    "notice_period": "30 days",
-    "job_id": "e1f2a3b4-0001-0000-0000-000000000001",
-    "job_role": "Data Engineer",
-    "job_description": "We are looking for a Data Engineer to build and maintain our data infrastructure.",
-    "resume_text": "",
-    "match_percentage": 93,
-    "recommendation": "Strong Hire",
-    "match_summary": "Ishaan has 4 years of data engineering experience with expert-level Python, Spark, and Airflow skills. Has built end-to-end data pipelines for two unicorn-stage startups. Exceptional technical fit.",
-    "match_strengths": ["Apache Spark & PySpark mastery", "dbt and Airflow expertise", "AWS Glue and Redshift experience"],
-    "match_gaps": ["GCP experience limited (primarily AWS)"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "interview_complete",
-    "applied_at": "2026-04-18T09:00:00+00:00",
-    "additional_comments": "Ishaan is one of the strongest data engineering candidates we have seen. He gave a detailed walkthrough of a real-time pipeline he built using Kafka and Spark Streaming at his previous company, handling 50M+ events/day. His understanding of data modeling, partition strategies, and incremental loads using dbt is impressive. Communication is sharp and technical explanations are crystal clear. Highly recommend moving to offer immediately — risk of losing him to competing offers is high.",
-    "interview_slot": "2026-05-12 10:00",
-    "call_status": {
-      "call_made": true,
-      "call_made_at": "2026-05-10T09:30:00+00:00",
-      "call_answered": true,
-      "call_answered_at": "2026-05-10T09:30:10+00:00",
-      "call_complete": true,
-      "call_complete_at": "2026-05-10T09:32:50+00:00",
-      "message_delivered": true,
-      "call_sid": "CAxxxx015",
-      "note": "Candidate confirmed slot and asked about tech stack details"
-    },
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/ishaanpatel-de",
-      "status": "verified_match",
-      "status_label": "Verified Match",
-      "status_color": "#0F6E56",
-      "overall_score": 91,
-      "experience_comparison": {
-        "resume_years": 4,
-        "linkedin_years": 4.3,
-        "match": true,
-        "note": "LinkedIn confirms senior data engineering roles at Meesho and Razorpay. Fully consistent with resume."
-      },
-      "certifications": [
-        {"name": "AWS Certified Data Engineer – Associate", "verified": true},
-        {"name": "dbt Analytics Engineering Certification", "verified": true}
-      ],
-      "recent_activity": [
-        "Posted about Apache Iceberg for lakehouse architecture",
-        "Shared dbt best practices blog",
-        "Spoke at Bangalore Data Engineering Meetup"
-      ],
-      "skills_match": {
-        "resume_skills": ["Python", "Spark", "Airflow", "dbt", "SQL", "AWS"],
-        "linkedin_skills": ["Python", "Apache Spark", "Airflow", "dbt", "SQL", "AWS Glue", "Redshift"],
-        "overlap_percentage": 93
-      },
-      "scanned_at": "2026-05-10T08:00:00+00:00"
-    }
-  },
-  {
-    "name": "Nisha Kapoor",
-    "ct_number": "CT20260016",
-    "email": "nisha.kapoor@gmail.com",
-    "phone": "9812034567",
-    "location": "Bangalore, Karnataka",
-    "linkedin_url": "https://linkedin.com/in/nishakapoor-ux",
-    "current_role": "UX Designer",
-    "current_ctc": "1100000",
-    "expected_ctc": "1600000",
-    "notice_period": "30 days",
-    "job_id": "e1f2a3b4-0002-0000-0000-000000000002",
-    "job_role": "UX Designer",
-    "job_description": "We are seeking a creative UX Designer to craft intuitive, user-centered product experiences.",
-    "resume_text": "",
-    "match_percentage": 87,
-    "recommendation": "Strong Hire",
-    "match_summary": "Nisha brings 3 years of UX design experience with a strong portfolio spanning SaaS products and mobile apps. Excellent research and prototyping skills.",
-    "match_strengths": ["Figma mastery", "User research methodology", "Strong portfolio"],
-    "match_gaps": ["Limited design systems experience at scale"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "interview_scheduled",
-    "interview_slot": "2026-05-22 14:00",
-    "applied_at": "2026-04-20T10:30:00+00:00",
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/nishakapoor-ux",
-      "status": "verified_match",
-      "status_label": "Verified Match",
-      "status_color": "#0F6E56",
-      "overall_score": 84,
-      "experience_comparison": {
-        "resume_years": 3,
-        "linkedin_years": 3.2,
-        "match": true,
-        "note": "LinkedIn confirms UX roles at Swiggy and Sharechat. Consistent with resume."
-      },
-      "certifications": [
-        {"name": "Google UX Design Certificate", "verified": true},
-        {"name": "Nielsen Norman Group UX Research", "verified": false}
-      ],
-      "recent_activity": [
-        "Published Dribbble shots of new onboarding flow",
-        "Shared article on accessibility in B2B SaaS",
-        "Posted Figma community template"
-      ],
-      "skills_match": {
-        "resume_skills": ["Figma", "User Research", "Wireframing", "Prototyping"],
-        "linkedin_skills": ["Figma", "User Research", "Usability Testing", "Design Systems"],
-        "overlap_percentage": 87
-      },
-      "scanned_at": "2026-05-15T09:00:00+00:00"
-    }
-  },
-  {
-    "name": "Aditya Bhat",
-    "ct_number": "CT20260017",
-    "email": "aditya.bhat@gmail.com",
-    "phone": "9765301234",
-    "location": "Hyderabad, Telangana",
-    "linkedin_url": "https://linkedin.com/in/adityabhat-devops",
-    "current_role": "DevOps Engineer",
-    "current_ctc": "1400000",
-    "expected_ctc": "1900000",
-    "notice_period": "30 days",
-    "job_id": "e1f2a3b4-0003-0000-0000-000000000003",
-    "job_role": "DevOps Engineer",
-    "job_description": "We are hiring a DevOps Engineer to build and maintain our cloud infrastructure and CI/CD pipelines.",
-    "resume_text": "",
-    "match_percentage": 79,
-    "recommendation": "Hire",
-    "match_summary": "Aditya has solid Kubernetes and CI/CD experience with hands-on Terraform use. Strong AWS foundation with some gaps in observability tooling.",
-    "match_strengths": ["Kubernetes administration", "Terraform IaC", "GitHub Actions CI/CD"],
-    "match_gaps": ["Limited Prometheus/Grafana setup experience", "No GCP exposure"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "shortlisted",
-    "applied_at": "2026-04-22T11:00:00+00:00",
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/adityabhat-devops",
-      "status": "verified_match",
-      "status_label": "Verified Match",
-      "status_color": "#0F6E56",
-      "overall_score": 76,
-      "experience_comparison": {
-        "resume_years": 4,
-        "linkedin_years": 4.1,
-        "match": true,
-        "note": "LinkedIn confirms DevOps roles at Freshworks and Juspay. Fully consistent."
-      },
-      "certifications": [
-        {"name": "AWS Solutions Architect – Associate", "verified": true},
-        {"name": "Certified Kubernetes Administrator (CKA)", "verified": true}
-      ],
-      "recent_activity": [
-        "Shared post on GitOps with ArgoCD",
-        "Published Terraform module on GitHub",
-        "Commented on Kubernetes best practices thread"
-      ],
-      "skills_match": {
-        "resume_skills": ["Kubernetes", "Docker", "Terraform", "AWS", "CI/CD"],
-        "linkedin_skills": ["Kubernetes", "Docker", "Terraform", "AWS", "GitHub Actions"],
-        "overlap_percentage": 79
-      },
-      "scanned_at": "2026-05-14T10:00:00+00:00"
-    }
-  },
-  {
-    "name": "Priti Agarwal",
-    "ct_number": "CT20260018",
-    "email": "priti.agarwal@gmail.com",
-    "phone": "9823056789",
-    "location": "Mumbai, Maharashtra",
-    "linkedin_url": "https://linkedin.com/in/pritiagarwal-mktg",
-    "current_role": "Marketing Manager",
-    "current_ctc": "1700000",
-    "expected_ctc": "2300000",
-    "notice_period": "45 days",
-    "job_id": "e1f2a3b4-0004-0000-0000-000000000004",
-    "job_role": "Marketing Manager",
-    "job_description": "We are looking for a Marketing Manager to lead our go-to-market strategy and brand presence.",
-    "resume_text": "",
-    "match_percentage": 82,
-    "recommendation": "Hire",
-    "match_summary": "Priti has 6 years of B2B SaaS marketing experience with a proven track record in demand generation and content-led growth.",
-    "match_strengths": ["B2B/SaaS marketing depth", "HubSpot and Marketo expertise", "Content strategy and SEO"],
-    "match_gaps": ["Limited paid media (SEM) experience", "Notice period at upper end"],
-    "compensation_fit": "partial",
-    "notice_fit": "partial",
-    "session_id": null,
-    "status": "interview_complete",
-    "applied_at": "2026-04-19T14:00:00+00:00",
-    "additional_comments": "Priti presented a detailed case study of a campaign she ran at her previous SaaS company that drove 3x MQLs within 6 months using a content-led SEO strategy combined with HubSpot automation. She is confident, data-driven, and clearly understands the full-funnel B2B buyer journey. Her limited SEM experience is a gap but she has a plan to close it. Notice period and compensation are slightly above band — recommend negotiation before extending offer. Overall a strong hire.",
-    "interview_slot": "2026-05-10 11:00",
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/pritiagarwal-mktg",
-      "status": "partial_match",
-      "status_label": "Partial Match",
-      "status_color": "#854F0B",
-      "overall_score": 75,
-      "experience_comparison": {
-        "resume_years": 6,
-        "linkedin_years": 5.8,
-        "match": true,
-        "note": "LinkedIn shows 6 years of marketing experience across Zoho and Freshdesk. Broadly consistent."
-      },
-      "certifications": [
-        {"name": "HubSpot Marketing Certification", "verified": true},
-        {"name": "Google Analytics Certification", "verified": true}
-      ],
-      "recent_activity": [
-        "Published article on content-led B2B growth",
-        "Shared HubSpot email automation tips",
-        "Liked Salesforce marketing cloud post"
-      ],
-      "skills_match": {
-        "resume_skills": ["Digital Marketing", "HubSpot", "Content Strategy", "SEO", "Lead Generation"],
-        "linkedin_skills": ["Digital Marketing", "HubSpot", "Content Strategy", "SEO"],
-        "overlap_percentage": 80
-      },
-      "scanned_at": "2026-05-10T08:00:00+00:00"
-    }
-  },
-  {
-    "name": "Suresh Menon",
-    "ct_number": "CT20260019",
-    "email": "suresh.menon@gmail.com",
-    "phone": "9901345678",
-    "location": "Bangalore, Karnataka",
-    "linkedin_url": "https://linkedin.com/in/sureshmenon-dev",
-    "current_role": "Senior Frontend Developer",
-    "current_ctc": "1800000",
-    "expected_ctc": "2500000",
-    "notice_period": "30 days",
-    "job_id": "e1f2a3b4-0006-0000-0000-000000000006",
-    "job_role": "React Frontend Developer",
-    "job_description": "We are looking for a React Frontend Developer to build responsive, high-performance web applications.",
-    "resume_text": "",
-    "match_percentage": 95,
-    "recommendation": "Strong Hire",
-    "match_summary": "Suresh is an exceptional frontend engineer with 5 years of React and TypeScript experience. Contributed to multiple high-traffic consumer products. Outstanding technical fit.",
-    "match_strengths": ["React & TypeScript mastery", "Performance optimization", "Component library ownership"],
-    "match_gaps": ["Compensation expectations above band (negotiable)"],
-    "compensation_fit": "partial",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "interview_complete",
-    "applied_at": "2026-04-21T09:00:00+00:00",
-    "additional_comments": "Suresh is easily the strongest frontend candidate we have interviewed. He demonstrated deep React internals knowledge — explaining reconciliation, concurrent mode, and memoization with precision. His live coding session was flawless: he built a complex paginated data grid with virtualization in under 30 minutes. He has led the migration of a legacy codebase to React 18 at his current company. Culture fit is excellent — calm, methodical, loves mentoring. Compensation is slightly above band but he's worth every rupee. Extend offer immediately.",
-    "interview_slot": "2026-05-09 11:00",
-    "call_status": {
-      "call_made": true,
-      "call_made_at": "2026-05-07T10:00:00+00:00",
-      "call_answered": true,
-      "call_answered_at": "2026-05-07T10:00:08+00:00",
-      "call_complete": true,
-      "call_complete_at": "2026-05-07T10:02:30+00:00",
-      "message_delivered": true,
-      "call_sid": "CAxxxx019",
-      "note": "Confirmed slot and asked about the tech stack used"
-    },
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/sureshmenon-dev",
-      "status": "verified_match",
-      "status_label": "Verified Match",
-      "status_color": "#0F6E56",
-      "overall_score": 96,
-      "experience_comparison": {
-        "resume_years": 5,
-        "linkedin_years": 5.2,
-        "match": true,
-        "note": "LinkedIn confirms senior frontend roles at Flipkart and Cred. Fully consistent with resume."
-      },
-      "certifications": [
-        {"name": "Meta Frontend Developer Professional Certificate", "verified": true}
-      ],
-      "recent_activity": [
-        "Open-sourced a React performance monitoring hook",
-        "Spoke at ReactConf India 2025",
-        "Published blog: React Server Components in Production"
-      ],
-      "skills_match": {
-        "resume_skills": ["React", "TypeScript", "JavaScript", "CSS", "Vite"],
-        "linkedin_skills": ["React", "TypeScript", "JavaScript", "CSS", "Webpack", "Jest"],
-        "overlap_percentage": 95
-      },
-      "scanned_at": "2026-05-07T08:00:00+00:00"
-    }
-  },
-  {
-    "name": "Ritika Bansal",
-    "ct_number": "CT20260020",
-    "email": "ritika.bansal@gmail.com",
-    "phone": "9876890123",
-    "location": "Bangalore, Karnataka",
-    "linkedin_url": "https://linkedin.com/in/ritikabansal-hr",
-    "current_role": "HR Manager",
-    "current_ctc": "1200000",
     "expected_ctc": "1700000",
     "notice_period": "30 days",
-    "job_id": "e1f2a3b4-0007-0000-0000-000000000007",
-    "job_role": "HR Business Partner",
-    "job_description": "We are hiring an HR Business Partner to align HR strategies with business objectives.",
-    "resume_text": "",
-    "match_percentage": 73,
-    "recommendation": "Hire",
-    "match_summary": "Ritika has 4 years of HR management experience with good strengths in talent acquisition and employee relations. HR analytics experience is still developing.",
-    "match_strengths": ["Talent acquisition", "Employee relations", "Performance management cycles"],
-    "match_gaps": ["Limited HR analytics depth", "No HRBP-specific experience"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "shortlisted",
-    "applied_at": "2026-04-23T15:00:00+00:00",
-    "linkedin_analysis": {
-      "linkedin_url": null,
-      "status": "no_url",
-      "status_label": "No LinkedIn URL",
-      "status_color": "#64748b",
-      "overall_score": null,
-      "experience_comparison": null,
-      "certifications": [],
-      "recent_activity": [],
-      "skills_match": null,
-      "scanned_at": null
-    }
+    "is_demo": true,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0002-0000-0000-000000000002",
+        "job_role": "Salesforce Developer",
+        "job_code": "ASTRA-2026-0002",
+        "resume_text": "AKSHAY DC\nSalesforce Developer | Bangalore | arjun.mehta@demo.com\n\nSUMMARY\n4+ years Salesforce Developer. Apex, LWC, SOQL expert. Certified Platform Developer I. Worked at Infosys and TCS on enterprise Sales Cloud implementations.\n\nEXPERIENCE\nSenior SF Developer — Infosys 2023-Present\n• Built 15+ LWC components, reduced manual entry 40%\n• Apex triggers, batch jobs, scheduled classes for Sales Cloud\n• SOQL-optimised queries, improved performance 60%\n• Einstein Analytics dashboards for leadership\n• Agile sprints, Python REST API integrations\n\nSF Developer — TCS 2021-2023\n• Full Sales Cloud config: opportunity stages, products, pricebooks\n• Salesforce Administration: user management, profiles, permission sets\n• Python middleware for Salesforce-SAP integration\n\nCERTIFICATIONS\nSalesforce Certified Platform Developer I\nSalesforce Certified Administrator\n\nSKILLS\nApex, LWC, SOQL, Salesforce Administration, Sales Cloud, Einstein Analytics, Python, Agile",
+        "match_percentage": 93,
+        "recommendation": "Strong Hire",
+        "match_summary": "Exceptional Salesforce Developer. All 5 must-have skills matched. Strong Einstein Analytics and Agile exposure. 4+ years at Infosys and TCS.",
+        "match_strengths": [
+          "All must-have matched: Apex, LWC, SOQL, SF Admin, Sales Cloud",
+          "Einstein Analytics and Agile experience",
+          "4+ years at top-tier companies",
+          "Certified Platform Developer I & Admin"
+        ],
+        "match_gaps": [
+          "No Copado experience"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "must_have_matched": [
+          "Apex",
+          "LWC",
+          "SOQL",
+          "Salesforce Administration",
+          "Sales Cloud"
+        ],
+        "must_have_missing": [],
+        "must_have_score": 30.0,
+        "good_to_have_matched": [
+          "Einstein Analytics",
+          "Python",
+          "Agile"
+        ],
+        "good_to_have_missing": [
+          "Copado"
+        ],
+        "good_to_have_score": 15.0,
+        "notice_score": 10.0,
+        "compensation_score": 9.0,
+        "status": "interview_scheduled",
+        "applied_at": "2026-05-15T10:00:00+00:00",
+        "interview_slot": "DEMO_DYNAMIC",
+        "linkedin_analysis": {
+          "scanned": true,
+          "scanned_at": "2026-05-16T11:00:00+00:00",
+          "overall_score": 97,
+          "experience_verified": true,
+          "skills_verified": [
+            "Apex",
+            "LWC",
+            "SOQL",
+            "Salesforce Administration",
+            "Sales Cloud",
+            "Einstein Analytics",
+            "Python"
+          ],
+          "recommendation": "LinkedIn fully corroborates CV. Exceptional community presence.",
+          "red_flags": [],
+          "highlights": [
+            "Trailhead Ranger with 150+ badges",
+            "Speaker at Salesforce developer groups"
+          ]
+        },
+        "call_status": {
+          "call_made": true,
+          "call_answered": true,
+          "call_complete": true,
+          "message_delivered": true,
+          "note": "Confirmed interview slot."
+        }
+      }
+    ]
   },
   {
-    "name": "Aryan Khanna",
+    "linkedin_url": "https://linkedin.com/in/priyasharma",
+    "ct_number": "CT20260001",
+    "phone": "9876543210",
+    "location": "Bangalore, Karnataka",
+    "email": "priya.sharma@gmail.com",
+    "current_ctc": "600000",
+    "notice_period": "30 days",
+    "expected_ctc": "900000",
+    "name": "Priya Sharma",
+    "current_role": "Junior Salesforce Admin",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0001-0000-0000-000000000001",
+        "job_role": "Salesforce Administrator",
+        "job_description": "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform.",
+        "resume_text": "",
+        "match_percentage": 90,
+        "recommendation": "Strong Hire",
+        "match_summary": "Priya has 3 years of hands-on Salesforce Admin experience with Sales Cloud and Service Cloud. Holds Salesforce Admin certification. Strong fit for the role.",
+        "match_strengths": [
+          "Certified Salesforce Admin",
+          "Sales Cloud expertise",
+          "Flow Builder experience"
+        ],
+        "match_gaps": [
+          "Limited Service Cloud exposure"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": "24a71143-c8a7-47cd-b058-7f4e5ff9a1a0",
+        "status": "interview_complete",
+        "applied_at": "2026-04-10T09:00:00+00:00",
+        "additional_comments": "Priya demonstrated excellent communication throughout the interview. She articulated her Salesforce Admin experience clearly and gave specific examples of Flow Builder automations she built at her previous role. Technically solid with deep knowledge of Sales Cloud configuration. Cultural fit is excellent — she showed enthusiasm for the product and asked thoughtful questions about team structure. Recommendation: Proceed to offer stage.",
+        "call_status": {
+          "call_made": true,
+          "call_made_at": "2026-05-13T09:30:00+00:00",
+          "call_answered": true,
+          "call_answered_at": "2026-05-13T09:30:15+00:00",
+          "call_complete": true,
+          "call_complete_at": "2026-05-13T09:32:45+00:00",
+          "message_delivered": true,
+          "call_sid": "CAxxxx001",
+          "note": "Candidate confirmed receipt of email"
+        },
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/priyasharma-sf",
+          "status": "verified_match",
+          "status_label": "Verified Match",
+          "status_color": "#0F6E56",
+          "overall_score": 91,
+          "experience_comparison": {
+            "resume_years": 4,
+            "linkedin_years": 4.2,
+            "match": true,
+            "note": "LinkedIn confirms 4+ years at TCS as Salesforce Admin. Consistent with resume."
+          },
+          "certifications": [
+            {
+              "name": "Salesforce Certified Administrator",
+              "verified": true
+            },
+            {
+              "name": "Sales Cloud Consultant",
+              "verified": true
+            },
+            {
+              "name": "Service Cloud Consultant",
+              "verified": false
+            }
+          ],
+          "recent_activity": [
+            "Shared Salesforce Winter 24 release highlights",
+            "Posted about Flow Builder best practices",
+            "Completed Trailhead Superbadge: Business Administration"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Salesforce Admin",
+              "Sales Cloud",
+              "Flows",
+              "Reports"
+            ],
+            "linkedin_skills": [
+              "Salesforce",
+              "Sales Cloud",
+              "Service Cloud",
+              "Flow Builder",
+              "SOQL"
+            ],
+            "overlap_percentage": 88
+          },
+          "scanned_at": "2026-05-13T09:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Salesforce Admin",
+          "Sales Cloud",
+          "Flow Builder"
+        ],
+        "must_have_missing": [
+          "Service Cloud"
+        ],
+        "must_have_score": 22.5,
+        "good_to_have_matched": [
+          "Reports & Dashboards",
+          "User Management",
+          "Data Management"
+        ],
+        "good_to_have_missing": [],
+        "good_to_have_score": 20.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/rahulmehta",
+    "ct_number": "CT20260002",
+    "phone": "9823456710",
+    "location": "Bangalore, Karnataka",
+    "email": "rahul.mehta@outlook.com",
+    "current_ctc": "750000",
+    "notice_period": "30 days",
+    "expected_ctc": "1100000",
+    "name": "Rahul Mehta",
+    "current_role": "Salesforce Support Analyst",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0001-0000-0000-000000000001",
+        "job_role": "Salesforce Administrator",
+        "job_description": "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform.",
+        "resume_text": "",
+        "match_percentage": 72,
+        "recommendation": "Hire",
+        "match_summary": "Rahul has solid Salesforce support experience with good reporting skills. Lacks deep Flow Builder exposure but has the fundamentals.",
+        "match_strengths": [
+          "Salesforce configuration experience",
+          "Reports & Dashboards",
+          "User management"
+        ],
+        "match_gaps": [
+          "No Flow Builder experience",
+          "Limited Sales Cloud depth"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": "80ef549d-81e3-40a3-a6f3-10a1cf64bbb1",
+        "status": "interview_complete",
+        "applied_at": "2026-04-11T10:30:00+00:00",
+        "additional_comments": "Rahul was confident and well-spoken but showed clear gaps in his technical depth. He could speak broadly about Salesforce configuration but struggled when asked about Flow Builder and automation. His support background gives him a good foundation for the Admin role, but he'll need structured onboarding on the automation side. Culture fit is decent — he's professional and collaborative. Recommend hiring with a 3-month ramp plan focusing on Flow and automation skills.",
+        "call_status": {
+          "call_made": true,
+          "call_made_at": "2026-05-13T10:00:00+00:00",
+          "call_answered": false,
+          "call_answered_at": null,
+          "call_complete": true,
+          "call_complete_at": "2026-05-13T10:00:45+00:00",
+          "message_delivered": false,
+          "call_sid": "CAxxxx002",
+          "note": "Candidate did not answer. Email sent."
+        },
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/rahulmehta-dev",
+          "status": "mismatch",
+          "status_label": "Mismatch Detected",
+          "status_color": "#A32D2D",
+          "overall_score": 52,
+          "experience_comparison": {
+            "resume_years": 3,
+            "linkedin_years": 1.5,
+            "match": false,
+            "note": "Resume claims 3 years experience but LinkedIn shows only 1.5 years in Salesforce roles. Discrepancy detected."
+          },
+          "certifications": [
+            {
+              "name": "Salesforce Platform Developer I",
+              "verified": false
+            },
+            {
+              "name": "JavaScript Developer I",
+              "verified": false
+            }
+          ],
+          "recent_activity": [
+            "No recent Salesforce-related posts",
+            "Last activity: 8 months ago"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Apex",
+              "LWC",
+              "SOQL",
+              "REST APIs",
+              "Integration"
+            ],
+            "linkedin_skills": [
+              "JavaScript",
+              "React",
+              "Node.js"
+            ],
+            "overlap_percentage": 25
+          },
+          "scanned_at": "2026-05-13T10:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Salesforce Admin",
+          "Sales Cloud",
+          "Service Cloud"
+        ],
+        "must_have_missing": [
+          "Flow Builder"
+        ],
+        "must_have_score": 22.5,
+        "good_to_have_matched": [
+          "Reports & Dashboards",
+          "User Management"
+        ],
+        "good_to_have_missing": [
+          "Data Management"
+        ],
+        "good_to_have_score": 13.3,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/snehapatel",
+    "ct_number": "CT20260003",
+    "phone": "9765432180",
+    "location": "Pune, Maharashtra",
+    "email": "sneha.patel@yahoo.com",
+    "current_ctc": "400000",
+    "notice_period": "15 days",
+    "expected_ctc": "700000",
+    "name": "Sneha Patel",
+    "current_role": "CRM Executive",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0001-0000-0000-000000000001",
+        "job_role": "Salesforce Administrator",
+        "job_description": "We are hiring an experienced Salesforce Administrator to manage and enhance our CRM platform.",
+        "resume_text": "",
+        "match_percentage": 56,
+        "recommendation": "Consider",
+        "match_summary": "Sneha has basic CRM experience but limited Salesforce-specific skills. Would need significant onboarding for the Admin role.",
+        "match_strengths": [
+          "CRM familiarity",
+          "Quick learner",
+          "Good communication"
+        ],
+        "match_gaps": [
+          "No Salesforce certification",
+          "No Apex/Flow experience",
+          "Limited technical depth"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "applied",
+        "applied_at": "2026-04-12T14:00:00+00:00",
+        "linkedin_analysis": {
+          "linkedin_url": null,
+          "status": "no_url",
+          "status_label": "No LinkedIn URL",
+          "status_color": "#64748b",
+          "overall_score": 46,
+          "experience_comparison": null,
+          "certifications": [],
+          "recent_activity": [],
+          "skills_match": null,
+          "scanned_at": null
+        },
+        "must_have_matched": [
+          "Salesforce Admin",
+          "Sales Cloud"
+        ],
+        "must_have_missing": [
+          "Service Cloud",
+          "Flow Builder"
+        ],
+        "must_have_score": 15.0,
+        "good_to_have_matched": [
+          "Reports & Dashboards"
+        ],
+        "good_to_have_missing": [
+          "User Management",
+          "Data Management"
+        ],
+        "good_to_have_score": 6.7,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/arjunkumar",
+    "ct_number": "CT20260004",
+    "phone": "9988776655",
+    "location": "Hyderabad, Telangana",
+    "email": "arjun.kumar@gmail.com",
+    "current_ctc": "1200000",
+    "notice_period": "30 days",
+    "expected_ctc": "1800000",
+    "name": "Arjun Kumar",
+    "current_role": "Salesforce Developer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0002-0000-0000-000000000002",
+        "job_role": "Salesforce Developer",
+        "job_description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform.",
+        "resume_text": "",
+        "match_percentage": 91,
+        "recommendation": "Strong Hire",
+        "match_summary": "Arjun brings 4 years of strong Salesforce development experience including Apex, LWC, and third-party integrations. Excellent technical fit.",
+        "match_strengths": [
+          "Apex & LWC expertise",
+          "REST API integrations",
+          "CI/CD with Salesforce DX"
+        ],
+        "match_gaps": [
+          "Limited Experience Cloud exposure"
+        ],
+        "compensation_fit": "partial",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "interview_complete",
+        "applied_at": "2026-04-08T11:00:00+00:00",
+        "additional_comments": "Arjun is a standout candidate. He demonstrated deep Apex knowledge, explained complex trigger frameworks confidently, and showed a solid grasp of integration patterns using REST and Named Credentials. His LWC samples showed clean, component-driven thinking. The only minor gap was limited Experience Cloud exposure, which he acknowledged proactively. Culture fit is strong — he's collaborative, intellectually curious, and eager to mentor junior developers. Highly recommend for immediate offer.",
+        "must_have_matched": [
+          "Apex",
+          "LWC",
+          "SOQL",
+          "Salesforce Administration",
+          "Sales Cloud"
+        ],
+        "must_have_missing": [],
+        "must_have_score": 30.0,
+        "good_to_have_matched": [
+          "Copado",
+          "Einstein Analytics",
+          "Python",
+          "Agile"
+        ],
+        "good_to_have_missing": [],
+        "good_to_have_score": 20.0,
+        "notice_score": 10.0,
+        "compensation_score": 6.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/kavyanair",
+    "ct_number": "CT20260005",
+    "phone": "9876012345",
+    "location": "Chennai, Tamil Nadu",
+    "email": "kavya.nair@gmail.com",
+    "current_ctc": "1000000",
+    "notice_period": "30 days",
+    "expected_ctc": "1500000",
+    "name": "Kavya Nair",
+    "current_role": "Salesforce Developer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0002-0000-0000-000000000002",
+        "job_role": "Salesforce Developer",
+        "job_description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform.",
+        "resume_text": "",
+        "match_percentage": 75,
+        "recommendation": "Hire",
+        "match_summary": "Kavya has strong Apex skills and good LWC experience. Integration experience is limited but she demonstrates solid fundamentals.",
+        "match_strengths": [
+          "Strong Apex development",
+          "LWC proficiency",
+          "SOQL optimization"
+        ],
+        "match_gaps": [
+          "Limited REST API integration work",
+          "No Experience Cloud exposure"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "interview_scheduled",
+        "interview_slot": "2026-05-22 11:00",
+        "applied_at": "2026-04-09T09:45:00+00:00",
+        "must_have_matched": [
+          "Apex",
+          "LWC",
+          "SOQL"
+        ],
+        "must_have_missing": [
+          "Salesforce Administration",
+          "Sales Cloud"
+        ],
+        "must_have_score": 18.0,
+        "good_to_have_matched": [
+          "Python",
+          "Agile",
+          "Einstein Analytics"
+        ],
+        "good_to_have_missing": [
+          "Copado"
+        ],
+        "good_to_have_score": 15.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/vikramsingh",
+    "ct_number": "CT20260006",
+    "phone": "9812345670",
+    "location": "Noida, Uttar Pradesh",
+    "email": "vikram.singh@hotmail.com",
+    "current_ctc": "800000",
+    "notice_period": "60 days",
+    "expected_ctc": "1400000",
+    "name": "Vikram Singh",
+    "current_role": "Junior Apex Developer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0002-0000-0000-000000000002",
+        "job_role": "Salesforce Developer",
+        "job_description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform.",
+        "resume_text": "",
+        "match_percentage": 62,
+        "recommendation": "Consider",
+        "match_summary": "Vikram has basic Apex knowledge but lacks LWC and integration experience. Long notice period may be a constraint.",
+        "match_strengths": [
+          "Apex fundamentals",
+          "SOQL basics",
+          "Agile familiarity"
+        ],
+        "match_gaps": [
+          "No LWC experience",
+          "No REST API integrations",
+          "60-day notice exceeds preference"
+        ],
+        "compensation_fit": "partial",
+        "notice_fit": "mismatch",
+        "session_id": null,
+        "status": "applied",
+        "applied_at": "2026-04-13T16:00:00+00:00",
+        "linkedin_analysis": {
+          "linkedin_url": null,
+          "status": "no_url",
+          "status_label": "No LinkedIn URL",
+          "status_color": "#64748b",
+          "overall_score": 57,
+          "experience_comparison": null,
+          "certifications": [],
+          "recent_activity": [],
+          "skills_match": null,
+          "scanned_at": null
+        },
+        "must_have_matched": [
+          "Apex",
+          "LWC",
+          "SOQL",
+          "Salesforce Administration"
+        ],
+        "must_have_missing": [
+          "Sales Cloud"
+        ],
+        "must_have_score": 24.0,
+        "good_to_have_matched": [
+          "Python",
+          "Agile",
+          "Einstein Analytics"
+        ],
+        "good_to_have_missing": [
+          "Copado"
+        ],
+        "good_to_have_score": 15.0,
+        "notice_score": 0.0,
+        "compensation_score": 6.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/anitadesai",
+    "ct_number": "CT20260007",
+    "phone": "9765098765",
+    "location": "Mumbai, Maharashtra",
+    "email": "anita.desai@gmail.com",
+    "current_ctc": "900000",
+    "notice_period": "30 days",
+    "expected_ctc": "1300000",
+    "name": "Anita Desai",
+    "current_role": "Senior QA Engineer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0003-0000-0000-000000000003",
+        "job_role": "QA Engineer",
+        "job_description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products.",
+        "resume_text": "",
+        "match_percentage": 86,
+        "recommendation": "Strong Hire",
+        "match_summary": "Anita has 4 years of QA experience with strong automation and API testing skills. Excellent match for the Mumbai hybrid role.",
+        "match_strengths": [
+          "Selenium automation",
+          "API testing with Postman",
+          "JIRA expertise"
+        ],
+        "match_gaps": [
+          "Limited SQL proficiency"
+        ],
+        "compensation_fit": "partial",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "interview_complete",
+        "applied_at": "2026-04-07T10:00:00+00:00",
+        "additional_comments": "Anita came prepared with detailed examples of her automation frameworks and gave a live walkthrough of a Selenium test she wrote. Her understanding of the SDLC and defect lifecycle is thorough. She asked intelligent questions about our release cycle and CI/CD pipeline. SQL is a minor gap but she expressed willingness to upskill quickly. Very strong candidate — recommend moving to offer.",
+        "must_have_matched": [
+          "Manual Testing",
+          "Selenium",
+          "JIRA",
+          "API Testing"
+        ],
+        "must_have_missing": [],
+        "must_have_score": 30.0,
+        "good_to_have_matched": [
+          "Postman",
+          "Regression Testing",
+          "Agile"
+        ],
+        "good_to_have_missing": [
+          "SQL"
+        ],
+        "good_to_have_score": 15.0,
+        "notice_score": 10.0,
+        "compensation_score": 6.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/rohansharma",
+    "ct_number": "CT20260008",
+    "phone": "9823109876",
+    "location": "Mumbai, Maharashtra",
+    "email": "rohan.sharma@gmail.com",
+    "current_ctc": "650000",
+    "notice_period": "15 days",
+    "expected_ctc": "950000",
+    "name": "Rohan Sharma",
+    "current_role": "QA Analyst",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0003-0000-0000-000000000003",
+        "job_role": "QA Engineer",
+        "job_description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products.",
+        "resume_text": "",
+        "match_percentage": 68,
+        "recommendation": "Hire",
+        "match_summary": "Rohan has solid manual testing background and is learning automation. Good cultural fit for a growing QA team.",
+        "match_strengths": [
+          "Manual testing expertise",
+          "Test case writing",
+          "Agile experience"
+        ],
+        "match_gaps": [
+          "Selenium still learning",
+          "Limited API testing exposure"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "applied",
+        "applied_at": "2026-04-14T11:00:00+00:00",
+        "must_have_matched": [
+          "Manual Testing",
+          "Selenium",
+          "JIRA"
+        ],
+        "must_have_missing": [
+          "API Testing"
+        ],
+        "must_have_score": 22.5,
+        "good_to_have_matched": [
+          "Agile"
+        ],
+        "good_to_have_missing": [
+          "Postman",
+          "Regression Testing",
+          "SQL"
+        ],
+        "good_to_have_score": 5.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/poojavgupta",
+    "ct_number": "CT20260009",
+    "phone": "9901234560",
+    "location": "Navi Mumbai, Maharashtra",
+    "email": "pooja.gupta@rediffmail.com",
+    "current_ctc": "450000",
+    "notice_period": "Immediate",
+    "expected_ctc": "750000",
+    "name": "Pooja Gupta",
+    "current_role": "Manual Tester",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0003-0000-0000-000000000003",
+        "job_role": "QA Engineer",
+        "job_description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products.",
+        "resume_text": "",
+        "match_percentage": 53,
+        "recommendation": "Consider",
+        "match_summary": "Pooja has basic manual testing skills but lacks automation and API testing experience required for this role.",
+        "match_strengths": [
+          "Manual testing",
+          "Bug reporting",
+          "Immediate availability"
+        ],
+        "match_gaps": [
+          "No Selenium experience",
+          "No API testing",
+          "No SQL knowledge"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "applied",
+        "applied_at": "2026-04-15T09:30:00+00:00",
+        "linkedin_analysis": {
+          "linkedin_url": null,
+          "status": "no_url",
+          "status_label": "No LinkedIn URL",
+          "status_color": "#64748b",
+          "overall_score": 43,
+          "experience_comparison": null,
+          "certifications": [],
+          "recent_activity": [],
+          "skills_match": null,
+          "scanned_at": null
+        },
+        "must_have_matched": [
+          "Manual Testing",
+          "JIRA"
+        ],
+        "must_have_missing": [
+          "Selenium",
+          "API Testing"
+        ],
+        "must_have_score": 15.0,
+        "good_to_have_matched": [
+          "Agile"
+        ],
+        "good_to_have_missing": [
+          "Postman",
+          "Regression Testing",
+          "SQL"
+        ],
+        "good_to_have_score": 5.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/deepakverma",
+    "ct_number": "CT20260010",
+    "phone": "9876123450",
+    "location": "Pune, Maharashtra",
+    "email": "deepak.verma@gmail.com",
+    "current_ctc": "1100000",
+    "notice_period": "45 days",
+    "expected_ctc": "1600000",
+    "name": "Deepak Verma",
+    "current_role": "Senior Business Analyst",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0004-0000-0000-000000000004",
+        "job_role": "Business Analyst",
+        "job_description": "We are looking for a Business Analyst to bridge the gap between business needs and technical solutions.",
+        "resume_text": "",
+        "match_percentage": 87,
+        "recommendation": "Strong Hire",
+        "match_summary": "Deepak has 5 years of BA experience with strong stakeholder management and process mapping skills. Salesforce CRM background is a bonus.",
+        "match_strengths": [
+          "Stakeholder management",
+          "User story writing",
+          "Salesforce CRM experience"
+        ],
+        "match_gaps": [
+          "Notice period slightly above preference"
+        ],
+        "compensation_fit": "partial",
+        "notice_fit": "partial",
+        "session_id": null,
+        "status": "interview_complete",
+        "applied_at": "2026-04-06T14:00:00+00:00",
+        "additional_comments": "Deepak is a polished communicator who clearly understands the BA role end-to-end. He walked through a real process improvement initiative he led at his current company and demonstrated a data-driven approach to identifying inefficiencies. His Salesforce CRM background is an unexpected plus for this role. The 45-day notice is a minor concern but he indicated flexibility if the offer is strong. Strong hire recommendation.",
+        "must_have_matched": [
+          "Requirements Gathering",
+          "User Stories",
+          "JIRA",
+          "Stakeholder Management",
+          "SQL"
+        ],
+        "must_have_missing": [],
+        "must_have_score": 30.0,
+        "good_to_have_matched": [
+          "Process Mapping",
+          "Agile",
+          "Wireframing",
+          "Data Analysis"
+        ],
+        "good_to_have_missing": [],
+        "good_to_have_score": 20.0,
+        "notice_score": 6.0,
+        "compensation_score": 6.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/meerajoshi",
+    "ct_number": "CT20260011",
+    "phone": "9823456780",
+    "location": "Pune, Maharashtra",
+    "email": "meera.joshi@gmail.com",
+    "current_ctc": "850000",
+    "notice_period": "30 days",
+    "expected_ctc": "1300000",
+    "name": "Meera Joshi",
+    "current_role": "Business Analyst",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0004-0000-0000-000000000004",
+        "job_role": "Business Analyst",
+        "job_description": "We are looking for a Business Analyst to bridge the gap between business needs and technical solutions.",
+        "resume_text": "",
+        "match_percentage": 73,
+        "recommendation": "Hire",
+        "match_summary": "Meera has good BA fundamentals with experience in Agile environments. Solid JIRA and user story skills.",
+        "match_strengths": [
+          "Agile/Scrum experience",
+          "JIRA proficiency",
+          "Requirements gathering"
+        ],
+        "match_gaps": [
+          "Limited data analysis skills",
+          "No Salesforce experience"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "interview_scheduled",
+        "interview_slot": "2026-05-23 14:00",
+        "applied_at": "2026-04-11T15:00:00+00:00",
+        "must_have_matched": [
+          "Requirements Gathering",
+          "User Stories",
+          "JIRA"
+        ],
+        "must_have_missing": [
+          "Stakeholder Management",
+          "SQL"
+        ],
+        "must_have_score": 18.0,
+        "good_to_have_matched": [
+          "Agile",
+          "Process Mapping",
+          "Data Analysis"
+        ],
+        "good_to_have_missing": [
+          "Wireframing"
+        ],
+        "good_to_have_score": 15.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/sanjayrao",
+    "ct_number": "CT20260012",
+    "phone": "9901287650",
+    "location": "Pune, Maharashtra",
+    "email": "sanjay.rao@gmail.com",
+    "current_ctc": "550000",
+    "notice_period": "30 days",
+    "expected_ctc": "900000",
+    "name": "Sanjay Rao",
+    "current_role": "Jr. Business Analyst",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0004-0000-0000-000000000004",
+        "job_role": "Business Analyst",
+        "job_description": "We are looking for a Business Analyst to bridge the gap between business needs and technical solutions.",
+        "resume_text": "",
+        "match_percentage": 57,
+        "recommendation": "Consider",
+        "match_summary": "Sanjay is a junior BA with limited hands-on experience. Shows promise but needs mentoring to meet the 3-6 year experience requirement.",
+        "match_strengths": [
+          "Eager learner",
+          "Good communication",
+          "Basic JIRA knowledge"
+        ],
+        "match_gaps": [
+          "Only 1 year of experience",
+          "No process mapping exposure",
+          "Limited stakeholder management"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "applied",
+        "applied_at": "2026-04-16T10:00:00+00:00",
+        "linkedin_analysis": {
+          "linkedin_url": null,
+          "status": "no_url",
+          "status_label": "No LinkedIn URL",
+          "status_color": "#64748b",
+          "overall_score": 51,
+          "experience_comparison": null,
+          "certifications": [],
+          "recent_activity": [],
+          "skills_match": null,
+          "scanned_at": null
+        },
+        "must_have_matched": [
+          "Requirements Gathering",
+          "JIRA"
+        ],
+        "must_have_missing": [
+          "User Stories",
+          "Stakeholder Management",
+          "SQL"
+        ],
+        "must_have_score": 12.0,
+        "good_to_have_matched": [
+          "Agile",
+          "Process Mapping"
+        ],
+        "good_to_have_missing": [
+          "Wireframing",
+          "Data Analysis"
+        ],
+        "good_to_have_score": 10.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/ananyak",
+    "ct_number": "CT20260013",
+    "phone": "9812309876",
+    "location": "Chennai, Tamil Nadu",
+    "email": "ananya.k@gmail.com",
+    "current_ctc": "380000",
+    "notice_period": "30 days",
+    "expected_ctc": "620000",
+    "name": "Ananya Krishnan",
+    "current_role": "Junior QA Analyst",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0003-0000-0000-000000000003",
+        "job_role": "QA Engineer",
+        "job_description": "We are seeking a detail-oriented QA Engineer to ensure the quality of our software products.",
+        "resume_text": "",
+        "match_percentage": 48,
+        "recommendation": "Consider",
+        "match_summary": "Ananya has basic manual testing knowledge but lacks automation skills and technical depth required for the role.",
+        "match_strengths": [
+          "Enthusiastic learner",
+          "Basic manual testing"
+        ],
+        "match_gaps": [
+          "No automation experience",
+          "Limited API testing",
+          "Short answers"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": "0f6ef23e-0d3a-475b-b32c-2337bb2acba6",
+        "status": "rejected",
+        "applied_at": "2026-04-17T09:00:00+00:00",
+        "additional_comments": "Ananya showed genuine enthusiasm but unfortunately did not demonstrate the minimum technical competency expected for the QA Engineer role. Her answers on automation were largely theoretical with no practical examples. API testing concepts were unfamiliar to her. After panel discussion, the team agreed she is better suited for a junior/internship-track role. Recommend rejection for this position but may revisit in 12-18 months if she builds her automation skills.",
+        "call_status": {
+          "call_made": true,
+          "call_made_at": "2026-05-13T11:15:00+00:00",
+          "call_answered": true,
+          "call_answered_at": "2026-05-13T11:15:08+00:00",
+          "call_complete": false,
+          "call_complete_at": null,
+          "message_delivered": false,
+          "call_sid": "CAxxxx003",
+          "note": "Call disconnected before message delivered"
+        },
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/ananyak-qa",
+          "status": "no_match",
+          "status_label": "Profile Not Found",
+          "status_color": "#854F0B",
+          "overall_score": 0,
+          "experience_comparison": {
+            "resume_years": 2,
+            "linkedin_years": 0,
+            "match": false,
+            "note": "LinkedIn profile URL provided but profile appears to be private or deleted."
+          },
+          "certifications": [],
+          "recent_activity": [
+            "Profile is private or unavailable"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Manual Testing",
+              "Selenium",
+              "JIRA"
+            ],
+            "linkedin_skills": [],
+            "overlap_percentage": 0
+          },
+          "scanned_at": "2026-05-13T11:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Manual Testing",
+          "JIRA"
+        ],
+        "must_have_missing": [
+          "Selenium",
+          "API Testing"
+        ],
+        "must_have_score": 15.0,
+        "good_to_have_matched": [
+          "Agile",
+          "Regression Testing",
+          "SQL"
+        ],
+        "good_to_have_missing": [
+          "Postman"
+        ],
+        "good_to_have_score": 15.0,
+        "notice_score": 10.0,
+        "compensation_score": 8.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/vikramnair",
+    "ct_number": "CT20260014",
+    "phone": "9876540123",
+    "location": "Bangalore, Karnataka",
+    "email": "vikram.nair@gmail.com",
+    "current_ctc": "1400000",
+    "notice_period": "30 days",
+    "expected_ctc": "2000000",
+    "name": "Vikram Nair",
+    "current_role": "Senior Salesforce Developer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "d1e2f3a4-0002-0000-0000-000000000002",
+        "job_role": "Salesforce Developer",
+        "job_description": "We are looking for a skilled Salesforce Developer to design and build custom solutions on the Salesforce platform.",
+        "resume_text": "",
+        "match_percentage": 78,
+        "recommendation": "Hire",
+        "match_summary": "Vikram is technically strong with real Apex and integration experience. Minor dip on system design questions but recovered well.",
+        "match_strengths": [
+          "Strong Apex",
+          "Platform events",
+          "CI/CD experience"
+        ],
+        "match_gaps": [
+          "Multi-org architecture gap",
+          "Could improve structured delivery"
+        ],
+        "compensation_fit": "partial",
+        "notice_fit": "good",
+        "session_id": "29a8a3eb-5e8e-4ca5-a506-7bbc60cc28fe",
+        "status": "interview_complete",
+        "applied_at": "2026-04-17T11:00:00+00:00",
+        "additional_comments": "Vikram showed strong command of Apex and Platform Events. He struggled briefly with multi-org architecture questions but corrected himself and demonstrated he understood the concepts. His CI/CD experience with SFDX and GitHub Actions is a real asset. Communication was clear and structured. Compensation expectations are slightly above band but within negotiation range. Recommend hire.",
+        "call_status": {
+          "call_made": true,
+          "call_made_at": "2026-05-13T14:00:00+00:00",
+          "call_answered": true,
+          "call_answered_at": "2026-05-13T14:00:12+00:00",
+          "call_complete": true,
+          "call_complete_at": "2026-05-13T14:03:22+00:00",
+          "message_delivered": true,
+          "call_sid": "CAxxxx004",
+          "note": "Candidate asked about interview format. Informed about AI interview."
+        },
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/vikramnair-sf",
+          "status": "verified_match",
+          "status_label": "Strong Verified Match",
+          "status_color": "#0F6E56",
+          "overall_score": 96,
+          "experience_comparison": {
+            "resume_years": 5,
+            "linkedin_years": 5.5,
+            "match": true,
+            "note": "LinkedIn shows additional experience not on resume. Senior roles at Infosys and TCS confirmed."
+          },
+          "certifications": [
+            {
+              "name": "Salesforce Platform Developer I",
+              "verified": true
+            },
+            {
+              "name": "Salesforce Platform Developer II",
+              "verified": true
+            },
+            {
+              "name": "Application Architect",
+              "verified": true
+            }
+          ],
+          "recent_activity": [
+            "Published article: CI/CD Best Practices in Salesforce",
+            "Earned Trailhead Ranger status",
+            "Spoke at Salesforce Mumbai User Group",
+            "Completed Salesforce Architect certification"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Apex",
+              "LWC",
+              "SOQL",
+              "Platform Events",
+              "MuleSoft"
+            ],
+            "linkedin_skills": [
+              "Apex",
+              "LWC",
+              "SOQL",
+              "Platform Events",
+              "REST APIs",
+              "CI/CD",
+              "Git"
+            ],
+            "overlap_percentage": 94
+          },
+          "scanned_at": "2026-05-13T14:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Apex",
+          "LWC",
+          "SOQL"
+        ],
+        "must_have_missing": [
+          "Salesforce Administration",
+          "Sales Cloud"
+        ],
+        "must_have_score": 18.0,
+        "good_to_have_matched": [
+          "Einstein Analytics",
+          "Agile",
+          "Python"
+        ],
+        "good_to_have_missing": [
+          "Copado"
+        ],
+        "good_to_have_score": 15.0,
+        "notice_score": 10.0,
+        "compensation_score": 6.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/ishaanpatel-de",
+    "ct_number": "CT20260015",
+    "phone": "9870123456",
+    "location": "Bangalore, Karnataka",
+    "email": "ishaan.patel@gmail.com",
+    "current_ctc": "1600000",
+    "notice_period": "30 days",
+    "expected_ctc": "2200000",
+    "name": "Ishaan Patel",
+    "current_role": "Senior Data Engineer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0001-0000-0000-000000000001",
+        "job_role": "Data Engineer",
+        "job_description": "We are looking for a Data Engineer to build and maintain our data infrastructure.",
+        "resume_text": "",
+        "match_percentage": 93,
+        "recommendation": "Strong Hire",
+        "match_summary": "Ishaan has 4 years of data engineering experience with expert-level Python, Spark, and Airflow skills. Has built end-to-end data pipelines for two unicorn-stage startups. Exceptional technical fit.",
+        "match_strengths": [
+          "Apache Spark & PySpark mastery",
+          "dbt and Airflow expertise",
+          "AWS Glue and Redshift experience"
+        ],
+        "match_gaps": [
+          "GCP experience limited (primarily AWS)"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "interview_complete",
+        "applied_at": "2026-04-18T09:00:00+00:00",
+        "additional_comments": "Ishaan is one of the strongest data engineering candidates we have seen. He gave a detailed walkthrough of a real-time pipeline he built using Kafka and Spark Streaming at his previous company, handling 50M+ events/day. His understanding of data modeling, partition strategies, and incremental loads using dbt is impressive. Communication is sharp and technical explanations are crystal clear. Highly recommend moving to offer immediately — risk of losing him to competing offers is high.",
+        "interview_slot": "2026-05-12 10:00",
+        "call_status": {
+          "call_made": true,
+          "call_made_at": "2026-05-10T09:30:00+00:00",
+          "call_answered": true,
+          "call_answered_at": "2026-05-10T09:30:10+00:00",
+          "call_complete": true,
+          "call_complete_at": "2026-05-10T09:32:50+00:00",
+          "message_delivered": true,
+          "call_sid": "CAxxxx015",
+          "note": "Candidate confirmed slot and asked about tech stack details"
+        },
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/ishaanpatel-de",
+          "status": "verified_match",
+          "status_label": "Verified Match",
+          "status_color": "#0F6E56",
+          "overall_score": 91,
+          "experience_comparison": {
+            "resume_years": 4,
+            "linkedin_years": 4.3,
+            "match": true,
+            "note": "LinkedIn confirms senior data engineering roles at Meesho and Razorpay. Fully consistent with resume."
+          },
+          "certifications": [
+            {
+              "name": "AWS Certified Data Engineer – Associate",
+              "verified": true
+            },
+            {
+              "name": "dbt Analytics Engineering Certification",
+              "verified": true
+            }
+          ],
+          "recent_activity": [
+            "Posted about Apache Iceberg for lakehouse architecture",
+            "Shared dbt best practices blog",
+            "Spoke at Bangalore Data Engineering Meetup"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Python",
+              "Spark",
+              "Airflow",
+              "dbt",
+              "SQL",
+              "AWS"
+            ],
+            "linkedin_skills": [
+              "Python",
+              "Apache Spark",
+              "Airflow",
+              "dbt",
+              "SQL",
+              "AWS Glue",
+              "Redshift"
+            ],
+            "overlap_percentage": 93
+          },
+          "scanned_at": "2026-05-10T08:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Python",
+          "SQL",
+          "Apache Spark",
+          "ETL Pipelines",
+          "Data Warehousing"
+        ],
+        "must_have_missing": [],
+        "must_have_score": 30.0,
+        "good_to_have_matched": [
+          "AWS/GCP",
+          "Kafka",
+          "Airflow",
+          "dbt"
+        ],
+        "good_to_have_missing": [
+          "Hadoop"
+        ],
+        "good_to_have_score": 16.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/nishakapoor-ux",
+    "ct_number": "CT20260016",
+    "phone": "9812034567",
+    "location": "Bangalore, Karnataka",
+    "email": "nisha.kapoor@gmail.com",
+    "current_ctc": "1100000",
+    "notice_period": "30 days",
+    "expected_ctc": "1600000",
+    "name": "Nisha Kapoor",
+    "current_role": "UX Designer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0002-0000-0000-000000000002",
+        "job_role": "UX Designer",
+        "job_description": "We are seeking a creative UX Designer to craft intuitive, user-centered product experiences.",
+        "resume_text": "",
+        "match_percentage": 88,
+        "recommendation": "Strong Hire",
+        "match_summary": "Nisha brings 3 years of UX design experience with a strong portfolio spanning SaaS products and mobile apps. Excellent research and prototyping skills.",
+        "match_strengths": [
+          "Figma mastery",
+          "User research methodology",
+          "Strong portfolio"
+        ],
+        "match_gaps": [
+          "Limited design systems experience at scale"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "interview_scheduled",
+        "interview_slot": "2026-05-22 14:00",
+        "applied_at": "2026-04-20T10:30:00+00:00",
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/nishakapoor-ux",
+          "status": "verified_match",
+          "status_label": "Verified Match",
+          "status_color": "#0F6E56",
+          "overall_score": 84,
+          "experience_comparison": {
+            "resume_years": 3,
+            "linkedin_years": 3.2,
+            "match": true,
+            "note": "LinkedIn confirms UX roles at Swiggy and Sharechat. Consistent with resume."
+          },
+          "certifications": [
+            {
+              "name": "Google UX Design Certificate",
+              "verified": true
+            },
+            {
+              "name": "Nielsen Norman Group UX Research",
+              "verified": false
+            }
+          ],
+          "recent_activity": [
+            "Published Dribbble shots of new onboarding flow",
+            "Shared article on accessibility in B2B SaaS",
+            "Posted Figma community template"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Figma",
+              "User Research",
+              "Wireframing",
+              "Prototyping"
+            ],
+            "linkedin_skills": [
+              "Figma",
+              "User Research",
+              "Usability Testing",
+              "Design Systems"
+            ],
+            "overlap_percentage": 87
+          },
+          "scanned_at": "2026-05-15T09:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Figma",
+          "User Research",
+          "Wireframing"
+        ],
+        "must_have_missing": [
+          "Prototyping"
+        ],
+        "must_have_score": 22.5,
+        "good_to_have_matched": [
+          "Adobe XD",
+          "Design Systems",
+          "Accessibility",
+          "HTML/CSS"
+        ],
+        "good_to_have_missing": [],
+        "good_to_have_score": 20.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/adityabhat-devops",
+    "ct_number": "CT20260017",
+    "phone": "9765301234",
+    "location": "Hyderabad, Telangana",
+    "email": "aditya.bhat@gmail.com",
+    "current_ctc": "1400000",
+    "notice_period": "30 days",
+    "expected_ctc": "1900000",
+    "name": "Aditya Bhat",
+    "current_role": "DevOps Engineer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0003-0000-0000-000000000003",
+        "job_role": "DevOps Engineer",
+        "job_description": "We are hiring a DevOps Engineer to build and maintain our cloud infrastructure and CI/CD pipelines.",
+        "resume_text": "",
+        "match_percentage": 79,
+        "recommendation": "Hire",
+        "match_summary": "Aditya has solid Kubernetes and CI/CD experience with hands-on Terraform use. Strong AWS foundation with some gaps in observability tooling.",
+        "match_strengths": [
+          "Kubernetes administration",
+          "Terraform IaC",
+          "GitHub Actions CI/CD"
+        ],
+        "match_gaps": [
+          "Limited Prometheus/Grafana setup experience",
+          "No GCP exposure"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "shortlisted",
+        "applied_at": "2026-04-22T11:00:00+00:00",
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/adityabhat-devops",
+          "status": "verified_match",
+          "status_label": "Verified Match",
+          "status_color": "#0F6E56",
+          "overall_score": 66,
+          "experience_comparison": {
+            "resume_years": 4,
+            "linkedin_years": 4.1,
+            "match": true,
+            "note": "LinkedIn confirms DevOps roles at Freshworks and Juspay. Fully consistent."
+          },
+          "certifications": [
+            {
+              "name": "AWS Solutions Architect – Associate",
+              "verified": true
+            },
+            {
+              "name": "Certified Kubernetes Administrator (CKA)",
+              "verified": true
+            }
+          ],
+          "recent_activity": [
+            "Shared post on GitOps with ArgoCD",
+            "Published Terraform module on GitHub",
+            "Commented on Kubernetes best practices thread"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Kubernetes",
+              "Docker",
+              "Terraform",
+              "AWS",
+              "CI/CD"
+            ],
+            "linkedin_skills": [
+              "Kubernetes",
+              "Docker",
+              "Terraform",
+              "AWS",
+              "GitHub Actions"
+            ],
+            "overlap_percentage": 79
+          },
+          "scanned_at": "2026-05-14T10:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Kubernetes",
+          "Docker",
+          "CI/CD (GitHub Actions/Jenkins)",
+          "Linux"
+        ],
+        "must_have_missing": [
+          "AWS/GCP/Azure"
+        ],
+        "must_have_score": 24.0,
+        "good_to_have_matched": [
+          "Terraform",
+          "Prometheus/Grafana",
+          "Ansible"
+        ],
+        "good_to_have_missing": [
+          "Helm"
+        ],
+        "good_to_have_score": 15.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/pritiagarwal-mktg",
+    "ct_number": "CT20260018",
+    "phone": "9823056789",
+    "location": "Mumbai, Maharashtra",
+    "email": "priti.agarwal@gmail.com",
+    "current_ctc": "1700000",
+    "notice_period": "45 days",
+    "expected_ctc": "2300000",
+    "name": "Priti Agarwal",
+    "current_role": "Marketing Manager",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0004-0000-0000-000000000004",
+        "job_role": "Marketing Manager",
+        "job_description": "We are looking for a Marketing Manager to lead our go-to-market strategy and brand presence.",
+        "resume_text": "",
+        "match_percentage": 82,
+        "recommendation": "Hire",
+        "match_summary": "Priti has 6 years of B2B SaaS marketing experience with a proven track record in demand generation and content-led growth.",
+        "match_strengths": [
+          "B2B/SaaS marketing depth",
+          "HubSpot and Marketo expertise",
+          "Content strategy and SEO"
+        ],
+        "match_gaps": [
+          "Limited paid media (SEM) experience",
+          "Notice period at upper end"
+        ],
+        "compensation_fit": "partial",
+        "notice_fit": "partial",
+        "session_id": null,
+        "status": "interview_complete",
+        "applied_at": "2026-04-19T14:00:00+00:00",
+        "additional_comments": "Priti presented a detailed case study of a campaign she ran at her previous SaaS company that drove 3x MQLs within 6 months using a content-led SEO strategy combined with HubSpot automation. She is confident, data-driven, and clearly understands the full-funnel B2B buyer journey. Her limited SEM experience is a gap but she has a plan to close it. Notice period and compensation are slightly above band — recommend negotiation before extending offer. Overall a strong hire.",
+        "interview_slot": "2026-05-10 11:00",
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/pritiagarwal-mktg",
+          "status": "partial_match",
+          "status_label": "Partial Match",
+          "status_color": "#854F0B",
+          "overall_score": 83,
+          "experience_comparison": {
+            "resume_years": 6,
+            "linkedin_years": 5.8,
+            "match": true,
+            "note": "LinkedIn shows 6 years of marketing experience across Zoho and Freshdesk. Broadly consistent."
+          },
+          "certifications": [
+            {
+              "name": "HubSpot Marketing Certification",
+              "verified": true
+            },
+            {
+              "name": "Google Analytics Certification",
+              "verified": true
+            }
+          ],
+          "recent_activity": [
+            "Published article on content-led B2B growth",
+            "Shared HubSpot email automation tips",
+            "Liked Salesforce marketing cloud post"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Digital Marketing",
+              "HubSpot",
+              "Content Strategy",
+              "SEO",
+              "Lead Generation"
+            ],
+            "linkedin_skills": [
+              "Digital Marketing",
+              "HubSpot",
+              "Content Strategy",
+              "SEO"
+            ],
+            "overlap_percentage": 80
+          },
+          "scanned_at": "2026-05-10T08:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Digital Marketing",
+          "Content Strategy",
+          "SEO/SEM",
+          "Google Analytics"
+        ],
+        "must_have_missing": [],
+        "must_have_score": 30.0,
+        "good_to_have_matched": [
+          "HubSpot",
+          "Email Marketing",
+          "Social Media"
+        ],
+        "good_to_have_missing": [
+          "Brand Management"
+        ],
+        "good_to_have_score": 15.0,
+        "notice_score": 6.0,
+        "compensation_score": 6.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/sureshmenon-dev",
+    "ct_number": "CT20260019",
+    "phone": "9901345678",
+    "location": "Bangalore, Karnataka",
+    "email": "suresh.menon@gmail.com",
+    "current_ctc": "1800000",
+    "notice_period": "30 days",
+    "expected_ctc": "2500000",
+    "name": "Suresh Menon",
+    "current_role": "Senior Frontend Developer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0006-0000-0000-000000000006",
+        "job_role": "React Frontend Developer",
+        "job_description": "We are looking for a React Frontend Developer to build responsive, high-performance web applications.",
+        "resume_text": "",
+        "match_percentage": 95,
+        "recommendation": "Strong Hire",
+        "match_summary": "Suresh is an exceptional frontend engineer with 5 years of React and TypeScript experience. Contributed to multiple high-traffic consumer products. Outstanding technical fit.",
+        "match_strengths": [
+          "React & TypeScript mastery",
+          "Performance optimization",
+          "Component library ownership"
+        ],
+        "match_gaps": [
+          "Compensation expectations above band (negotiable)"
+        ],
+        "compensation_fit": "partial",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "interview_complete",
+        "applied_at": "2026-04-21T09:00:00+00:00",
+        "additional_comments": "Suresh is easily the strongest frontend candidate we have interviewed. He demonstrated deep React internals knowledge — explaining reconciliation, concurrent mode, and memoization with precision. His live coding session was flawless: he built a complex paginated data grid with virtualization in under 30 minutes. He has led the migration of a legacy codebase to React 18 at his current company. Culture fit is excellent — calm, methodical, loves mentoring. Compensation is slightly above band but he's worth every rupee. Extend offer immediately.",
+        "interview_slot": "2026-05-09 11:00",
+        "call_status": {
+          "call_made": true,
+          "call_made_at": "2026-05-07T10:00:00+00:00",
+          "call_answered": true,
+          "call_answered_at": "2026-05-07T10:00:08+00:00",
+          "call_complete": true,
+          "call_complete_at": "2026-05-07T10:02:30+00:00",
+          "message_delivered": true,
+          "call_sid": "CAxxxx019",
+          "note": "Confirmed slot and asked about the tech stack used"
+        },
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/sureshmenon-dev",
+          "status": "verified_match",
+          "status_label": "Verified Match",
+          "status_color": "#0F6E56",
+          "overall_score": 96,
+          "experience_comparison": {
+            "resume_years": 5,
+            "linkedin_years": 5.2,
+            "match": true,
+            "note": "LinkedIn confirms senior frontend roles at Flipkart and Cred. Fully consistent with resume."
+          },
+          "certifications": [
+            {
+              "name": "Meta Frontend Developer Professional Certificate",
+              "verified": true
+            }
+          ],
+          "recent_activity": [
+            "Open-sourced a React performance monitoring hook",
+            "Spoke at ReactConf India 2025",
+            "Published blog: React Server Components in Production"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "React",
+              "TypeScript",
+              "JavaScript",
+              "CSS",
+              "Vite"
+            ],
+            "linkedin_skills": [
+              "React",
+              "TypeScript",
+              "JavaScript",
+              "CSS",
+              "Webpack",
+              "Jest"
+            ],
+            "overlap_percentage": 95
+          },
+          "scanned_at": "2026-05-07T08:00:00+00:00"
+        },
+        "must_have_matched": [
+          "React",
+          "TypeScript",
+          "JavaScript",
+          "HTML/CSS",
+          "REST APIs"
+        ],
+        "must_have_missing": [],
+        "must_have_score": 30.0,
+        "good_to_have_matched": [
+          "Redux",
+          "Next.js",
+          "Testing (Jest)",
+          "Git",
+          "Performance Optimization"
+        ],
+        "good_to_have_missing": [],
+        "good_to_have_score": 20.0,
+        "notice_score": 10.0,
+        "compensation_score": 6.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/ritikabansal-hr",
+    "ct_number": "CT20260020",
+    "phone": "9876890123",
+    "location": "Bangalore, Karnataka",
+    "email": "ritika.bansal@gmail.com",
+    "current_ctc": "1200000",
+    "notice_period": "30 days",
+    "expected_ctc": "1700000",
+    "name": "Ritika Bansal",
+    "current_role": "HR Manager",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0007-0000-0000-000000000007",
+        "job_role": "HR Business Partner",
+        "job_description": "We are hiring an HR Business Partner to align HR strategies with business objectives.",
+        "resume_text": "",
+        "match_percentage": 73,
+        "recommendation": "Hire",
+        "match_summary": "Ritika has 4 years of HR management experience with good strengths in talent acquisition and employee relations. HR analytics experience is still developing.",
+        "match_strengths": [
+          "Talent acquisition",
+          "Employee relations",
+          "Performance management cycles"
+        ],
+        "match_gaps": [
+          "Limited HR analytics depth",
+          "No HRBP-specific experience"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "shortlisted",
+        "applied_at": "2026-04-23T15:00:00+00:00",
+        "linkedin_analysis": {
+          "linkedin_url": null,
+          "status": "no_url",
+          "status_label": "No LinkedIn URL",
+          "status_color": "#64748b",
+          "overall_score": 77,
+          "experience_comparison": null,
+          "certifications": [],
+          "recent_activity": [],
+          "skills_match": null,
+          "scanned_at": null
+        },
+        "must_have_matched": [
+          "HR Business Partnering",
+          "Talent Management"
+        ],
+        "must_have_missing": [
+          "Employee Relations"
+        ],
+        "must_have_score": 20.0,
+        "good_to_have_matched": [
+          "HRIS Systems",
+          "L&D"
+        ],
+        "good_to_have_missing": [
+          "Compensation & Benefits",
+          "HR Analytics"
+        ],
+        "good_to_have_score": 10.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
+  },
+  {
+    "linkedin_url": "https://linkedin.com/in/aryankhanna-backend",
     "ct_number": "CT20260021",
-    "email": "aryan.khanna@gmail.com",
     "phone": "9823678901",
     "location": "Remote (Delhi NCR)",
-    "linkedin_url": "https://linkedin.com/in/aryankhanna-backend",
-    "current_role": "Backend Engineer",
+    "email": "aryan.khanna@gmail.com",
     "current_ctc": "1600000",
-    "expected_ctc": "2100000",
     "notice_period": "30 days",
-    "job_id": "e1f2a3b4-0008-0000-0000-000000000008",
-    "job_role": "Python Backend Developer",
-    "job_description": "We are looking for a Python Backend Developer to design and build robust APIs and microservices.",
-    "resume_text": "",
-    "match_percentage": 90,
-    "recommendation": "Strong Hire",
-    "match_summary": "Aryan is a strong Python backend engineer with 4 years of FastAPI and microservices experience. Excellent async programming knowledge and Docker/Redis proficiency.",
-    "match_strengths": ["FastAPI & async Python", "PostgreSQL optimization", "Redis caching patterns"],
-    "match_gaps": ["Limited unit test coverage in current projects"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "interview_scheduled",
-    "interview_slot": "2026-05-23 10:00",
-    "applied_at": "2026-04-24T10:00:00+00:00",
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/aryankhanna-backend",
-      "status": "verified_match",
-      "status_label": "Verified Match",
-      "status_color": "#0F6E56",
-      "overall_score": 89,
-      "experience_comparison": {
-        "resume_years": 4,
-        "linkedin_years": 4.0,
-        "match": true,
-        "note": "LinkedIn confirms backend roles at OYO Rooms and Slice. Fully consistent."
-      },
-      "certifications": [
-        {"name": "AWS Certified Developer – Associate", "verified": true}
-      ],
-      "recent_activity": [
-        "Posted about FastAPI async patterns",
-        "Contributed to open-source SQLAlchemy async library",
-        "Shared Redis caching strategies blog post"
-      ],
-      "skills_match": {
-        "resume_skills": ["Python", "FastAPI", "PostgreSQL", "Redis", "Docker"],
-        "linkedin_skills": ["Python", "FastAPI", "PostgreSQL", "Redis", "Docker", "Microservices"],
-        "overlap_percentage": 90
-      },
-      "scanned_at": "2026-05-14T09:00:00+00:00"
-    }
+    "expected_ctc": "2100000",
+    "name": "Aryan Khanna",
+    "current_role": "Backend Engineer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0008-0000-0000-000000000008",
+        "job_role": "Python Backend Developer",
+        "job_description": "We are looking for a Python Backend Developer to design and build robust APIs and microservices.",
+        "resume_text": "",
+        "match_percentage": 89,
+        "recommendation": "Strong Hire",
+        "match_summary": "Aryan is a strong Python backend engineer with 4 years of FastAPI and microservices experience. Excellent async programming knowledge and Docker/Redis proficiency.",
+        "match_strengths": [
+          "FastAPI & async Python",
+          "PostgreSQL optimization",
+          "Redis caching patterns"
+        ],
+        "match_gaps": [
+          "Limited unit test coverage in current projects"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "interview_scheduled",
+        "interview_slot": "2026-05-23 10:00",
+        "applied_at": "2026-04-24T10:00:00+00:00",
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/aryankhanna-backend",
+          "status": "verified_match",
+          "status_label": "Verified Match",
+          "status_color": "#0F6E56",
+          "overall_score": 89,
+          "experience_comparison": {
+            "resume_years": 4,
+            "linkedin_years": 4.0,
+            "match": true,
+            "note": "LinkedIn confirms backend roles at OYO Rooms and Slice. Fully consistent."
+          },
+          "certifications": [
+            {
+              "name": "AWS Certified Developer – Associate",
+              "verified": true
+            }
+          ],
+          "recent_activity": [
+            "Posted about FastAPI async patterns",
+            "Contributed to open-source SQLAlchemy async library",
+            "Shared Redis caching strategies blog post"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Python",
+              "FastAPI",
+              "PostgreSQL",
+              "Redis",
+              "Docker"
+            ],
+            "linkedin_skills": [
+              "Python",
+              "FastAPI",
+              "PostgreSQL",
+              "Redis",
+              "Docker",
+              "Microservices"
+            ],
+            "overlap_percentage": 90
+          },
+          "scanned_at": "2026-05-14T09:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Python",
+          "FastAPI or Django",
+          "PostgreSQL",
+          "REST APIs",
+          "Git"
+        ],
+        "must_have_missing": [],
+        "must_have_score": 30.0,
+        "good_to_have_matched": [
+          "Docker",
+          "Redis",
+          "Microservices"
+        ],
+        "good_to_have_missing": [
+          "Celery",
+          "AWS"
+        ],
+        "good_to_have_score": 12.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
   },
   {
-    "name": "Shruti Reddy",
+    "linkedin_url": "https://linkedin.com/in/shrutireddy-fin",
     "ct_number": "CT20260022",
-    "email": "shruti.reddy@gmail.com",
     "phone": "9812456789",
     "location": "Mumbai, Maharashtra",
-    "linkedin_url": "https://linkedin.com/in/shrutireddy-fin",
-    "current_role": "Finance Executive",
+    "email": "shruti.reddy@gmail.com",
     "current_ctc": "800000",
-    "expected_ctc": "1200000",
     "notice_period": "30 days",
-    "job_id": "e1f2a3b4-0009-0000-0000-000000000009",
-    "job_role": "Finance Analyst",
-    "job_description": "We are seeking a Finance Analyst to support financial planning, reporting, and analysis.",
-    "resume_text": "",
-    "match_percentage": 67,
-    "recommendation": "Hire",
-    "match_summary": "Shruti has 3 years of finance experience with solid Excel and MIS reporting skills. Lacks financial modelling depth and BI tool exposure.",
-    "match_strengths": ["MIS reporting", "Excel proficiency", "Tally/SAP experience"],
-    "match_gaps": ["No financial modelling experience", "No PowerBI or Tableau", "Limited variance analysis"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "applied",
-    "applied_at": "2026-04-25T11:00:00+00:00",
-    "linkedin_analysis": {
-      "linkedin_url": null,
-      "status": "no_url",
-      "status_label": "No LinkedIn URL",
-      "status_color": "#64748b",
-      "overall_score": null,
-      "experience_comparison": null,
-      "certifications": [],
-      "recent_activity": [],
-      "skills_match": null,
-      "scanned_at": null
-    }
+    "expected_ctc": "1200000",
+    "name": "Shruti Reddy",
+    "current_role": "Finance Executive",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0009-0000-0000-000000000009",
+        "job_role": "Finance Analyst",
+        "job_description": "We are seeking a Finance Analyst to support financial planning, reporting, and analysis.",
+        "resume_text": "",
+        "match_percentage": 67,
+        "recommendation": "Hire",
+        "match_summary": "Shruti has 3 years of finance experience with solid Excel and MIS reporting skills. Lacks financial modelling depth and BI tool exposure.",
+        "match_strengths": [
+          "MIS reporting",
+          "Excel proficiency",
+          "Tally/SAP experience"
+        ],
+        "match_gaps": [
+          "No financial modelling experience",
+          "No PowerBI or Tableau",
+          "Limited variance analysis"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "applied",
+        "applied_at": "2026-04-25T11:00:00+00:00",
+        "linkedin_analysis": {
+          "linkedin_url": null,
+          "status": "no_url",
+          "status_label": "No LinkedIn URL",
+          "status_color": "#64748b",
+          "overall_score": 68,
+          "experience_comparison": null,
+          "certifications": [],
+          "recent_activity": [],
+          "skills_match": null,
+          "scanned_at": null
+        },
+        "must_have_matched": [
+          "Financial Modelling",
+          "Excel/Google Sheets"
+        ],
+        "must_have_missing": [
+          "MIS Reporting",
+          "Budget Analysis"
+        ],
+        "must_have_score": 15.0,
+        "good_to_have_matched": [
+          "SQL",
+          "Tableau",
+          "Power BI"
+        ],
+        "good_to_have_missing": [
+          "SAP",
+          "Financial Planning"
+        ],
+        "good_to_have_score": 12.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
   },
   {
-    "name": "Gaurav Tiwari",
+    "linkedin_url": "https://linkedin.com/in/gauravtiwari-sf",
     "ct_number": "CT20260023",
-    "email": "gaurav.tiwari@gmail.com",
     "phone": "9901567890",
     "location": "Bangalore, Karnataka",
-    "linkedin_url": "https://linkedin.com/in/gauravtiwari-sf",
-    "current_role": "Lead Salesforce Developer",
+    "email": "gaurav.tiwari@gmail.com",
     "current_ctc": "2200000",
-    "expected_ctc": "3000000",
     "notice_period": "30 days",
-    "job_id": "e1f2a3b4-0010-0000-0000-000000000010",
-    "job_role": "Salesforce Developer",
-    "job_description": "We are looking for a Salesforce Developer to build and customize solutions on the Salesforce platform.",
-    "resume_text": "",
-    "match_percentage": 97,
-    "recommendation": "Strong Hire",
-    "match_summary": "Gaurav is an elite-level Salesforce Developer with 6 years of experience spanning Apex, LWC, Experience Cloud, MuleSoft integrations, and multi-org architecture. A genuinely exceptional candidate.",
-    "match_strengths": ["Expert Apex & LWC", "MuleSoft integration experience", "Multi-org architecture", "Experience Cloud certified"],
-    "match_gaps": ["Compensation expectations at the top of the band"],
-    "compensation_fit": "partial",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "interview_complete",
-    "applied_at": "2026-04-26T09:00:00+00:00",
-    "additional_comments": "Gaurav is the strongest Salesforce Developer candidate we have ever screened. His command of the platform is encyclopedic — he explained governor limit optimization strategies, multi-org B2C Commerce integrations with MuleSoft, and Experience Cloud site architecture without hesitation. His GitHub has impressive open-source Salesforce utilities with 400+ stars. In the cultural interview, he demonstrated servant leadership and a passion for knowledge sharing through the Salesforce developer community. Compensation is top of band but fully justified. Extend offer at the top of the range immediately.",
-    "interview_slot": "2026-05-08 10:00",
-    "call_status": {
-      "call_made": true,
-      "call_made_at": "2026-05-06T09:30:00+00:00",
-      "call_answered": true,
-      "call_answered_at": "2026-05-06T09:30:05+00:00",
-      "call_complete": true,
-      "call_complete_at": "2026-05-06T09:32:20+00:00",
-      "message_delivered": true,
-      "call_sid": "CAxxxx023",
-      "note": "Candidate is very interested — mentioned he has two other competing offers"
-    },
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/gauravtiwari-sf",
-      "status": "verified_match",
-      "status_label": "Verified Match",
-      "status_color": "#0F6E56",
-      "overall_score": 98,
-      "experience_comparison": {
-        "resume_years": 6,
-        "linkedin_years": 6.2,
-        "match": true,
-        "note": "LinkedIn confirms lead and senior developer roles at Accenture and Deloitte Digital. Exceeds resume claims."
-      },
-      "certifications": [
-        {"name": "Salesforce Platform Developer II", "verified": true},
-        {"name": "Application Architect", "verified": true},
-        {"name": "System Architect", "verified": true},
-        {"name": "Experience Cloud Consultant", "verified": true},
-        {"name": "MuleSoft Certified Developer", "verified": true}
-      ],
-      "recent_activity": [
-        "Spoke at Dreamforce 2025",
-        "Published Salesforce LWC OSS contributions",
-        "Wrote community blog: Multi-org Strategy for B2B Commerce",
-        "Trailhead Ranger with 200+ badges"
-      ],
-      "skills_match": {
-        "resume_skills": ["Apex", "LWC", "SOQL", "MuleSoft", "Experience Cloud", "Salesforce DX"],
-        "linkedin_skills": ["Apex", "LWC", "SOQL", "MuleSoft", "Experience Cloud", "CI/CD", "Integration"],
-        "overlap_percentage": 97
-      },
-      "scanned_at": "2026-05-06T08:00:00+00:00"
-    }
+    "expected_ctc": "3000000",
+    "name": "Gaurav Tiwari",
+    "current_role": "Lead Salesforce Developer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0010-0000-0000-000000000010",
+        "job_role": "Salesforce Developer",
+        "job_description": "We are looking for a Salesforce Developer to build and customize solutions on the Salesforce platform.",
+        "resume_text": "",
+        "match_percentage": 97,
+        "recommendation": "Strong Hire",
+        "match_summary": "Gaurav is an elite-level Salesforce Developer with 6 years of experience spanning Apex, LWC, Experience Cloud, MuleSoft integrations, and multi-org architecture. A genuinely exceptional candidate.",
+        "match_strengths": [
+          "Expert Apex & LWC",
+          "MuleSoft integration experience",
+          "Multi-org architecture",
+          "Experience Cloud certified"
+        ],
+        "match_gaps": [
+          "Compensation expectations at the top of the band"
+        ],
+        "compensation_fit": "partial",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "interview_complete",
+        "applied_at": "2026-04-26T09:00:00+00:00",
+        "additional_comments": "Gaurav is the strongest Salesforce Developer candidate we have ever screened. His command of the platform is encyclopedic — he explained governor limit optimization strategies, multi-org B2C Commerce integrations with MuleSoft, and Experience Cloud site architecture without hesitation. His GitHub has impressive open-source Salesforce utilities with 400+ stars. In the cultural interview, he demonstrated servant leadership and a passion for knowledge sharing through the Salesforce developer community. Compensation is top of band but fully justified. Extend offer at the top of the range immediately.",
+        "interview_slot": "2026-05-08 10:00",
+        "call_status": {
+          "call_made": true,
+          "call_made_at": "2026-05-06T09:30:00+00:00",
+          "call_answered": true,
+          "call_answered_at": "2026-05-06T09:30:05+00:00",
+          "call_complete": true,
+          "call_complete_at": "2026-05-06T09:32:20+00:00",
+          "message_delivered": true,
+          "call_sid": "CAxxxx023",
+          "note": "Candidate is very interested — mentioned he has two other competing offers"
+        },
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/gauravtiwari-sf",
+          "status": "verified_match",
+          "status_label": "Verified Match",
+          "status_color": "#0F6E56",
+          "overall_score": 98,
+          "experience_comparison": {
+            "resume_years": 6,
+            "linkedin_years": 6.2,
+            "match": true,
+            "note": "LinkedIn confirms lead and senior developer roles at Accenture and Deloitte Digital. Exceeds resume claims."
+          },
+          "certifications": [
+            {
+              "name": "Salesforce Platform Developer II",
+              "verified": true
+            },
+            {
+              "name": "Application Architect",
+              "verified": true
+            },
+            {
+              "name": "System Architect",
+              "verified": true
+            },
+            {
+              "name": "Experience Cloud Consultant",
+              "verified": true
+            },
+            {
+              "name": "MuleSoft Certified Developer",
+              "verified": true
+            }
+          ],
+          "recent_activity": [
+            "Spoke at Dreamforce 2025",
+            "Published Salesforce LWC OSS contributions",
+            "Wrote community blog: Multi-org Strategy for B2B Commerce",
+            "Trailhead Ranger with 200+ badges"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Apex",
+              "LWC",
+              "SOQL",
+              "MuleSoft",
+              "Experience Cloud",
+              "Salesforce DX"
+            ],
+            "linkedin_skills": [
+              "Apex",
+              "LWC",
+              "SOQL",
+              "MuleSoft",
+              "Experience Cloud",
+              "CI/CD",
+              "Integration"
+            ],
+            "overlap_percentage": 97
+          },
+          "scanned_at": "2026-05-06T08:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Apex",
+          "LWC",
+          "SOQL",
+          "Sales Cloud",
+          "Integration"
+        ],
+        "must_have_missing": [],
+        "must_have_score": 30.0,
+        "good_to_have_matched": [
+          "Experience Cloud",
+          "Einstein Analytics",
+          "JIRA",
+          "Agile",
+          "Git"
+        ],
+        "good_to_have_missing": [],
+        "good_to_have_score": 20.0,
+        "notice_score": 10.0,
+        "compensation_score": 8.0
+      }
+    ]
   },
   {
-    "name": "Neha Jain",
+    "linkedin_url": "https://linkedin.com/in/nehajain-ml",
     "ct_number": "CT20260024",
-    "email": "neha.jain@gmail.com",
     "phone": "9876234567",
     "location": "Bangalore, Karnataka",
-    "linkedin_url": "https://linkedin.com/in/nehajain-ml",
-    "current_role": "Machine Learning Engineer",
+    "email": "neha.jain@gmail.com",
     "current_ctc": "2000000",
-    "expected_ctc": "2800000",
     "notice_period": "30 days",
-    "job_id": "e1f2a3b4-0011-0000-0000-000000000011",
-    "job_role": "AI/ML Engineer",
-    "job_description": "We are hiring an AI/ML Engineer to build intelligent features into our product.",
-    "resume_text": "",
-    "match_percentage": 85,
-    "recommendation": "Strong Hire",
-    "match_summary": "Neha has 4 years of ML engineering experience with solid NLP, PyTorch, and MLOps skills. Her LLM API integration work at her current company is directly relevant.",
-    "match_strengths": ["NLP and LLM experience", "PyTorch and Scikit-learn proficiency", "MLflow-based MLOps pipelines"],
-    "match_gaps": ["Limited vector database experience", "GCP over AWS (minor)"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "interview_complete",
-    "applied_at": "2026-04-27T10:00:00+00:00",
-    "additional_comments": "Neha is a strong ML engineer with a clear talent for translating business problems into model architectures. She demonstrated her RAG pipeline work using LangChain and OpenAI embeddings, which is directly relevant to our planned AI features. She explained model evaluation and drift detection clearly and showed familiarity with MLflow for experiment tracking. Her vector database experience is limited but she has used FAISS at a basic level. Culture fit is excellent — she's curious, collaborative, and energetic. Recommend extending offer.",
-    "interview_slot": "2026-05-11 10:00",
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/nehajain-ml",
-      "status": "verified_match",
-      "status_label": "Verified Match",
-      "status_color": "#0F6E56",
-      "overall_score": 83,
-      "experience_comparison": {
-        "resume_years": 4,
-        "linkedin_years": 3.8,
-        "match": true,
-        "note": "LinkedIn shows ML roles at PhonePe and Lenskart. Broadly consistent with resume."
-      },
-      "certifications": [
-        {"name": "Deep Learning Specialization – Coursera/deeplearning.ai", "verified": true},
-        {"name": "AWS Machine Learning Specialty", "verified": true}
-      ],
-      "recent_activity": [
-        "Shared paper on RAG evaluation benchmarks",
-        "Posted about fine-tuning LLaMA 3 for domain adaptation",
-        "Open-sourced a text classification toolkit"
-      ],
-      "skills_match": {
-        "resume_skills": ["Python", "PyTorch", "NLP", "LLM APIs", "MLflow", "SQL"],
-        "linkedin_skills": ["Python", "PyTorch", "NLP", "Machine Learning", "MLflow"],
-        "overlap_percentage": 85
-      },
-      "scanned_at": "2026-05-11T08:00:00+00:00"
-    }
+    "expected_ctc": "2800000",
+    "name": "Neha Jain",
+    "current_role": "Machine Learning Engineer",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0011-0000-0000-000000000011",
+        "job_role": "AI/ML Engineer",
+        "job_description": "We are hiring an AI/ML Engineer to build intelligent features into our product.",
+        "resume_text": "",
+        "match_percentage": 85,
+        "recommendation": "Strong Hire",
+        "match_summary": "Neha has 4 years of ML engineering experience with solid NLP, PyTorch, and MLOps skills. Her LLM API integration work at her current company is directly relevant.",
+        "match_strengths": [
+          "NLP and LLM experience",
+          "PyTorch and Scikit-learn proficiency",
+          "MLflow-based MLOps pipelines"
+        ],
+        "match_gaps": [
+          "Limited vector database experience",
+          "GCP over AWS (minor)"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "interview_complete",
+        "applied_at": "2026-04-27T10:00:00+00:00",
+        "additional_comments": "Neha is a strong ML engineer with a clear talent for translating business problems into model architectures. She demonstrated her RAG pipeline work using LangChain and OpenAI embeddings, which is directly relevant to our planned AI features. She explained model evaluation and drift detection clearly and showed familiarity with MLflow for experiment tracking. Her vector database experience is limited but she has used FAISS at a basic level. Culture fit is excellent — she's curious, collaborative, and energetic. Recommend extending offer.",
+        "interview_slot": "2026-05-11 10:00",
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/nehajain-ml",
+          "status": "verified_match",
+          "status_label": "Verified Match",
+          "status_color": "#0F6E56",
+          "overall_score": 83,
+          "experience_comparison": {
+            "resume_years": 4,
+            "linkedin_years": 3.8,
+            "match": true,
+            "note": "LinkedIn shows ML roles at PhonePe and Lenskart. Broadly consistent with resume."
+          },
+          "certifications": [
+            {
+              "name": "Deep Learning Specialization – Coursera/deeplearning.ai",
+              "verified": true
+            },
+            {
+              "name": "AWS Machine Learning Specialty",
+              "verified": true
+            }
+          ],
+          "recent_activity": [
+            "Shared paper on RAG evaluation benchmarks",
+            "Posted about fine-tuning LLaMA 3 for domain adaptation",
+            "Open-sourced a text classification toolkit"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Python",
+              "PyTorch",
+              "NLP",
+              "LLM APIs",
+              "MLflow",
+              "SQL"
+            ],
+            "linkedin_skills": [
+              "Python",
+              "PyTorch",
+              "NLP",
+              "Machine Learning",
+              "MLflow"
+            ],
+            "overlap_percentage": 85
+          },
+          "scanned_at": "2026-05-11T08:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Python",
+          "Machine Learning",
+          "NLP",
+          "Deep Learning"
+        ],
+        "must_have_missing": [
+          "Model Deployment"
+        ],
+        "must_have_score": 24.0,
+        "good_to_have_matched": [
+          "TensorFlow/PyTorch",
+          "Hugging Face",
+          "MLOps",
+          "LLMs"
+        ],
+        "good_to_have_missing": [
+          "AWS SageMaker"
+        ],
+        "good_to_have_score": 16.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
   },
   {
-    "name": "Karan Malhotra",
+    "linkedin_url": "https://linkedin.com/in/karanmalhotra-cs",
     "ct_number": "CT20260025",
-    "email": "karan.malhotra@gmail.com",
     "phone": "9812789012",
     "location": "Bangalore, Karnataka",
-    "linkedin_url": "https://linkedin.com/in/karanmalhotra-cs",
-    "current_role": "Account Manager",
+    "email": "karan.malhotra@gmail.com",
     "current_ctc": "900000",
-    "expected_ctc": "1400000",
     "notice_period": "15 days",
-    "job_id": "e1f2a3b4-0012-0000-0000-000000000012",
-    "job_role": "Customer Success Manager",
-    "job_description": "We are seeking a Customer Success Manager to build lasting relationships with our enterprise clients.",
-    "resume_text": "",
-    "match_percentage": 59,
-    "recommendation": "No Hire",
-    "match_summary": "Karan has account management experience in a non-SaaS context. Lacks technical depth and SaaS-specific customer success skills required for the role.",
-    "match_strengths": ["Relationship management basics", "Communication skills"],
-    "match_gaps": ["No SaaS experience", "No churn prevention or product adoption track record", "No CRM proficiency", "Limited data analysis skills"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "rejected",
-    "applied_at": "2026-04-28T12:00:00+00:00",
-    "additional_comments": "Karan is personable and has basic relationship management instincts, but he could not demonstrate understanding of key SaaS CSM concepts like product adoption metrics, churn signals, health scores, or QBRs. His prior account management was in a telecom context with little overlap to our enterprise SaaS environment. He was also unable to articulate a structured approach to onboarding new customers or managing escalations. The panel unanimously agreed he does not meet the bar for this role. Recommend rejection.",
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/karanmalhotra-cs",
-      "status": "mismatch",
-      "status_label": "Mismatch Detected",
-      "status_color": "#A32D2D",
-      "overall_score": 38,
-      "experience_comparison": {
-        "resume_years": 3,
-        "linkedin_years": 2.1,
-        "match": false,
-        "note": "Resume claims 3 years of customer success experience but LinkedIn shows 2 years in telecom account management — different domain and skillset."
-      },
-      "certifications": [],
-      "recent_activity": ["No activity in past 6 months"],
-      "skills_match": {
-        "resume_skills": ["Customer Success", "CRM", "Stakeholder Management", "Data Analysis"],
-        "linkedin_skills": ["Sales", "Telecom"],
-        "overlap_percentage": 15
-      },
-      "scanned_at": "2026-05-12T09:00:00+00:00"
-    }
+    "expected_ctc": "1400000",
+    "name": "Karan Malhotra",
+    "current_role": "Account Manager",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0012-0000-0000-000000000012",
+        "job_role": "Customer Success Manager",
+        "job_description": "We are seeking a Customer Success Manager to build lasting relationships with our enterprise clients.",
+        "resume_text": "",
+        "match_percentage": 58,
+        "recommendation": "No Hire",
+        "match_summary": "Karan has account management experience in a non-SaaS context. Lacks technical depth and SaaS-specific customer success skills required for the role.",
+        "match_strengths": [
+          "Relationship management basics",
+          "Communication skills"
+        ],
+        "match_gaps": [
+          "No SaaS experience",
+          "No churn prevention or product adoption track record",
+          "No CRM proficiency",
+          "Limited data analysis skills"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "rejected",
+        "applied_at": "2026-04-28T12:00:00+00:00",
+        "additional_comments": "Karan is personable and has basic relationship management instincts, but he could not demonstrate understanding of key SaaS CSM concepts like product adoption metrics, churn signals, health scores, or QBRs. His prior account management was in a telecom context with little overlap to our enterprise SaaS environment. He was also unable to articulate a structured approach to onboarding new customers or managing escalations. The panel unanimously agreed he does not meet the bar for this role. Recommend rejection.",
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/karanmalhotra-cs",
+          "status": "mismatch",
+          "status_label": "Mismatch Detected",
+          "status_color": "#A32D2D",
+          "overall_score": 38,
+          "experience_comparison": {
+            "resume_years": 3,
+            "linkedin_years": 2.1,
+            "match": false,
+            "note": "Resume claims 3 years of customer success experience but LinkedIn shows 2 years in telecom account management — different domain and skillset."
+          },
+          "certifications": [],
+          "recent_activity": [
+            "No activity in past 6 months"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Customer Success",
+              "CRM",
+              "Stakeholder Management",
+              "Data Analysis"
+            ],
+            "linkedin_skills": [
+              "Sales",
+              "Telecom"
+            ],
+            "overlap_percentage": 15
+          },
+          "scanned_at": "2026-05-12T09:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Customer Success",
+          "Relationship Management",
+          "Product Adoption"
+        ],
+        "must_have_missing": [
+          "CRM Tools"
+        ],
+        "must_have_score": 22.5,
+        "good_to_have_matched": [
+          "Data Analysis"
+        ],
+        "good_to_have_missing": [
+          "Salesforce",
+          "Upselling/Cross-selling",
+          "NPS Management"
+        ],
+        "good_to_have_score": 5.0,
+        "notice_score": 10.0,
+        "compensation_score": 10.0
+      }
+    ]
   },
   {
-    "name": "Divya Pillai",
+    "linkedin_url": "https://linkedin.com/in/divyapillai-ba",
     "ct_number": "CT20260026",
-    "email": "divya.pillai@gmail.com",
     "phone": "9901890123",
     "location": "Delhi, NCT",
-    "linkedin_url": "https://linkedin.com/in/divyapillai-ba",
-    "current_role": "Business Analyst",
+    "email": "divya.pillai@gmail.com",
     "current_ctc": "950000",
-    "expected_ctc": "1400000",
     "notice_period": "30 days",
-    "job_id": "e1f2a3b4-0005-0000-0000-000000000005",
-    "job_role": "Business Analyst",
-    "job_description": "We are seeking a Business Analyst with a focus on operations and process improvement.",
-    "resume_text": "",
-    "match_percentage": 77,
-    "recommendation": "Hire",
-    "match_summary": "Divya has 3 years of solid BA experience focused on operations and supply chain. Strong process mapping and stakeholder management skills with good JIRA proficiency.",
-    "match_strengths": ["Operations & process improvement", "Stakeholder management", "JIRA and user stories"],
-    "match_gaps": ["SQL skills are basic", "No CRM/ERP system experience"],
-    "compensation_fit": "good",
-    "notice_fit": "good",
-    "session_id": null,
-    "status": "shortlisted",
-    "applied_at": "2026-04-29T10:00:00+00:00",
-    "linkedin_analysis": {
-      "linkedin_url": "https://linkedin.com/in/divyapillai-ba",
-      "status": "verified_match",
-      "status_label": "Verified Match",
-      "status_color": "#0F6E56",
-      "overall_score": 78,
-      "experience_comparison": {
-        "resume_years": 3,
-        "linkedin_years": 3.1,
-        "match": true,
-        "note": "LinkedIn confirms BA roles at Delhivery and Blue Dart. Operations focus consistent with resume."
-      },
-      "certifications": [
-        {"name": "CBAP Certification (in progress)", "verified": false},
-        {"name": "Agile Scrum Master Certification", "verified": true}
-      ],
-      "recent_activity": [
-        "Posted about process mining techniques",
-        "Shared user story mapping best practices",
-        "Liked Agile estimation techniques article"
-      ],
-      "skills_match": {
-        "resume_skills": ["Requirements Gathering", "Process Mapping", "JIRA", "Agile", "Stakeholder Management"],
-        "linkedin_skills": ["Requirements Gathering", "Process Mapping", "JIRA", "Agile"],
-        "overlap_percentage": 77
-      },
-      "scanned_at": "2026-05-13T10:00:00+00:00"
-    }
+    "expected_ctc": "1400000",
+    "name": "Divya Pillai",
+    "current_role": "Business Analyst",
+    "is_demo": false,
+    "applications": [
+      {
+        "job_id": "e1f2a3b4-0005-0000-0000-000000000005",
+        "job_role": "Business Analyst",
+        "job_description": "We are seeking a Business Analyst with a focus on operations and process improvement.",
+        "resume_text": "",
+        "match_percentage": 76,
+        "recommendation": "Hire",
+        "match_summary": "Divya has 3 years of solid BA experience focused on operations and supply chain. Strong process mapping and stakeholder management skills with good JIRA proficiency.",
+        "match_strengths": [
+          "Operations & process improvement",
+          "Stakeholder management",
+          "JIRA and user stories"
+        ],
+        "match_gaps": [
+          "SQL skills are basic",
+          "No CRM/ERP system experience"
+        ],
+        "compensation_fit": "good",
+        "notice_fit": "good",
+        "session_id": null,
+        "status": "shortlisted",
+        "applied_at": "2026-04-29T10:00:00+00:00",
+        "linkedin_analysis": {
+          "linkedin_url": "https://linkedin.com/in/divyapillai-ba",
+          "status": "verified_match",
+          "status_label": "Verified Match",
+          "status_color": "#0F6E56",
+          "overall_score": 78,
+          "experience_comparison": {
+            "resume_years": 3,
+            "linkedin_years": 3.1,
+            "match": true,
+            "note": "LinkedIn confirms BA roles at Delhivery and Blue Dart. Operations focus consistent with resume."
+          },
+          "certifications": [
+            {
+              "name": "CBAP Certification (in progress)",
+              "verified": false
+            },
+            {
+              "name": "Agile Scrum Master Certification",
+              "verified": true
+            }
+          ],
+          "recent_activity": [
+            "Posted about process mining techniques",
+            "Shared user story mapping best practices",
+            "Liked Agile estimation techniques article"
+          ],
+          "skills_match": {
+            "resume_skills": [
+              "Requirements Gathering",
+              "Process Mapping",
+              "JIRA",
+              "Agile",
+              "Stakeholder Management"
+            ],
+            "linkedin_skills": [
+              "Requirements Gathering",
+              "Process Mapping",
+              "JIRA",
+              "Agile"
+            ],
+            "overlap_percentage": 77
+          },
+          "scanned_at": "2026-05-13T10:00:00+00:00"
+        },
+        "must_have_matched": [
+          "Requirements Gathering",
+          "Process Mapping",
+          "Data Analysis"
+        ],
+        "must_have_missing": [
+          "JIRA"
+        ],
+        "must_have_score": 22.5,
+        "good_to_have_matched": [
+          "SQL",
+          "Tableau",
+          "Agile"
+        ],
+        "good_to_have_missing": [
+          "Stakeholder Management"
+        ],
+        "good_to_have_score": 15.0,
+        "notice_score": 10.0,
+        "compensation_score": 6.0
+      }
+    ]
   }
 ]

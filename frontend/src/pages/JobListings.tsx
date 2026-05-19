@@ -13,6 +13,8 @@ export type Job = {
   experience: string
   description: string
   requirements: string[]
+  must_have_skills?: string[]
+  good_to_have_skills?: string[]
   role_budget?: string
   preferred_notice?: string
   status: string

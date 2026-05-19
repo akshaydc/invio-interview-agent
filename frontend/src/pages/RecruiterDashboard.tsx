@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import axios from 'axios'
 import { API_BASE_URL as API } from '../config'
 import Navbar from '../components/Navbar'
@@ -58,6 +58,16 @@ type Candidate = {
   call_status?: CallStatus
   linkedin_analysis?: LinkedInAnalysis | null
   additional_comments?: string
+  // Component score fields
+  must_have_matched?: string[]
+  must_have_missing?: string[]
+  good_to_have_matched?: string[]
+  good_to_have_missing?: string[]
+  must_have_score?: number | null
+  good_to_have_score?: number | null
+  notice_score?: number | null
+  compensation_score?: number | null
+  is_demo?: boolean
 }
 
 type SlotInfo = { slot: string; display: string; available: boolean; booked_by: string | null }
@@ -72,6 +82,8 @@ type Job = {
   experience: string
   description: string
   requirements: string[]
+  must_have_skills?: string[]
+  good_to_have_skills?: string[]
   role_budget?: string
   preferred_notice?: string
   status: string
@@ -92,6 +104,94 @@ type InternalRecord = {
   status: string
   note?: string
   created_at: string
+}
+
+function TagInput({ tags, onChange, placeholder, color = 'blue' }: {
+  tags: string[]
+  onChange: (tags: string[]) => void
+  placeholder?: string
+  color?: 'red' | 'blue'
+}) {
+  const [input, setInput] = React.useState('')
+  const tagStyle: React.CSSProperties = color === 'red'
+    ? { background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FCA5A5' }
+    : { background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD' }
+
+  function addTag() {
+    const val = input.trim()
+    if (val && !tags.includes(val)) onChange([...tags, val])
+    setInput('')
+  }
+
+  return (
+    <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '6px 8px', display: 'flex', flexWrap: 'wrap', gap: 4, background: 'var(--bg)' }}>
+      {tags.map(t => (
+        <span key={t} style={{ ...tagStyle, fontSize: '0.78rem', padding: '2px 8px', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+          {t}
+          <button onClick={() => onChange(tags.filter(x => x !== t))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, color: 'inherit' }}>×</button>
+        </span>
+      ))}
+      <input
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } if (e.key === 'Backspace' && !input && tags.length) onChange(tags.slice(0, -1)) }}
+        placeholder={placeholder}
+        style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: '0.85rem', minWidth: 120, color: 'var(--text)', fontFamily: 'inherit' }}
+      />
+    </div>
+  )
+}
+
+function MatchScoreWidget({ c }: { c: Candidate }) {
+  const [expanded, setExpanded] = React.useState(false)
+  if (c.must_have_score == null && c.good_to_have_score == null) return null
+
+  const mustTotal = (c.must_have_matched?.length ?? 0) + (c.must_have_missing?.length ?? 0)
+  const goodTotal = (c.good_to_have_matched?.length ?? 0) + (c.good_to_have_missing?.length ?? 0)
+  const perMust = mustTotal > 0 ? 30 / mustTotal : 0
+  const perGood = goodTotal > 0 ? 20 / goodTotal : 0
+  const liOverall = c.linkedin_analysis?.overall_score
+  const linkedinContrib = liOverall != null ? Math.round((liOverall / 100) * 30) : 0
+  const noticeScore = c.notice_score ?? 0
+  const compScore = c.compensation_score ?? 0
+  const skillsTotal = (c.must_have_score ?? 0) + (c.good_to_have_score ?? 0)
+  const total = Math.round(skillsTotal + noticeScore + compScore + linkedinContrib)
+
+  return (
+    <div style={{ border: '1px solid var(--border)', borderRadius: 10, marginBottom: 12, overflow: 'hidden' }}>
+      <button onClick={() => setExpanded(v => !v)} style={{ width: '100%', background: '#F8FAFC', border: 'none', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)' }}>
+        <span>Match Score Breakdown</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: '1rem', fontWeight: 700, color: total >= 80 ? '#16a34a' : total >= 60 ? '#d97706' : '#dc2626' }}>{total}%</span>
+          <span style={{ fontSize: 11, color: '#94a3b8' }}>{expanded ? '▲' : '▼'}</span>
+        </span>
+      </button>
+      {expanded && (
+        <div style={{ padding: '12px 14px', fontSize: '0.82rem' }}>
+          {mustTotal > 0 && (
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontWeight: 600, marginBottom: 4, color: '#B91C1C' }}>Must-Have Skills (30%)</div>
+              {c.must_have_matched?.map(s => <div key={s} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>✅ {s}</span><span style={{ color: '#64748b' }}>+{perMust.toFixed(1)}</span></div>)}
+              {c.must_have_missing?.map(s => <div key={s} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>❌ {s}</span><span style={{ color: '#64748b' }}>+0</span></div>)}
+            </div>
+          )}
+          {goodTotal > 0 && (
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontWeight: 600, marginBottom: 4, color: '#1D4ED8' }}>Good-to-Have Skills (20%)</div>
+              {c.good_to_have_matched?.map(s => <div key={s} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>✅ {s}</span><span style={{ color: '#64748b' }}>+{perGood.toFixed(1)}</span></div>)}
+              {c.good_to_have_missing?.map(s => <div key={s} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>❌ {s}</span><span style={{ color: '#64748b' }}>+0</span></div>)}
+            </div>
+          )}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Notice Period (10%)</span><span style={{ fontWeight: 600 }}>{noticeScore}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Compensation (10%)</span><span style={{ fontWeight: 600 }}>{compScore}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>LinkedIn (30%)</span><span style={{ fontWeight: 600 }}>{linkedinContrib}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 4, paddingTop: 4, borderTop: '1px solid var(--border)' }}><span>Total</span><span style={{ color: total >= 80 ? '#16a34a' : total >= 60 ? '#d97706' : '#dc2626' }}>{total}%</span></div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 type Props = {
@@ -223,6 +323,17 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   const [resumeModal, setResumeModal] = useState<{ name: string; text: string; filename: string } | null>(null)
 
+  // Create/edit job skill arrays
+  const [jMustHaveSkills, setJMustHaveSkills] = useState<string[]>([])
+  const [jGoodToHaveSkills, setJGoodToHaveSkills] = useState<string[]>([])
+  const [editMustHaveSkills, setEditMustHaveSkills] = useState<string[]>([])
+  const [editGoodToHaveSkills, setEditGoodToHaveSkills] = useState<string[]>([])
+  // Custom skill search
+  const [customSkillQuery, setCustomSkillQuery] = useState('')
+  const [customSkillResults, setCustomSkillResults] = useState<any[]>([])
+  const [customSkillSearched, setCustomSkillSearched] = useState(false)
+  const [customSkillLoading, setCustomSkillLoading] = useState(false)
+
   const [filterRole, setFilterRole] = useState('')
   const [filterSkill, setFilterSkill] = useState('')
   const [filterLocation, setFilterLocation] = useState('')
@@ -293,6 +404,8 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
 
   const filteredCandidates = useMemo(() => {
     let result = [...candidates].sort((a, b) => {
+      if (a.is_demo && !b.is_demo) return -1
+      if (!a.is_demo && b.is_demo) return 1
       const aMatch = a.combined_score ?? a.match_percentage ?? -1
       const bMatch = b.combined_score ?? b.match_percentage ?? -1
       return bMatch - aMatch
@@ -594,6 +707,8 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
       fd.append('experience', jExperience.trim())
       fd.append('description', jDescription.trim())
       fd.append('requirements', jRequirements.split(',').map(r => r.trim()).filter(Boolean).join(','))
+      fd.append('must_have_skills', JSON.stringify(jMustHaveSkills))
+      fd.append('good_to_have_skills', JSON.stringify(jGoodToHaveSkills))
       fd.append('role_budget', jRoleBudget.trim())
       fd.append('preferred_notice', jPreferredNotice)
       if (jdFile) fd.append('jd_file', jdFile)
@@ -601,6 +716,7 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
       setJTitle(''); setJDepartment(''); setJLocation(''); setJJobType('Full-time')
       setJExperience(''); setJRoleBudget(''); setJPreferredNotice('Flexible')
       setJDescription(''); setJRequirements(''); setJdFile(null)
+      setJMustHaveSkills([]); setJGoodToHaveSkills([])
       if (jdFileInputRef.current) jdFileInputRef.current.value = ''
       setShowJobForm(false)
       await fetchJobs()
@@ -623,6 +739,8 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
     setEditPreferredNotice(job.preferred_notice ?? 'Flexible')
     setEditDescription(job.description)
     setEditRequirements(job.requirements.join(', '))
+    setEditMustHaveSkills(job.must_have_skills ?? job.requirements ?? [])
+    setEditGoodToHaveSkills(job.good_to_have_skills ?? [])
     setEditFormError('')
     setEditSuccessMsg('')
   }
@@ -653,6 +771,8 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
           experience: editExperience.trim(),
           description: editDescription.trim(),
           requirements: editRequirements.split(',').map(r => r.trim()).filter(Boolean),
+          must_have_skills: editMustHaveSkills,
+          good_to_have_skills: editGoodToHaveSkills,
           role_budget: editRoleBudget.trim(),
           preferred_notice: editPreferredNotice,
         },
@@ -678,6 +798,22 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
       await fetchJobs()
     } catch {
       // silent
+    }
+  }
+
+  async function searchCustomSkill() {
+    if (!customSkillQuery.trim()) return
+    setCustomSkillLoading(true)
+    setCustomSkillSearched(false)
+    try {
+      const res = await axios.get(`${API}/recruiter/candidates/skill-search`, { params: { skill: customSkillQuery }, headers })
+      setCustomSkillResults(res.data)
+      setCustomSkillSearched(true)
+    } catch {
+      setCustomSkillResults([])
+      setCustomSkillSearched(true)
+    } finally {
+      setCustomSkillLoading(false)
     }
   }
 
@@ -910,6 +1046,35 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                   transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                 }} />
               </div>
+            </div>
+            <div>
+              <label className="role-label">Custom Skill Search</label>
+              <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                <input
+                  className="role-input"
+                  placeholder="e.g. Apex, LWC"
+                  value={customSkillQuery}
+                  onChange={e => setCustomSkillQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && searchCustomSkill()}
+                  style={{ flex: 1 }}
+                />
+                <button className="btn btn-secondary" onClick={searchCustomSkill} disabled={customSkillLoading} style={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}>
+                  {customSkillLoading ? '…' : 'Search'}
+                </button>
+              </div>
+              {customSkillSearched && (
+                <div style={{ marginTop: 8, fontSize: '0.82rem', color: 'var(--muted)' }}>
+                  {customSkillResults.length === 0
+                    ? 'No candidates found.'
+                    : `${customSkillResults.length} candidate${customSkillResults.length !== 1 ? 's' : ''} matched:`}
+                  {customSkillResults.map(r => (
+                    <div key={r.ct_number} style={{ padding: '4px 0', borderBottom: '1px solid var(--border)', color: 'var(--text)' }}>
+                      <span style={{ fontWeight: 600 }}>{r.name}</span>
+                      <span className="muted"> · {r.job_title} · {r.combined_score}%</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </>
@@ -1603,6 +1768,11 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                                           ) : null}
                                         </div>
 
+                                        {/* Match Score Breakdown Widget */}
+                                        <div style={{ marginTop: 16 }}>
+                                          <MatchScoreWidget c={c} />
+                                        </div>
+
                                         {c.recommendation && (
                                           <div style={{ marginTop: 16 }}>
                                             <p className="role-label" style={{ marginBottom: 6 }}>AI Recommendation</p>
@@ -1834,6 +2004,14 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                   <label className="role-label">Requirements (comma-separated)</label>
                   <input className="role-input" placeholder="Python, React, FastAPI" value={jRequirements} onChange={e => setJRequirements(e.target.value)} />
                 </div>
+                <div className="role-select-group">
+                  <label className="role-label" style={{ color: '#B91C1C' }}>Must-Have Skills <span style={{ fontWeight: 400, fontSize: '0.78rem' }}>(type + Enter)</span></label>
+                  <TagInput tags={jMustHaveSkills} onChange={setJMustHaveSkills} placeholder="Add skill…" color="red" />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label" style={{ color: '#1D4ED8' }}>Good-to-Have Skills <span style={{ fontWeight: 400, fontSize: '0.78rem' }}>(type + Enter)</span></label>
+                  <TagInput tags={jGoodToHaveSkills} onChange={setJGoodToHaveSkills} placeholder="Add skill…" color="blue" />
+                </div>
                 <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
                   <label className="role-label">Upload JD File (PDF or TXT)</label>
                   <div
@@ -1924,6 +2102,14 @@ export default function RecruiterDashboard({ token, onLogout, onViewScorecard }:
                 <div className="role-select-group">
                   <label className="role-label">Requirements (comma-separated)</label>
                   <input className="role-input" value={editRequirements} onChange={e => setEditRequirements(e.target.value)} />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label" style={{ color: '#B91C1C' }}>Must-Have Skills</label>
+                  <TagInput tags={editMustHaveSkills} onChange={setEditMustHaveSkills} placeholder="Add skill…" color="red" />
+                </div>
+                <div className="role-select-group">
+                  <label className="role-label" style={{ color: '#1D4ED8' }}>Good-to-Have Skills</label>
+                  <TagInput tags={editGoodToHaveSkills} onChange={setEditGoodToHaveSkills} placeholder="Add skill…" color="blue" />
                 </div>
                 <div className="role-select-group" style={{ gridColumn: '1 / -1' }}>
                   <label className="role-label">Job Description</label>

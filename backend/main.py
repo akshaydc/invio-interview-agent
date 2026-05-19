@@ -572,6 +572,8 @@ class CreateJobRequest(BaseModel):
     experience: str
     description: str
     requirements: list[str]
+    must_have_skills: list[str] = []
+    good_to_have_skills: list[str] = []
 
 
 class UpdateJobRequest(BaseModel):
@@ -582,6 +584,8 @@ class UpdateJobRequest(BaseModel):
     experience: str | None = None
     description: str | None = None
     requirements: list[str] | None = None
+    must_have_skills: list[str] | None = None
+    good_to_have_skills: list[str] | None = None
     role_budget: str | None = None
     preferred_notice: str | None = None
     status: str | None = None
@@ -736,7 +740,14 @@ async def _write_session(session_id: str, data: dict) -> None:
 
 async def _read_jobs() -> list:
     async with aiofiles.open(JOBS_FILE, "r") as f:
-        return json.loads(await f.read())
+        jobs = json.loads(await f.read())
+    # Backfill: if a job has no must_have_skills, derive from requirements
+    for job in jobs:
+        if "must_have_skills" not in job:
+            job["must_have_skills"] = job.get("requirements", [])
+        if "good_to_have_skills" not in job:
+            job["good_to_have_skills"] = []
+    return jobs
 
 
 async def _write_jobs(jobs: list) -> None:
@@ -1277,18 +1288,39 @@ def _flatten_for_recruiter(candidate: dict) -> list[dict]:
         "ct_number", "name", "email", "phone", "linkedin_url", "location",
         "current_role", "current_ctc", "expected_ctc", "notice_period",
     )}
+    identity["is_demo"] = candidate.get("is_demo", False)
     identity["call_status"] = candidate.get("call_status", {})
-    identity["linkedin_analysis"] = candidate.get("linkedin_analysis")
-    li_score = (candidate.get("linkedin_analysis") or {}).get("overall_score")
     rows = []
     for app in _get_applications(candidate):
         row = {**identity, **app}
         row["job_role"] = app.get("job_title") or app.get("job_role", "")
+
+        # linkedin_analysis: check app-level (new) then candidate top-level (legacy)
+        li_analysis = app.get("linkedin_analysis") or candidate.get("linkedin_analysis")
+        row["linkedin_analysis"] = li_analysis
+        li_score = (li_analysis or {}).get("overall_score")
+
         match_pct = app.get("match_percentage") if app.get("match_percentage") is not None else candidate.get("match_percentage")
-        if li_score is not None and match_pct is not None:
+
+        if app.get("must_have_score") is not None:
+            # New component-based scoring
+            base = (
+                (app.get("must_have_score") or 0) +
+                (app.get("good_to_have_score") or 0) +
+                (app.get("notice_score") or 0) +
+                (app.get("compensation_score") or 0)
+            )
+            linkedin_contrib = round((li_score / 100) * 30) if li_score else 0
+            row["combined_score"] = min(100, int(base + linkedin_contrib))
+        elif li_score is not None and match_pct is not None:
             row["combined_score"] = round(match_pct * 0.7 + li_score * 0.3)
         else:
             row["combined_score"] = match_pct
+
+        # Replace DEMO_DYNAMIC sentinel with now + 5 minutes
+        if row.get("interview_slot") == "DEMO_DYNAMIC":
+            row["interview_slot"] = (datetime.now(timezone.utc) + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M")
+
         rows.append(row)
     return rows
 
@@ -1376,9 +1408,99 @@ async def _analyze_resume_match(
 ) -> dict:
     if not ANTHROPIC_API_KEY or not resume_text:
         return {}
-    requirements_str = ", ".join(job.get("requirements", []))
+
+    must_have_skills = job.get("must_have_skills", [])
+    good_to_have_skills = job.get("good_to_have_skills", [])
+    has_skill_split = bool(must_have_skills or good_to_have_skills)
+
     role_budget = job.get("role_budget", "")
     preferred_notice = job.get("preferred_notice", "")
+
+    if has_skill_split:
+        # New component-based scoring path
+        notice_score_map = {"good": 10.0, "partial": 6.0, "mismatch": 0.0}
+        comp_score_map = {"good": 10.0, "partial": 6.0, "mismatch": 0.0}
+
+        must_list = json.dumps(must_have_skills)
+        good_list = json.dumps(good_to_have_skills)
+        fit_lines = ""
+        if role_budget and expected_ctc:
+            fit_lines += f"Candidate expected CTC: {expected_ctc}. Role budget: {role_budget}.\n"
+        if preferred_notice and notice_period:
+            fit_lines += f"Candidate notice: {notice_period}. Preferred notice: {preferred_notice}.\n"
+
+        prompt = (
+            "You must respond with ONLY a valid JSON object. No markdown, no code blocks.\n\n"
+            f"Job: {job.get('title', '')}\n"
+            f"Description: {job.get('description', '')}\n"
+            f"Must-Have Skills: {must_list}\n"
+            f"Good-to-Have Skills: {good_list}\n"
+            f"{fit_lines}\n"
+            f"Resume:\n{resume_text}\n\n"
+            "Return this exact JSON:\n"
+            '{"must_have_matched": ["skill1"], "must_have_missing": ["skill2"], '
+            '"good_to_have_matched": ["skill3"], "good_to_have_missing": ["skill4"], '
+            '"notice_fit": "good", "compensation_fit": "good", '
+            '"match_summary": "...", "strengths": ["..."], "gaps": ["..."]}'
+        )
+        try:
+            client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+            response = await client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=600,
+                system="You are a JSON-only response bot. Output only valid JSON.",
+                messages=[{"role": "user", "content": prompt}],
+            )
+            parsed = _safe_parse_json(response.content[0].text)
+        except Exception:
+            parsed = {}
+
+        must_matched = parsed.get("must_have_matched") or []
+        must_missing = parsed.get("must_have_missing") or []
+        good_matched = parsed.get("good_to_have_matched") or []
+        good_missing = parsed.get("good_to_have_missing") or []
+        notice_fit = parsed.get("notice_fit", "good")
+        comp_fit = parsed.get("compensation_fit", "good")
+
+        total_must = len(must_have_skills)
+        total_good = len(good_to_have_skills)
+        n_must = len(must_matched)
+        n_good = len(good_matched)
+
+        must_have_score = round((n_must / total_must) * 30, 1) if total_must > 0 else 30.0
+        good_to_have_score = round((n_good / total_good) * 20, 1) if total_good > 0 else 20.0
+        notice_score = notice_score_map.get(notice_fit, 10.0)
+        compensation_score = comp_score_map.get(comp_fit, 10.0)
+
+        base_match = round(must_have_score + good_to_have_score + notice_score + compensation_score)
+        normalized_for_rec = min(100, round(base_match / 0.7))
+
+        def _rec(pct: int) -> str:
+            if pct >= 80: return "Strong Hire"
+            if pct >= 65: return "Hire"
+            if pct >= 50: return "Consider"
+            return "Reject"
+
+        return {
+            "match_percentage": base_match,
+            "match_summary": parsed.get("match_summary", ""),
+            "match_strengths": parsed.get("strengths", []),
+            "match_gaps": parsed.get("gaps", []),
+            "compensation_fit": comp_fit,
+            "notice_fit": notice_fit,
+            "recommendation": _rec(normalized_for_rec),
+            "must_have_matched": must_matched,
+            "must_have_missing": must_missing,
+            "good_to_have_matched": good_matched,
+            "good_to_have_missing": good_missing,
+            "must_have_score": must_have_score,
+            "good_to_have_score": good_to_have_score,
+            "notice_score": notice_score,
+            "compensation_score": compensation_score,
+        }
+
+    # Legacy path (no skill split)
+    requirements_str = ", ".join(job.get("requirements", []))
 
     extra_lines = ""
     if role_budget:
@@ -2066,6 +2188,51 @@ async def get_analytics(_auth: dict = Depends(verify_recruiter_token)) -> dict:
     }
 
 
+@app.get("/recruiter/candidates/skill-search")
+async def skill_search_candidates(
+    skill: str = "",
+    _auth: dict = Depends(verify_recruiter_token),
+) -> list:
+    if not skill.strip():
+        return []
+    skill_terms = [s.strip().lower() for s in skill.split(",") if s.strip()]
+    candidates = await _read_candidates()
+    results = []
+    for candidate in candidates:
+        for app in _get_applications(candidate):
+            resume_text = (app.get("resume_text") or "").lower()
+            match_strengths = " ".join(app.get("match_strengths") or []).lower()
+            if any(term in resume_text + " " + match_strengths for term in skill_terms):
+                li_analysis = app.get("linkedin_analysis") or candidate.get("linkedin_analysis")
+                li_score = (li_analysis or {}).get("overall_score")
+                match_pct = app.get("match_percentage") if app.get("match_percentage") is not None else candidate.get("match_percentage")
+                if app.get("must_have_score") is not None:
+                    base = (
+                        (app.get("must_have_score") or 0) +
+                        (app.get("good_to_have_score") or 0) +
+                        (app.get("notice_score") or 0) +
+                        (app.get("compensation_score") or 0)
+                    )
+                    combined = min(100, int(base + (round((li_score / 100) * 30) if li_score else 0)))
+                elif li_score is not None and match_pct is not None:
+                    combined = round(match_pct * 0.7 + li_score * 0.3)
+                else:
+                    combined = match_pct
+                results.append({
+                    "ct_number": candidate.get("ct_number"),
+                    "name": candidate.get("name"),
+                    "email": candidate.get("email"),
+                    "job_title": app.get("job_title") or app.get("job_role", ""),
+                    "job_id": app.get("job_id"),
+                    "combined_score": combined,
+                    "recommendation": app.get("recommendation"),
+                    "status": app.get("status"),
+                    "match_strengths": app.get("match_strengths", []),
+                })
+                break
+    return results
+
+
 @app.get("/recruiter/candidates")
 async def list_candidates(
     linkedin_verified: bool | None = None,
@@ -2073,6 +2240,8 @@ async def list_candidates(
     _auth: dict = Depends(verify_recruiter_token),
 ) -> list:
     candidates = await _read_candidates()
+    # Demo candidates always at the top
+    candidates = sorted(candidates, key=lambda c: (0 if c.get("is_demo") else 1))
     rows = []
     for c in candidates:
         rows.extend(_flatten_for_recruiter(c))
@@ -2200,7 +2369,13 @@ async def get_candidate_linkedin(
     candidate = next((c for c in candidates if c["ct_number"] == ct_number), None)
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
+    # Check app-level first (new structure), then top-level (legacy)
     linkedin = candidate.get("linkedin_analysis")
+    if not linkedin:
+        for app in _get_applications(candidate):
+            if app.get("linkedin_analysis"):
+                linkedin = app["linkedin_analysis"]
+                break
     if not linkedin:
         return {"status": "no_url", "status_label": "No LinkedIn URL", "status_color": "#64748b", "overall_score": None}
     return linkedin
@@ -2217,9 +2392,10 @@ async def scan_linkedin(
         raise HTTPException(status_code=404, detail="Candidate not found")
 
     linkedin_url = candidate.get("linkedin_url", "")
-    resume_text = candidate.get("resume_text", "")
+    apps = _get_applications(candidate)
+    resume_text = next((a.get("resume_text", "") for a in apps if a.get("resume_text")), candidate.get("resume_text", ""))
+    job_id = next((a.get("job_id", "") for a in apps), candidate.get("job_id", ""))
 
-    job_id = candidate.get("job_id", "")
     jobs = await _read_jobs()
     job = next((j for j in jobs if j.get("id") == job_id), {})
 
@@ -2230,13 +2406,25 @@ async def scan_linkedin(
         job_description=job.get("description", ""),
     )
 
+    li_score = analysis.get("overall_score")
     for i, c in enumerate(candidates):
         if c.get("ct_number") == ct_number:
-            candidates[i]["linkedin_analysis"] = analysis
-            match_pct = c.get("match_percentage", 0) or 0
-            li_score = analysis.get("overall_score")
-            if li_score is not None:
-                candidates[i]["combined_score"] = round(match_pct * 0.7 + li_score * 0.3)
+            if "applications" in candidates[i]:
+                for app in candidates[i]["applications"]:
+                    app["linkedin_analysis"] = analysis
+                    if li_score is not None and app.get("must_have_score") is not None:
+                        base = (
+                            (app.get("must_have_score") or 0) +
+                            (app.get("good_to_have_score") or 0) +
+                            (app.get("notice_score") or 0) +
+                            (app.get("compensation_score") or 0)
+                        )
+                        app["match_percentage"] = min(100, int(base + round((li_score / 100) * 30)))
+            else:
+                candidates[i]["linkedin_analysis"] = analysis
+                if li_score is not None:
+                    match_pct = c.get("match_percentage", 0) or 0
+                    candidates[i]["combined_score"] = round(match_pct * 0.7 + li_score * 0.3)
             break
 
     await _write_candidates(candidates)
