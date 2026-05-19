@@ -1368,6 +1368,105 @@ def _extract_resume_text(file_bytes: bytes, filename: str) -> str:
     return file_bytes.decode("utf-8", errors="replace").strip()
 
 
+def _tokenize_match_text(text: str) -> set[str]:
+    import re as _re
+
+    words = _re.findall(r"[a-zA-Z][a-zA-Z0-9+#.-]{1,}", text.lower())
+    stop_words = {
+        "and", "the", "for", "with", "from", "that", "this", "you", "will",
+        "are", "our", "your", "into", "work", "team", "role", "jobs", "job",
+        "years", "experience", "skills", "using", "have", "has", "was",
+    }
+    return {word.strip(".") for word in words if word not in stop_words}
+
+
+def _extract_resume_profile(resume_text: str, current_role: str = "") -> dict:
+    import re as _re
+
+    tokens = _tokenize_match_text(resume_text)
+    known_skills = [
+        "python", "react", "fastapi", "postgresql", "sql", "rest", "apis",
+        "salesforce", "apex", "lwc", "soql", "git", "agile", "jira",
+        "selenium", "postman", "typescript", "javascript", "docker",
+        "aws", "gcp", "figma", "analytics", "machine", "learning",
+    ]
+    skills = []
+    for skill in known_skills:
+        parts = skill.split()
+        if skill in tokens or all(part in tokens for part in parts):
+            skills.append(skill.upper() if skill in {"sql", "apis", "lwc"} else skill.title())
+
+    years = 0
+    year_match = _re.search(r"(\d{1,2})\+?\s*(?:years|yrs)", resume_text, _re.IGNORECASE)
+    if year_match:
+        years = int(year_match.group(1))
+
+    email_match = _re.search(r"[\w.+-]+@[\w-]+\.[\w.-]+", resume_text)
+    phone_match = _re.search(r"(?:\+?\d[\d\s().-]{8,}\d)", resume_text)
+    linkedin_match = _re.search(r"https?://(?:www\.)?linkedin\.com/[^\s,;]+", resume_text, _re.IGNORECASE)
+    first_line = next((line.strip() for line in resume_text.splitlines() if line.strip()), "")
+    full_name = first_line if 1 < len(first_line.split()) <= 4 and "@" not in first_line else ""
+
+    return {
+        "skills": skills[:10],
+        "experience_years": years,
+        "current_role": current_role,
+        "education": "",
+        "full_name": full_name,
+        "email": email_match.group(0) if email_match else "",
+        "phone": phone_match.group(0).strip() if phone_match else "",
+        "linkedin": linkedin_match.group(0) if linkedin_match else "",
+        "location": "",
+    }
+
+
+def _fallback_resume_matches(resume_text: str, open_jobs: list[dict], current_role: str = "") -> dict:
+    resume_tokens = _tokenize_match_text(resume_text)
+    matches = []
+
+    for job in open_jobs:
+        requirement_text = " ".join(str(req) for req in job.get("requirements", []))
+        job_text = " ".join([
+            job.get("title", ""),
+            job.get("department", ""),
+            job.get("description", ""),
+            requirement_text,
+        ])
+        job_tokens = _tokenize_match_text(job_text)
+        matched_tokens = sorted(resume_tokens & job_tokens)
+        requirements = [str(req) for req in job.get("requirements", [])]
+        matched_requirements = [
+            req for req in requirements
+            if _tokenize_match_text(req) & resume_tokens
+        ]
+
+        token_score = len(matched_tokens) / max(1, min(len(job_tokens), 28))
+        requirement_score = len(matched_requirements) / max(1, len(requirements))
+        pct = round(min(95, max(35, (token_score * 45) + (requirement_score * 45) + 10)))
+
+        matches.append({
+            "job_id": job["id"],
+            "job_title": job["title"],
+            "job_department": job.get("department", ""),
+            "job_location": job.get("location", ""),
+            "job_type": job.get("job_type", ""),
+            "match_percentage": pct,
+            "match_reason": (
+                "Matched against your resume using overlapping skills, role keywords, "
+                "and job requirements."
+            ),
+            "strengths": matched_requirements[:4] or matched_tokens[:4] or ["Relevant resume signals"],
+            "gaps": [req for req in requirements if req not in matched_requirements][:3],
+        })
+
+    matches.sort(key=lambda match: match["match_percentage"], reverse=True)
+    return {
+        "candidate_profile": _extract_resume_profile(resume_text, current_role),
+        "matches": matches,
+        "resume_text": resume_text,
+    }
+
+
 async def _analyze_resume_match(
     resume_text: str,
     job: dict,
@@ -2778,7 +2877,15 @@ async def match_resume_to_jobs(
             raise HTTPException(status_code=400, detail="Could not extract text from resume")
 
         jobs = await _read_jobs()
-        open_jobs = [j for j in jobs if j.get("status") == "open"]
+        open_jobs = [j for j in jobs if str(j.get("status", "")).lower() == "open"]
+        if not open_jobs:
+            open_jobs = jobs
+        fallback_result = _fallback_resume_matches(resume_text, open_jobs, current_role)
+        fallback_result["candidate_info"] = {
+            "name": name, "email": email, "phone": phone,
+            "linkedin_url": linkedin_url,
+            "current_role": current_role, "location": location,
+        }
 
         if not open_jobs:
             return {
@@ -2868,7 +2975,15 @@ async def match_resume_to_jobs(
                             "job_location": job.get("location", ""),
                             "job_type": job.get("job_type", ""),
                         })
-                result["matches"] = enriched
+                if not enriched:
+                    return fallback_result
+
+                result["matches"] = sorted(
+                    enriched,
+                    key=lambda match: match.get("match_percentage", 0) or 0,
+                    reverse=True,
+                )
+                result["candidate_profile"] = result.get("candidate_profile") or fallback_result["candidate_profile"]
                 result["resume_text"] = resume_text
                 result["candidate_info"] = {
                     "name": name, "email": email, "phone": phone,
@@ -2879,32 +2994,9 @@ async def match_resume_to_jobs(
             except Exception as e:
                 print(f"Claude error in resume match: {e}")
                 traceback.print_exc()
-                return {
-                    "match_score": 0,
-                    "matching_skills": [],
-                    "missing_skills": [],
-                    "recommendation": "Unable to analyze at this time",
-                    "error": True,
-                }
+                return fallback_result
         else:
-            return {
-                "candidate_profile": {
-                    "skills": ["Salesforce", "Python"], "experience_years": 3,
-                    "current_role": current_role, "education": "B.Tech",
-                },
-                "matches": [{
-                    "job_id": open_jobs[0]["id"],
-                    "job_title": open_jobs[0]["title"],
-                    "job_department": open_jobs[0].get("department", ""),
-                    "job_location": open_jobs[0].get("location", ""),
-                    "job_type": open_jobs[0].get("job_type", ""),
-                    "match_percentage": 75,
-                    "match_reason": "Good overall fit",
-                    "strengths": ["Relevant experience"],
-                    "gaps": ["Some skills missing"],
-                }],
-                "resume_text": resume_text,
-            }
+            return fallback_result
     except HTTPException:
         raise
     except Exception as e:
