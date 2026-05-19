@@ -1434,7 +1434,7 @@ async def _analyze_resume_match(
     try:
         client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
         response = await client.messages.create(
-            model="claude-sonnet-4-6",
+            model="claude-sonnet-4-5",
             max_tokens=512,
             system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
             messages=[{"role": "user", "content": prompt}],
@@ -2798,7 +2798,7 @@ async def match_resume_to_jobs(
             try:
                 client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
                 response = await client.messages.create(
-                    model="claude-sonnet-4-20250514",
+                    model="claude-sonnet-4-5",
                     max_tokens=1000,
                     system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
                     messages=[{
@@ -4371,7 +4371,7 @@ async def start_session(
             )
             client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
             response = await client.messages.create(
-                model="claude-sonnet-4-6",
+                model="claude-sonnet-4-5",
                 max_tokens=512,
                 system=(
                     f"You are a professional interviewer conducting an interview for the role of {job_role}.{jd_context} "
@@ -4612,7 +4612,7 @@ async def proctor_frame(session_id: str, body: ProctorRequest) -> dict:
 
             client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
             response = await client.messages.create(
-                model="claude-sonnet-4-6",
+                model="claude-sonnet-4-5",
                 max_tokens=256,
                 system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
                 messages=[{
@@ -4693,7 +4693,7 @@ async def end_session(
 
                 client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
                 response = await client.messages.create(
-                    model="claude-sonnet-4-6",
+                    model="claude-sonnet-4-5",
                     max_tokens=1024,
                     system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
                     messages=[{
