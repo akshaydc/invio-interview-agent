@@ -1316,34 +1316,38 @@ def _strip_code_fence(text: str) -> str:
 def _safe_parse_json(text: str) -> dict:
     import re as _re
 
-    # Try 1: direct parse after stripping code fences
+    text = text.strip()
+
+    # Try 1: ```json ... ``` fence
+    if text.startswith("```json"):
+        try:
+            inner = text[7:]
+            end = inner.find("```")
+            return json.loads(inner[:end].strip() if end != -1 else inner.strip())
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Try 2: plain ``` ... ``` fence
+    if text.startswith("```"):
+        try:
+            inner = text[3:]
+            end = inner.find("```")
+            return json.loads(inner[:end].strip() if end != -1 else inner.strip())
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Try 3: direct json.loads
     try:
-        return json.loads(_strip_code_fence(text))
+        return json.loads(text)
     except (json.JSONDecodeError, ValueError):
         pass
 
-    # Try 2: find JSON block between ```json and ``` markers
-    try:
-        m = _re.search(r"```json\s*([\s\S]*?)```", text)
-        if m:
-            return json.loads(m.group(1).strip())
-    except (json.JSONDecodeError, ValueError):
-        pass
-
-    # Try 3: first { to last }
+    # Try 4: first { to last }
     try:
         start = text.index('{')
         end = text.rindex('}') + 1
         return json.loads(text[start:end])
     except (ValueError, json.JSONDecodeError):
-        pass
-
-    # Try 4: regex to extract any JSON object
-    try:
-        m = _re.search(r"\{[\s\S]*\}", text)
-        if m:
-            return json.loads(m.group(0))
-    except (json.JSONDecodeError, ValueError):
         pass
 
     print(f"_safe_parse_json: all attempts failed. Raw (first 500): {text[:500]}")
