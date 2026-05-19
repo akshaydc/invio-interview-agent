@@ -28,9 +28,9 @@ type Props = {
 }
 
 const WORK_TYPES = ['All Types', 'Remote', 'Hybrid', 'On-site']
-const LOCATIONS = ['All Locations', 'Bangalore', 'Mumbai', 'Pune', 'Remote']
-const DEPARTMENTS = ['All Departments', 'Engineering', 'Sales Operations', 'Product', 'QA', 'Quality Assurance']
-const EXPERIENCES = ['Any Experience', '0-2 years', '2-4 years', '3-5 years', '4-7 years', '5+ years']
+const LOCATIONS = ['All Locations', 'Bangalore', 'Mumbai', 'Pune', 'Delhi', 'Remote']
+const DEPARTMENTS = ['All Departments', 'Engineering', 'Salesforce', 'Design', 'Marketing', 'HR', 'Finance', 'Operations', 'Product', 'QA', 'Sales Operations']
+const EXPERIENCES = ['Any Experience', '0-2 years', '2-4 years', '2-5 years', '3-5 years', '3-6 years', '4-6 years', '4-7 years', '5-8 years', '5+ years']
 
 export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecruiterLoginClick, onInternalLoginClick, onHome }: Props) {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -90,7 +90,7 @@ export default function JobListings({ onSelectJob, onCandidateLoginClick, onRecr
   const selectStyle: React.CSSProperties = {
     padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)',
     background: 'var(--bg)', color: 'var(--text)', fontSize: '0.85rem',
-    cursor: 'pointer', outline: 'none',
+    cursor: 'pointer', outline: 'none', fontFamily: 'inherit',
   }
 
   return (

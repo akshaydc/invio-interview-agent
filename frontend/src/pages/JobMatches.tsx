@@ -69,7 +69,12 @@ function pillStyle(pct: number): React.CSSProperties {
 }
 
 export default function JobMatches({ matchResult, onApply, onBrowseAll, onCandidateLoginClick, onRecruiterLoginClick, onInternalLoginClick, onHome }: Props) {
-  const { candidate_profile, matches } = matchResult
+  console.log('JobMatches: full API response:', matchResult)
+
+  const candidate_profile: CandidateProfile = matchResult?.candidate_profile ?? {
+    skills: [], experience_years: 0, current_role: '', education: '',
+  }
+  const matches: JobMatch[] = matchResult?.matches ?? []
   const sortedMatches = [...matches].sort((a, b) => b.match_percentage - a.match_percentage)
 
   const [appliedJobIds, setAppliedJobIds] = useState<string[]>([])

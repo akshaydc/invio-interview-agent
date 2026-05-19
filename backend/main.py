@@ -122,7 +122,7 @@ _SEED_JOBS = [
     {
         "id": "b1e2c3d4-0002-0000-0000-000000000002",
         "title": "Salesforce Administrator",
-        "department": "Sales Operations",
+        "department": "Salesforce",
         "location": "Hybrid – Mumbai",
         "job_type": "Full-time",
         "experience": "2-4 years",
@@ -167,6 +167,330 @@ _SEED_JOBS = [
         "status": "open",
         "created_at": "2026-02-15T00:00:00+00:00",
     },
+    {
+        "id": "e1f2a3b4-0001-0000-0000-000000000001",
+        "title": "Data Engineer",
+        "department": "Engineering",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "3-5 years",
+        "description": (
+            "We are looking for a Data Engineer to build and maintain our data infrastructure. "
+            "You will design and implement scalable data pipelines, maintain data warehouses, and collaborate "
+            "with data analysts and scientists to support business intelligence initiatives. "
+            "Experience with cloud platforms and modern data stack tools is essential."
+        ),
+        "requirements": ["Python", "SQL", "Apache Spark", "dbt", "Apache Airflow", "AWS or GCP", "Data Warehousing", "ETL Pipelines", "Git"],
+        "role_budget": "18-28 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-01T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0002-0000-0000-000000000002",
+        "title": "UX Designer",
+        "department": "Design",
+        "location": "Hybrid - Bangalore",
+        "job_type": "Full-time",
+        "experience": "2-4 years",
+        "description": (
+            "We are seeking a creative and user-focused UX Designer to craft intuitive product experiences. "
+            "You will conduct user research, create wireframes and interactive prototypes, and partner with "
+            "product managers and engineers to deliver polished, accessible interfaces. "
+            "A strong portfolio demonstrating end-to-end design process is required."
+        ),
+        "requirements": ["Figma", "User Research", "Wireframing", "Prototyping", "Design Systems", "Usability Testing", "Accessibility Standards"],
+        "role_budget": "12-20 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-05T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0003-0000-0000-000000000003",
+        "title": "DevOps Engineer",
+        "department": "Engineering",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "4-6 years",
+        "description": (
+            "We are hiring a DevOps Engineer to build and maintain our cloud infrastructure and CI/CD pipelines. "
+            "You will manage Kubernetes clusters, automate deployments, implement infrastructure-as-code, "
+            "and monitor system health. You will collaborate closely with engineering teams to improve "
+            "release velocity and system reliability."
+        ),
+        "requirements": ["Kubernetes", "Docker", "CI/CD (GitHub Actions/Jenkins)", "Terraform", "AWS or GCP", "Linux", "Bash/Python scripting", "Prometheus/Grafana"],
+        "role_budget": "20-32 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-10T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0004-0000-0000-000000000004",
+        "title": "Marketing Manager",
+        "department": "Marketing",
+        "location": "Mumbai",
+        "job_type": "Full-time",
+        "experience": "5-8 years",
+        "description": (
+            "We are looking for a Marketing Manager to lead our go-to-market strategy and brand presence. "
+            "You will own digital marketing campaigns, manage content strategy across channels, drive lead "
+            "generation, and collaborate with sales to optimize the full funnel. "
+            "Experience in SaaS or B2B marketing is strongly preferred."
+        ),
+        "requirements": ["Digital Marketing", "Content Strategy", "SEO/SEM", "HubSpot or Marketo", "Lead Generation", "Google Analytics", "B2B/SaaS Marketing", "Campaign Management", "Team Leadership"],
+        "role_budget": "20-30 LPA",
+        "preferred_notice": "Up to 45 days",
+        "status": "open",
+        "created_at": "2026-03-12T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0005-0000-0000-000000000005",
+        "title": "Business Analyst",
+        "department": "Operations",
+        "location": "Hybrid - Delhi",
+        "job_type": "Full-time",
+        "experience": "2-4 years",
+        "description": (
+            "We are seeking a Business Analyst with a focus on operations and process improvement. "
+            "You will work with cross-functional teams to identify process inefficiencies, document workflows, "
+            "and implement data-driven solutions. Experience with ERP or CRM systems is a plus."
+        ),
+        "requirements": ["Requirements Gathering", "Process Mapping", "Data Analysis", "User Stories", "Stakeholder Management", "SQL", "JIRA", "Agile/Scrum"],
+        "role_budget": "10-16 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-15T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0006-0000-0000-000000000006",
+        "title": "React Frontend Developer",
+        "department": "Engineering",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "2-5 years",
+        "description": (
+            "We are looking for a React Frontend Developer to build responsive, high-performance web applications. "
+            "You will translate Figma designs into pixel-perfect UI components, write clean TypeScript and React code, "
+            "and optimize application performance. Strong attention to detail and experience with modern frontend "
+            "tooling is required."
+        ),
+        "requirements": ["React", "TypeScript", "JavaScript", "CSS/Tailwind", "REST APIs", "Git", "Webpack/Vite", "Jest or Cypress", "Responsive Design"],
+        "role_budget": "14-22 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-18T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0007-0000-0000-000000000007",
+        "title": "HR Business Partner",
+        "department": "HR",
+        "location": "Bangalore",
+        "job_type": "Full-time",
+        "experience": "4-7 years",
+        "description": (
+            "We are hiring an HR Business Partner to align HR strategies with our business objectives. "
+            "You will partner with senior leadership to manage talent acquisition, employee relations, "
+            "performance management, and learning & development initiatives. "
+            "Strong interpersonal skills and experience in a fast-paced startup environment are essential."
+        ),
+        "requirements": ["HR Business Partnering", "Talent Management", "Employee Relations", "Performance Management", "HRIS (Workday or SAP)", "Learning & Development", "HR Analytics", "Stakeholder Management"],
+        "role_budget": "15-22 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-20T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0008-0000-0000-000000000008",
+        "title": "Python Backend Developer",
+        "department": "Engineering",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "3-6 years",
+        "description": (
+            "We are looking for a Python Backend Developer to design and build robust APIs and microservices. "
+            "You will architect scalable backend systems, optimize database queries, implement integrations "
+            "with third-party services, and write well-tested code. "
+            "Experience with async programming and containerized deployments is highly valued."
+        ),
+        "requirements": ["Python", "FastAPI or Django", "PostgreSQL", "REST APIs", "Docker", "Git", "Redis", "Async programming", "Microservices", "Unit testing"],
+        "role_budget": "16-26 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-22T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0009-0000-0000-000000000009",
+        "title": "Finance Analyst",
+        "department": "Finance",
+        "location": "Mumbai",
+        "job_type": "Full-time",
+        "experience": "3-5 years",
+        "description": (
+            "We are seeking a Finance Analyst to support financial planning, reporting, and analysis. "
+            "You will build financial models, prepare MIS reports, analyze business performance against budget, "
+            "and partner with department heads to drive cost efficiency. CA inter or MBA Finance is preferred."
+        ),
+        "requirements": ["Financial Modelling", "MIS Reporting", "Excel/Google Sheets", "Tally or SAP", "Budget Planning", "Variance Analysis", "PowerBI or Tableau", "Stakeholder Reporting"],
+        "role_budget": "12-18 LPA",
+        "preferred_notice": "Up to 45 days",
+        "status": "open",
+        "created_at": "2026-03-25T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0010-0000-0000-000000000010",
+        "title": "Salesforce Developer",
+        "department": "Salesforce",
+        "location": "Hybrid - Bangalore",
+        "job_type": "Full-time",
+        "experience": "3-6 years",
+        "description": (
+            "We are looking for a Salesforce Developer to build and customize solutions on the Salesforce platform. "
+            "You will develop Apex classes, trigger frameworks, Lightning Web Components, and REST API integrations. "
+            "Experience with Experience Cloud and DevOps-driven release pipelines is a strong plus."
+        ),
+        "requirements": ["Apex", "LWC", "SOQL", "REST APIs", "Salesforce DX", "Git", "Experience Cloud", "Platform Events", "Integration patterns", "CI/CD"],
+        "role_budget": "15-25 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-03-28T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0011-0000-0000-000000000011",
+        "title": "AI/ML Engineer",
+        "department": "Engineering",
+        "location": "Remote",
+        "job_type": "Full-time",
+        "experience": "4-7 years",
+        "description": (
+            "We are hiring an AI/ML Engineer to build intelligent features into our product. "
+            "You will design and deploy machine learning models, work on NLP and recommendation systems, "
+            "and collaborate with product and data teams to translate business problems into ML solutions. "
+            "Experience with LLM APIs, vector databases, and MLOps is a strong plus."
+        ),
+        "requirements": ["Python", "Machine Learning", "NLP", "Scikit-learn or PyTorch", "MLOps", "SQL", "LLM APIs (OpenAI/Anthropic)", "Docker", "Cloud (AWS/GCP)", "Vector Databases"],
+        "role_budget": "25-40 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-04-01T00:00:00+00:00",
+    },
+    {
+        "id": "e1f2a3b4-0012-0000-0000-000000000012",
+        "title": "Customer Success Manager",
+        "department": "Operations",
+        "location": "Bangalore",
+        "job_type": "Full-time",
+        "experience": "2-5 years",
+        "description": (
+            "We are seeking a Customer Success Manager to build lasting relationships with our enterprise clients. "
+            "You will drive product adoption, manage onboarding, handle renewals, prevent churn, and act as the "
+            "voice of the customer internally. Experience in SaaS customer success with strong communication "
+            "skills is required."
+        ),
+        "requirements": ["Customer Success", "Relationship Management", "Product Adoption", "Churn Prevention", "CRM (Salesforce or HubSpot)", "Data Analysis", "Executive Communication", "Stakeholder Management"],
+        "role_budget": "12-20 LPA",
+        "preferred_notice": "Up to 30 days",
+        "status": "open",
+        "created_at": "2026-04-05T00:00:00+00:00",
+    },
+]
+
+_SEED_INTERNAL = [
+    {
+        "id": "ref-0001-0000-0000-000000000001",
+        "type": "referral",
+        "employee_id": "EMP001",
+        "employee_name": "Rahul Verma",
+        "employee_department": "Engineering",
+        "job_id": "e1f2a3b4-0006-0000-0000-000000000006",
+        "job_title": "React Frontend Developer",
+        "job_department": "Engineering",
+        "job_location": "Remote",
+        "candidate_name": "Manish Gupta",
+        "candidate_email": "manish.gupta@gmail.com",
+        "candidate_phone": "9876501234",
+        "status": "Interview Scheduled",
+        "note": "Manish is a close friend from college and an incredibly sharp React developer. He has 3 years at Byju's building their interactive learning UI, handles TypeScript like a pro, and wrote one of the most elegant component library architectures I've seen. Strongly recommend scheduling an interview ASAP — he has other offers in play.",
+        "match_score": 89,
+        "pipeline_stage": "Interview Scheduled",
+        "interview_slot": "2026-05-24 11:00",
+        "created_at": "2026-05-01T09:00:00+00:00",
+    },
+    {
+        "id": "ref-0002-0000-0000-000000000002",
+        "type": "referral",
+        "employee_id": "EMP002",
+        "employee_name": "Sneha Reddy",
+        "employee_department": "HR",
+        "job_id": "e1f2a3b4-0007-0000-0000-000000000007",
+        "job_title": "HR Business Partner",
+        "job_department": "HR",
+        "job_location": "Bangalore",
+        "candidate_name": "Amrita Singh",
+        "candidate_email": "amrita.singh@gmail.com",
+        "candidate_phone": "9823045678",
+        "status": "Pending Review",
+        "note": "Amrita was my colleague at Razorpay where she served as HRBP for the engineering division of ~150 people. She was exceptional at navigating complex employee relations situations and was deeply respected by both leadership and employees. Her people skills and startup savvy make her a natural fit for our HRBP role.",
+        "match_score": 82,
+        "pipeline_stage": "Applied",
+        "created_at": "2026-05-03T10:00:00+00:00",
+    },
+    {
+        "id": "ref-0003-0000-0000-000000000003",
+        "type": "referral",
+        "employee_id": "EMP003",
+        "employee_name": "Karthik Nair",
+        "employee_department": "Engineering",
+        "job_id": "e1f2a3b4-0008-0000-0000-000000000008",
+        "job_title": "Python Backend Developer",
+        "job_department": "Engineering",
+        "job_location": "Remote",
+        "candidate_name": "Rohit Chandrasekhar",
+        "candidate_email": "rohit.cs@gmail.com",
+        "candidate_phone": "9901123456",
+        "status": "Hired",
+        "note": "Rohit and I worked on the same backend squad at Zepto for two years. He built our order management microservice from scratch using FastAPI and PostgreSQL and it has been rock solid ever since. He's deeply comfortable with async Python, knows Redis well, and writes incredibly clean, well-tested code. I am very confident he will exceed expectations.",
+        "match_score": 94,
+        "pipeline_stage": "Hired",
+        "created_at": "2026-04-15T09:00:00+00:00",
+    },
+    {
+        "id": "ref-0004-0000-0000-000000000004",
+        "type": "referral",
+        "employee_id": "EMP004",
+        "employee_name": "Priya Shetty",
+        "employee_department": "Finance",
+        "job_id": "e1f2a3b4-0009-0000-0000-000000000009",
+        "job_title": "Finance Analyst",
+        "job_department": "Finance",
+        "job_location": "Mumbai",
+        "candidate_name": "Neeraj Sharma",
+        "candidate_email": "neeraj.sharma@gmail.com",
+        "candidate_phone": "9812890123",
+        "status": "Pending Review",
+        "note": "Neeraj is a former MBA Finance classmate from NMIMS Mumbai. He has been a finance analyst at Godrej Industries for 3 years handling MIS, budgeting, and variance analysis. He is methodical, highly dependable, and has strong Excel modeling skills. I believe his analytical rigor and structured thinking would fit our finance function very well.",
+        "match_score": 76,
+        "pipeline_stage": "Applied",
+        "created_at": "2026-05-05T11:00:00+00:00",
+    },
+    {
+        "id": "ref-0005-0000-0000-000000000005",
+        "type": "referral",
+        "employee_id": "EMP005",
+        "employee_name": "Vijay Kumar",
+        "employee_department": "Operations",
+        "job_id": "e1f2a3b4-0012-0000-0000-000000000012",
+        "job_title": "Customer Success Manager",
+        "job_department": "Operations",
+        "job_location": "Bangalore",
+        "candidate_name": "Lalita Prasad",
+        "candidate_email": "lalita.p@gmail.com",
+        "candidate_phone": "9765789012",
+        "status": "Rejected",
+        "note": "Lalita is a friend from my previous company in operations. She has been in account management for about 2 years and expressed interest in transitioning into customer success. She is a hard worker and eager to grow, though she is still building the technical depth expected for a CSM role here.",
+        "match_score": 52,
+        "pipeline_stage": "Rejected",
+        "created_at": "2026-04-28T14:00:00+00:00",
+    },
 ]
 
 if not CANDIDATES_FILE.exists():
@@ -174,11 +498,19 @@ if not CANDIDATES_FILE.exists():
 
 if not INTERNAL_APPLICATIONS_FILE.exists():
     INTERNAL_APPLICATIONS_FILE.write_text("[]")
+_existing_internal = json.loads(INTERNAL_APPLICATIONS_FILE.read_text()) or []
+_existing_internal_ids = {r.get("id") for r in _existing_internal if r.get("id")}
+_new_seed_internal = [r for r in _SEED_INTERNAL if r["id"] not in _existing_internal_ids]
+if _new_seed_internal:
+    INTERNAL_APPLICATIONS_FILE.write_text(json.dumps(_existing_internal + _new_seed_internal, indent=2))
 
 if not JOBS_FILE.exists():
     JOBS_FILE.write_text("[]")
-if not json.loads(JOBS_FILE.read_text()):
-    JOBS_FILE.write_text(json.dumps(_SEED_JOBS, indent=2))
+_existing_jobs = json.loads(JOBS_FILE.read_text()) or []
+_existing_job_ids = {j["id"] for j in _existing_jobs}
+_new_seed_jobs = [j for j in _SEED_JOBS if j["id"] not in _existing_job_ids]
+if _new_seed_jobs:
+    JOBS_FILE.write_text(json.dumps(_existing_jobs + _new_seed_jobs, indent=2))
 
 MOCK_SCORECARD = {
     "communication": 7,
@@ -469,32 +801,26 @@ async def analyze_linkedin_profile(
     posts_data = None
 
     try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             profile_resp = await client.get(
-                f"https://{RAPIDAPI_LINKEDIN_HOST}/get-profile-data-by-url",
+                "https://fresh-linkedin-profile-data.p.rapidapi.com/enrich-lead",
                 headers=headers,
-                params={"url": linkedin_url},
+                params={
+                    "linkedin_url": linkedin_url,
+                    "include_skills": "true",
+                    "include_certifications": "true",
+                    "include_profile_status": "false",
+                    "include_company_public_url": "false",
+                },
             )
             print(f"LinkedIn profile status: {profile_resp.status_code}")
             if profile_resp.status_code == 200:
-                profile_data = profile_resp.json()
-                if profile_data:
-                    print(f"LinkedIn profile keys: {list(profile_data.keys())}")
-                    print(f"LinkedIn profile sample: {str(profile_data)[:500]}")
+                api_response = profile_resp.json()
+                print(f"LinkedIn response keys: {list(api_response.keys())}")
+                profile_data = api_response.get("data") or {}
+                print(f"Profile sample: {str(profile_data)[:600]}")
             else:
                 print(f"LinkedIn error: {profile_resp.text[:200]}")
-
-            try:
-                posts_resp = await client.get(
-                    f"https://{RAPIDAPI_LINKEDIN_HOST}/get-profile-posts",
-                    headers=headers,
-                    params={"linkedin_url": linkedin_url, "type": "posts"},
-                )
-                if posts_resp.status_code == 200:
-                    posts_data = posts_resp.json()
-            except Exception as e:
-                print(f"Posts fetch error: {e}")
-
     except Exception as e:
         print(f"LinkedIn API error: {e}")
         traceback.print_exc()
@@ -507,6 +833,32 @@ async def analyze_linkedin_profile(
             "error": str(e),
             "scanned_at": datetime.now(timezone.utc).isoformat(),
         }
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            posts_resp = await client.get(
+                "https://fresh-linkedin-profile-data.p.rapidapi.com/get-profile-posts",
+                headers=headers,
+                params={"linkedin_url": linkedin_url, "type": "posts"},
+            )
+            if posts_resp.status_code == 200:
+                posts_data = posts_resp.json()
+    except Exception as e:
+        print(f"Posts fetch error: {e}")
+
+    experience_data = None
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            exp_resp = await client.get(
+                "https://fresh-linkedin-profile-data.p.rapidapi.com/get-year-of-experiences",
+                headers=headers,
+                params={"linkedin_url": linkedin_url},
+            )
+            if exp_resp.status_code == 200:
+                experience_data = exp_resp.json()
+                print(f"Experience API data: {str(experience_data)[:300]}")
+    except Exception as e:
+        print(f"Experience fetch error: {e}")
 
     if not isinstance(profile_data, dict):
         print(f"Invalid profile data type: {type(profile_data)}")
@@ -531,65 +883,141 @@ async def analyze_linkedin_profile(
             "scanned_at": datetime.now(timezone.utc).isoformat(),
         }
 
+    resume_skills: list[str] = []
+    if resume_text:
+        common_skills = [
+            "salesforce", "apex", "lwc", "soql", "python", "javascript", "react", "java",
+            "sql", "aws", "azure", "jira", "agile", "scrum", "tableau", "power bi", "excel",
+        ]
+        resume_lower = resume_text.lower()
+        resume_skills = [s.capitalize() for s in common_skills if s in resume_lower]
+
     try:
-        # Extract experience
-        positions = (profile_data.get("positions") or {}).get("positionHistory", [])
-        linkedin_exp_years = 0
-        companies = []
-        for pos in (positions or []):
-            start = (pos.get("startEndDate") or {}).get("start") or {}
-            end = (pos.get("startEndDate") or {}).get("end") or {}
-            start_year = start.get("year", 0)
-            end_year = end.get("year", datetime.now().year)
-            if start_year:
-                linkedin_exp_years += end_year - start_year
-            companies.append(pos.get("companyName", ""))
+        # Extract experience — use dedicated endpoint, fall back to summing positions[]
+        linkedin_exp_years: float = 0.0
+        companies: list[str] = []
+        current_job_title = ""
+        current_company = ""
+
+        if experience_data and isinstance(experience_data.get("data"), dict):
+            exp_info = experience_data["data"]
+            yoe_str = str(exp_info.get("years_of_experience", "") or "")
+            current_job_title = str(exp_info.get("current_job_title", "") or "")
+            current_company = str(exp_info.get("current_company", "") or "")
+            if current_company:
+                companies.append(current_company)
+            if "yr" in yoe_str:
+                try:
+                    parts = yoe_str.split("yr")
+                    yrs = int(parts[0].strip().split()[-1])
+                    mos = 0
+                    if len(parts) > 1 and "mo" in parts[1]:
+                        try:
+                            mos = int(parts[1].strip().split("mo")[0].strip().split()[-1])
+                        except Exception:
+                            pass
+                    linkedin_exp_years = round(yrs + mos / 12, 1)
+                except Exception:
+                    pass
+
+        if not linkedin_exp_years:
+            positions_raw = profile_data.get("positions", []) or profile_data.get("experience", []) or []
+            for pos in positions_raw:
+                duration = str(pos.get("duration", "") or "")
+                company = pos.get("company", "") or pos.get("companyName", "")
+                if company and company not in companies:
+                    companies.append(company)
+                if "yr" in duration:
+                    try:
+                        yrs = int(duration.split("yr")[0].strip().split()[-1])
+                        linkedin_exp_years += yrs
+                    except Exception:
+                        pass
+        else:
+            positions_raw = profile_data.get("positions", []) or profile_data.get("experience", []) or []
+            for pos in positions_raw:
+                company = pos.get("company", "") or pos.get("companyName", "")
+                if company and company not in companies:
+                    companies.append(company)
 
         # Extract education
-        education_raw = (profile_data.get("schools") or {}).get("educationHistory", [])
-        edu_list = [
-            {
-                "school": e.get("schoolName", ""),
-                "degree": e.get("degreeName", ""),
-                "field": e.get("fieldOfStudy", ""),
-            }
-            for e in (education_raw or [])
-        ]
+        education_raw = profile_data.get("education", []) or []
+        edu_list = []
+        for edu in education_raw:
+            edu_list.append({
+                "school": edu.get("school", "") or edu.get("schoolName", ""),
+                "degree": edu.get("degree", "") or edu.get("degreeName", ""),
+                "field": edu.get("field", "") or edu.get("fieldOfStudy", ""),
+            })
 
-        # Extract skills
-        linkedin_skills = [
-            s.get("name", "") for s in (profile_data.get("skills") or [])
-            if s and s.get("name")
-        ]
+        # Extract skills; log raw structure, filter noise, keep resume-relevant
+        skills_raw = profile_data.get("skills", []) or []
+        print(f"Raw LinkedIn skills (first 3): {skills_raw[:3]}")
+        linkedin_skills: list[str] = []
+        for s in skills_raw:
+            if isinstance(s, str) and len(s) > 2:
+                linkedin_skills.append(s)
+            elif isinstance(s, dict):
+                name = s.get("name", "") or s.get("skill", "") or s.get("title", "")
+                if name and len(name) > 2:
+                    linkedin_skills.append(name)
+        if resume_skills:
+            linkedin_skills = [
+                s for s in linkedin_skills
+                if any(r.lower() in s.lower() or s.lower() in r.lower() for r in resume_skills)
+            ]
+        if not linkedin_skills:
+            about = profile_data.get("about", "") or ""
+            common_tech = [
+                "Python", "JavaScript", "React", "SQL", "AWS", "Java", "Salesforce",
+                "Excel", "PowerBI", "Tableau", "Apex", "LWC", "Azure", "Jira",
+            ]
+            linkedin_skills = [t for t in common_tech if t.lower() in about.lower()]
 
-        # Extract certifications
-        certifications = [
-            {"name": c.get("name", ""), "issuer": c.get("authority", ""), "verified": True}
-            for c in (profile_data.get("certifications") or [])
-            if c and c.get("name")
-        ]
+        # Extract certifications (fields: name, authority, issued)
+        certs_raw = profile_data.get("certifications", []) or []
+        certifications = []
+        for c in certs_raw:
+            if isinstance(c, dict):
+                name = c.get("name", "") or c.get("title", "")
+                if name:
+                    certifications.append({
+                        "name": name,
+                        "issuer": c.get("authority", "") or c.get("issuer", ""),
+                        "verified": True,
+                    })
 
         # Extract recent posts
         recent_activity: list[str] = []
         if posts_data:
-            for post in (posts_data.get("data") or [])[:5]:
-                text = post.get("text", "") if post else ""
+            posts_list = posts_data.get("data", []) or posts_data.get("posts", []) or []
+            for post in posts_list[:5]:
+                text = post.get("text", "") or post.get("content", "") or post.get("commentary", "")
                 if text:
-                    recent_activity.append(text[:100] + "..." if len(text) > 100 else text)
+                    recent_activity.append(text[:120] + "..." if len(text) > 120 else text)
         if not recent_activity:
             recent_activity = ["No recent public posts found"]
 
+        first_name = profile_data.get("firstName", "") or profile_data.get("first_name", "")
+        last_name = profile_data.get("lastName", "") or profile_data.get("last_name", "")
+        headline = profile_data.get("headline", "") or profile_data.get("title", "") or profile_data.get("company", "")
+        location = (
+            profile_data.get("city", "")
+            or profile_data.get("location", "")
+            or (profile_data.get("geo") or {}).get("full", "")
+        )
+
         profile_summary = (
-            f"LinkedIn Profile Data:\n"
-            f"Name: {profile_data.get('firstName', '')} {profile_data.get('lastName', '')}\n"
-            f"Headline: {profile_data.get('headline', '')}\n"
-            f"Location: {(profile_data.get('geo') or {}).get('full', '')}\n"
+            f"LinkedIn Profile:\n"
+            f"Name: {first_name} {last_name}\n"
+            f"Headline: {headline}\n"
+            f"Location: {location}\n"
             f"Experience: {linkedin_exp_years} years\n"
             f"Companies: {', '.join(companies[:3])}\n"
             f"Skills: {', '.join(linkedin_skills[:15])}\n"
             f"Education: {', '.join(e['school'] for e in edu_list[:2])}\n"
             f"Certifications: {', '.join(c['name'] for c in certifications[:5])}\n"
-            f"Recent posts: {len(recent_activity)} posts found\n"
+            f"Recent posts: {len([p for p in recent_activity if 'No recent' not in p])} posts\n"
         )
 
         analysis_result: dict = {"match": False, "overall_score": 50, "experience_note": "", "skills_overlap": 50}
@@ -600,32 +1028,27 @@ async def analyze_linkedin_profile(
                 response = await ai_client.messages.create(
                     model="claude-haiku-4-5-20251001",
                     max_tokens=500,
+                    system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
                     messages=[{
                         "role": "user",
                         "content": (
+                            "You must respond with ONLY a valid JSON object. "
+                            "No explanation, no markdown, no code blocks, no preamble. "
+                            "Start your response with { and end with }. "
+                            "Do not include ```json or ``` anywhere.\n\n"
                             f"Compare this LinkedIn profile with the resume and job for {job_title}.\n\n"
                             f"LinkedIn:\n{profile_summary}\n\n"
                             f"Resume text (first 500 chars):\n{resume_text[:500]}\n\n"
-                            f'Return ONLY valid JSON:\n{{"overall_score": 0-100, "experience_match": true/false, '
+                            f'Return this JSON shape:\n{{"overall_score": 0-100, "experience_match": true/false, '
                             f'"experience_note": "...", "skills_overlap_pct": 0-100, '
                             f'"status": "verified_match"/"mismatch"/"partial_match", "summary": "2 sentence summary"}}'
                         ),
                     }],
                 )
                 raw = response.content[0].text
-                analysis_result = json.loads(_strip_code_fence(raw))
+                analysis_result = _safe_parse_json(raw)
             except Exception as e:
                 print(f"Claude LinkedIn analysis error: {e}")
-
-        # Resume skill extraction
-        resume_skills: list[str] = []
-        if resume_text:
-            common_skills = [
-                "salesforce", "apex", "lwc", "soql", "python", "javascript", "react", "java",
-                "sql", "aws", "azure", "jira", "agile", "scrum", "tableau", "power bi", "excel",
-            ]
-            resume_lower = resume_text.lower()
-            resume_skills = [s.capitalize() for s in common_skills if s in resume_lower]
 
         matching_skills = [
             s for s in linkedin_skills
@@ -648,7 +1071,7 @@ async def analyze_linkedin_profile(
             "status_label": status_label,
             "status_color": status_color,
             "overall_score": overall_score,
-            "headline": profile_data.get("headline", ""),
+            "headline": headline,
             "experience_comparison": {
                 "resume_years": round(linkedin_exp_years * 0.8),
                 "linkedin_years": linkedin_exp_years,
@@ -891,24 +1314,44 @@ def _strip_code_fence(text: str) -> str:
 
 
 def _safe_parse_json(text: str) -> dict:
-    text = _strip_code_fence(text)
+    import re as _re
+
+    text = text.strip()
+
+    # Try 1: ```json ... ``` fence
+    if text.startswith("```json"):
+        try:
+            inner = text[7:]
+            end = inner.find("```")
+            return json.loads(inner[:end].strip() if end != -1 else inner.strip())
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Try 2: plain ``` ... ``` fence
+    if text.startswith("```"):
+        try:
+            inner = text[3:]
+            end = inner.find("```")
+            return json.loads(inner[:end].strip() if end != -1 else inner.strip())
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Try 3: direct json.loads
     try:
         return json.loads(text)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValueError):
         pass
-    try:
-        import re as _re
-        fixed = _re.sub(r"'([^']*)'", r'"\1"', text)
-        return json.loads(fixed)
-    except json.JSONDecodeError:
-        pass
+
+    # Try 4: first { to last }
     try:
         start = text.index('{')
         end = text.rindex('}') + 1
         return json.loads(text[start:end])
     except (ValueError, json.JSONDecodeError):
         pass
-    raise ValueError("Could not parse JSON from Claude response")
+
+    print(f"_safe_parse_json: all attempts failed. Raw (first 500): {text[:500]}")
+    return {}
 
 
 def _extract_resume_text(file_bytes: bytes, filename: str) -> str:
@@ -972,6 +1415,10 @@ async def _analyze_resume_match(
         )
 
     prompt = (
+        "You must respond with ONLY a valid JSON object. "
+        "No explanation, no markdown, no code blocks, no preamble. "
+        "Start your response with { and end with }. "
+        "Do not include ```json or ``` anywhere.\n\n"
         f"Compare this resume with the job description.{compensation_instruction}"
         f"{fit_instructions}"
         "Based on the overall match, also provide a hiring recommendation: "
@@ -979,7 +1426,7 @@ async def _analyze_resume_match(
         "'Hire' (65-79% match, good overall fit), "
         "'Consider' (50-64% match, some gaps but potential), "
         "'Reject' (below 50% match, significant gaps). "
-        "Return ONLY valid JSON with no extra text:\n"
+        "Return this JSON shape:\n"
         '{"match_percentage": 75, "match_summary": "...", '
         '"strengths": ["...", "..."], "gaps": ["...", "..."], '
         '"compensation_fit": "good", "notice_fit": "good", '
@@ -991,12 +1438,13 @@ async def _analyze_resume_match(
     try:
         client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
         response = await client.messages.create(
-            model="claude-sonnet-4-6",
+            model="claude-sonnet-4-5",
             max_tokens=512,
+            system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
             messages=[{"role": "user", "content": prompt}],
         )
         raw = response.content[0].text
-        return json.loads(_strip_code_fence(raw))
+        return _safe_parse_json(raw)
     except Exception:
         return {}
 
@@ -2354,15 +2802,16 @@ async def match_resume_to_jobs(
             try:
                 client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
                 response = await client.messages.create(
-                    model="claude-sonnet-4-6",
-                    max_tokens=2000,
+                    model="claude-sonnet-4-5",
+                    max_tokens=1000,
+                    system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
                     messages=[{
                         "role": "user",
                         "content": (
                             "You must respond with ONLY a valid JSON object. "
-                            "Use double quotes for all keys and string values. "
-                            "No single quotes. No markdown. No explanation. "
-                            "Start your response with { and end with }.\n\n"
+                            "No explanation, no markdown, no code blocks, no preamble. "
+                            "Start your response with { and end with }. "
+                            "Do not include ```json or ``` anywhere.\n\n"
                             "You are a recruitment AI. Analyse this resume "
                             "and match it against these job openings. "
                             "For each job calculate a match percentage. "
@@ -2374,7 +2823,7 @@ async def match_resume_to_jobs(
                             "- phone: phone number if found, else \"\"\n"
                             "- linkedin: LinkedIn URL if found, else \"\"\n"
                             "- location: city/location if found, else \"\"\n\n"
-                            "Return ONLY valid JSON with no markdown:\n"
+                            "Return this JSON shape:\n"
                             "{\n"
                             '  "candidate_profile": {\n'
                             '    "skills": ["skill1", "skill2"],\n'
@@ -2430,7 +2879,13 @@ async def match_resume_to_jobs(
             except Exception as e:
                 print(f"Claude error in resume match: {e}")
                 traceback.print_exc()
-                raise HTTPException(status_code=500, detail=f"AI matching error: {str(e)}")
+                return {
+                    "match_score": 0,
+                    "matching_skills": [],
+                    "missing_skills": [],
+                    "recommendation": "Unable to analyze at this time",
+                    "error": True,
+                }
         else:
             return {
                 "candidate_profile": {
@@ -3920,7 +4375,7 @@ async def start_session(
             )
             client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
             response = await client.messages.create(
-                model="claude-sonnet-4-6",
+                model="claude-sonnet-4-5",
                 max_tokens=512,
                 system=(
                     f"You are a professional interviewer conducting an interview for the role of {job_role}.{jd_context} "
@@ -4161,8 +4616,9 @@ async def proctor_frame(session_id: str, body: ProctorRequest) -> dict:
 
             client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
             response = await client.messages.create(
-                model="claude-sonnet-4-6",
+                model="claude-sonnet-4-5",
                 max_tokens=256,
+                system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
                 messages=[{
                     "role": "user",
                     "content": [
@@ -4177,8 +4633,12 @@ async def proctor_frame(session_id: str, body: ProctorRequest) -> dict:
                         {
                             "type": "text",
                             "text": (
+                                "You must respond with ONLY a valid JSON object. "
+                                "No explanation, no markdown, no code blocks, no preamble. "
+                                "Start your response with { and end with }. "
+                                "Do not include ```json or ``` anywhere.\n\n"
                                 "Is there exactly one person visible and looking at the screen? "
-                                "Return ONLY valid JSON: "
+                                "Return this JSON shape: "
                                 "{\"faces\": 0, \"looking_at_screen\": true, \"flag\": false, \"reason\": \"\"}"
                             ),
                         },
@@ -4186,7 +4646,7 @@ async def proctor_frame(session_id: str, body: ProctorRequest) -> dict:
                 }],
             )
             raw = response.content[0].text.strip()
-            result = json.loads(_strip_code_fence(raw))
+            result = _safe_parse_json(raw)
         except Exception:
             pass  # never block interview for proctoring errors
 
@@ -4237,24 +4697,28 @@ async def end_session(
 
                 client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
                 response = await client.messages.create(
-                    model="claude-sonnet-4-6",
+                    model="claude-sonnet-4-5",
                     max_tokens=1024,
+                    system="You are a JSON-only response bot. You never output anything except valid JSON. No markdown, no explanation, no code fences.",
                     messages=[{
                         "role": "user",
                         "content": (
+                            "You must respond with ONLY a valid JSON object. "
+                            "No explanation, no markdown, no code blocks, no preamble. "
+                            "Start your response with { and end with }. "
+                            "Do not include ```json or ``` anywhere.\n\n"
                             f"Based on this interview transcript for the role of {job_role}, "
-                            "provide a scorecard in valid JSON format only with these exact fields: "
+                            "provide a scorecard with these exact fields: "
                             "communication (1-10), technical_depth (1-10), problem_solving (1-10), "
                             "cultural_fit (1-10), summary (string), strengths (array of strings), "
                             "red_flags (array of strings). "
-                            "Return ONLY valid JSON, no markdown, no explanation. "
                             f"\n\nTranscript:\n{transcript_text}"
                         ),
                     }],
                 )
                 raw = response.content[0].text
                 print(f"Claude response: {raw[:200]}")
-                scorecard = json.loads(_strip_code_fence(raw))
+                scorecard = _safe_parse_json(raw)
             except Exception as e:
                 print(f"CLAUDE ERROR in end_session: {type(e).__name__}: {e}")
                 traceback.print_exc()

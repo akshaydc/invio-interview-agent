@@ -314,6 +314,7 @@ export default function AvatarGuide({
         fd,
         { headers: { 'Content-Type': 'multipart/form-data' } },
       )
+      console.log('resume/match raw response:', res.data)
       onMatchResult({ ...res.data, resume_file: resumeFile })
     } catch (err) {
       const msg = axios.isAxiosError(err)
